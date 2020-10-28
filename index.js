@@ -1,23 +1,19 @@
 const axios = require("axios");
 const Cookies = require("js-cookie");
 
-const apiUrl = `https://api.userfront.com/v0/`;
-const privateIPRegex = /((^127\.)|(^10\.)|(^172\.1[6-9]\.)|(^172\.2[0-9]\.)|(^172\.3[0-1]\.)|(^192\.168\.))\d{1,3}\.\d{1,3}/g;
-const isDevHostname = () => {
+const { apiUrl, privateIPRegex } = require("./constants");
+
+const isTestHostname = (hn) => {
   try {
-    const hostname = window.location.hostname;
-    return (
-      hostname.match(/localhost/g) ||
-      hostname.match(/file/g) ||
-      hostname.match(privateIPRegex)
-    );
+    const hostname = hn || window.location.hostname;
+    return !!(hostname.match(/localhost/g) || hostname.match(privateIPRegex));
   } catch (err) {
     return true;
   }
 };
 
 const scope = {
-  mode: isDevHostname() ? "test" : "live",
+  mode: isTestHostname() ? "test" : "live",
 };
 
 function init(tenantId, opts = {}) {
@@ -79,6 +75,7 @@ function setCookie(token, options, type) {
 
 module.exports = {
   init,
+  isTestHostname,
   signup,
   getMode,
   setCookie,

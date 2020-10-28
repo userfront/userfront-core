@@ -4,7 +4,8 @@
   "description": "Userfront core JS library",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "NODE_ENV=test mocha ./test --exit",
+    "test:watch": "NODE_ENV=test mocha --watch ./test ./"
   },
   "repository": {
     "type": "git",
@@ -27,5 +28,9 @@
   "dependencies": {
     "axios": "^0.21.0",
     "js-cookie": "^2.2.1"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^8.2.0"
   }
 }

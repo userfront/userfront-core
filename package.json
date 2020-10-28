@@ -23,5 +23,9 @@
   "bugs": {
     "url": "https://github.com/userfront/userfront-core/issues"
   },
-  "homepage": "https://github.com/userfront/userfront-core#readme"
+  "homepage": "https://github.com/userfront/userfront-core#readme",
+  "dependencies": {
+    "axios": "^0.21.0",
+    "js-cookie": "^2.2.1"
+  }
 }

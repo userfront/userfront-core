@@ -1,0 +1,27 @@
+{
+  "name": "@userfront/core",
+  "version": "0.1.0",
+  "description": "Userfront core JS library",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/userfront/userfront-core.git"
+  },
+  "keywords": [
+    "userfront",
+    "auth",
+    "authentication",
+    "authorization",
+    "access",
+    "control",
+    "multi-tenancy"
+  ],
+  "author": "Userfront",
+  "bugs": {
+    "url": "https://github.com/userfront/userfront-core/issues"
+  },
+  "homepage": "https://github.com/userfront/userfront-core#readme"
+}

@@ -61,6 +61,11 @@ async function signup({ username, name, email, password }) {
   }
 }
 
+function redirectTo(url) {
+  try {
+  } catch (err) {}
+}
+
 function setCookie(token, options, type) {
   const cookieName = `${type}.${scope.tenantId}`;
   options = options || {

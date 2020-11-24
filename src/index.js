@@ -174,8 +174,8 @@ async function redirectIfLoggedIn() {
         authorization: `Bearer ${store.accessToken}`,
       },
     });
-    if (data.tenant && data.tenant.loginRedirectUrl) {
-      redirectToPath(data.tenant.loginRedirectUrl);
+    if (data.tenant && data.tenant.loginRedirectPath) {
+      redirectToPath(data.tenant.loginRedirectPath);
     }
   } catch (err) {
     removeAllCookies();

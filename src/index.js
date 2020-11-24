@@ -13,34 +13,30 @@ const isTestHostname = (hn) => {
   }
 };
 
-const scope = {
+const store = {
   mode: isTestHostname() ? "test" : "live",
 };
 
 function init(tenantId, opts = {}) {
   if (!tenantId) return console.warn("Userfront initialized without tenant ID");
-  scope.tenantId = tenantId;
-  scope.signupModId = opts.signup;
-  scope.loginModId = opts.login;
-  scope.logoutModId = opts.logout;
-  scope.resetModId = opts.reset;
-  scope.accessTokenName = `access.${tenantId}`;
-  scope.idTokenName = `id.${tenantId}`;
-  scope.refreshTokenName = `refresh.${tenantId}`;
+  store.tenantId = tenantId;
+  store.accessTokenName = `access.${tenantId}`;
+  store.idTokenName = `id.${tenantId}`;
+  store.refreshTokenName = `refresh.${tenantId}`;
 }
 
-async function getMode() {
+async function setMode() {
   try {
-    const { data } = await axios.get(`${apiUrl}tenants/${scope.tenantId}/mode`);
-    scope.mode = data.mode || "test";
+    const { data } = await axios.get(`${apiUrl}tenants/${store.tenantId}/mode`);
+    store.mode = data.mode || "test";
   } catch (err) {
-    scope.mode = "test";
+    store.mode = "test";
   }
 }
 
 async function signup({ username, name, email, password }) {
   const { data } = await axios.post(`${apiUrl}auth/create`, {
-    tenantId: scope.tenantId,
+    tenantId: store.tenantId,
     username,
     name,
     email,
@@ -71,7 +67,7 @@ function redirectTo(url) {
 }
 
 async function logout() {
-  const token = Cookies.get(scope.accessTokenName);
+  const token = Cookies.get(store.accessTokenName);
   if (!token) return;
 
   try {
@@ -81,17 +77,17 @@ async function logout() {
       },
     });
 
-    removeCookie(scope.accessTokenName);
-    removeCookie(scope.idTokenName);
-    removeCookie(scope.refreshTokenName);
+    removeCookie(store.accessTokenName);
+    removeCookie(store.idTokenName);
+    removeCookie(store.refreshTokenName);
     window.location.href = data.redirectTo;
   } catch (err) {}
 }
 
 function setCookie(token, options, type) {
-  const cookieName = `${type}.${scope.tenantId}`;
+  const cookieName = `${type}.${store.tenantId}`;
   options = options || {
-    secure: scope.mode === "live",
+    secure: store.mode === "live",
     sameSite: "Lax",
   };
   if (type === "refresh") {
@@ -109,11 +105,11 @@ function removeCookie(name) {
 }
 
 export default {
-  getMode,
+  setMode,
   init,
   isTestHostname,
   logout,
-  scope,
   setCookie,
   signup,
+  store,
 };

@@ -8,6 +8,7 @@
   "unpkg": "build/userfront-core.umd.js",
   "scripts": {
     "build": "microbundle",
+    "pub": "npm version patch --force && npm publish",
     "test": "NODE_ENV=test mocha ./test --exit",
     "test:watch": "NODE_ENV=test mocha --watch ./test ./"
   },

@@ -1,7 +1,8 @@
-const axios = require("axios");
-const Cookies = require("js-cookie");
+import axios from "axios";
+import Cookies from "js-cookie";
 
-const { apiUrl, privateIPRegex } = require("./constants");
+import constants from "./constants";
+const { apiUrl, privateIPRegex } = constants;
 
 const isTestHostname = (hn) => {
   try {
@@ -107,7 +108,7 @@ function removeCookie(name) {
   Cookies.remove(name, { secure: false, sameSite: "None" });
 }
 
-module.exports = {
+export default {
   getMode,
   init,
   isTestHostname,

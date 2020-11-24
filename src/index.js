@@ -1,9 +1,14 @@
 import axios from "axios";
 import Cookies from "js-cookie";
+// import jwt from "jsonwebtoken";
 
 import constants from "./constants";
 const { apiUrl, privateIPRegex } = constants;
 
+/**
+ * Determine whether a hostname is in test mode.
+ * @param {String} hn
+ */
 const isTestHostname = (hn) => {
   try {
     const hostname = hn || window.location.hostname;
@@ -16,6 +21,19 @@ const isTestHostname = (hn) => {
 const store = {
   mode: isTestHostname() ? "test" : "live",
 };
+
+/**
+ * Initialize the Userfront library.
+ * @param {String} tenantId
+ */
+function init(tenantId) {
+  if (!tenantId) return console.warn("Userfront initialized without tenant ID");
+  store.tenantId = tenantId;
+  store.accessTokenName = `access.${tenantId}`;
+  store.idTokenName = `id.${tenantId}`;
+  store.refreshTokenName = `refresh.${tenantId}`;
+  setTokensFromCookies();
+}
 
 /**
  * Get the value of a query attribute, e.g. ?attr=value
@@ -33,14 +51,9 @@ function getQueryAttr(attrName) {
   );
 }
 
-function init(tenantId) {
-  if (!tenantId) return console.warn("Userfront initialized without tenant ID");
-  store.tenantId = tenantId;
-  store.accessTokenName = `access.${tenantId}`;
-  store.idTokenName = `id.${tenantId}`;
-  store.refreshTokenName = `refresh.${tenantId}`;
-}
-
+/**
+ * Define the mode of operation (live or test)
+ */
 async function setMode() {
   try {
     const { data } = await axios.get(`${apiUrl}tenants/${store.tenantId}/mode`);
@@ -65,17 +78,7 @@ async function signup({ username, name, email, password }) {
   });
 
   if (data.tokens) {
-    setCookie(
-      data.tokens.access.value,
-      data.tokens.access.cookieOptions,
-      "access"
-    );
-    setCookie(data.tokens.id.value, data.tokens.id.cookieOptions, "id");
-    setCookie(
-      data.tokens.refresh.value,
-      data.tokens.refresh.cookieOptions,
-      "refresh"
-    );
+    setCookiesAndTokens(data.tokens);
     redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/");
   } else {
     throw new Error("Please try again.");
@@ -94,17 +97,7 @@ async function login({ email, username, emailOrUsername, password }) {
     password,
   });
   if (data.tokens) {
-    setCookie(
-      data.tokens.access.value,
-      data.tokens.access.cookieOptions,
-      "access"
-    );
-    setCookie(data.tokens.id.value, data.tokens.id.cookieOptions, "id");
-    setCookie(
-      data.tokens.refresh.value,
-      data.tokens.refresh.cookieOptions,
-      "refresh"
-    );
+    setCookiesAndTokens(data.tokens);
     redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/");
   } else {
     throw new Error("Please try again.");
@@ -129,17 +122,7 @@ async function loginWithTokenAndUuid({ token, uuid }) {
   });
 
   if (data.tokens) {
-    setCookie(
-      data.tokens.access.value,
-      data.tokens.access.cookieOptions,
-      "access"
-    );
-    setCookie(data.tokens.id.value, data.tokens.id.cookieOptions, "id");
-    setCookie(
-      data.tokens.refresh.value,
-      data.tokens.refresh.cookieOptions,
-      "refresh"
-    );
+    setCookiesAndTokens(data.tokens);
     redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/");
   } else {
     throw new Error("Problem logging in.");
@@ -178,6 +161,27 @@ async function sendResetLink(email) {
   }
 }
 
+// TODO replace with direct check of the access token.
+/**
+ * If the access token is valid, redirect the browser to the
+ * tenant's login redirection path (path after login).
+ */
+async function redirectIfLoggedIn() {
+  if (!store.accessToken) return removeAllCookies();
+  try {
+    const { data } = await axios.get(`${apiUrl}self`, {
+      headers: {
+        authorization: `Bearer ${store.accessToken}`,
+      },
+    });
+    if (data.tenant && data.tenant.loginRedirectUrl) {
+      redirectToPath(data.tenant.loginRedirectUrl);
+    }
+  } catch (err) {
+    removeAllCookies();
+  }
+}
+
 /**
  * Redirect to path portion of a URL.
  */
@@ -191,25 +195,29 @@ function redirectToPath(pathOrUrl) {
   }
 }
 
+/**
+ * Log a user out and redirect to the logout path.
+ */
 async function logout() {
-  const token = Cookies.get(store.accessTokenName);
-  if (!token) return;
-
+  if (!store.accessToken) return removeAllCookies();
   try {
     const { data } = await axios.get(`${apiUrl}auth/logout`, {
       headers: {
-        authorization: `Bearer ${token}`,
+        authorization: `Bearer ${store.accessToken}`,
       },
     });
-
-    removeCookie(store.accessTokenName);
-    removeCookie(store.idTokenName);
-    removeCookie(store.refreshTokenName);
-    window.location.href = data.redirectTo;
+    removeAllCookies();
+    redirectToPath(data.redirectTo);
   } catch (err) {}
 }
 
-function setCookie(token, options, type) {
+/**
+ * Set a cookie value based on the given options.
+ * @param {String} value
+ * @param {Object} options
+ * @param {String} type
+ */
+function setCookie(value, options, type) {
   const cookieName = `${type}.${store.tenantId}`;
   options = options || {
     secure: store.mode === "live",
@@ -218,15 +226,51 @@ function setCookie(token, options, type) {
   if (type === "refresh") {
     options.sameSite = "Strict";
   }
-  Cookies.set(cookieName, token, options);
+  Cookies.set(cookieName, value, options);
 }
 
+/**
+ * Remove a cookie by name, regardless of its cookie setting(s).
+ * @param {String} name
+ */
 function removeCookie(name) {
   Cookies.remove(name);
   Cookies.remove(name, { secure: true, sameSite: "Lax" });
   Cookies.remove(name, { secure: true, sameSite: "None" });
   Cookies.remove(name, { secure: false, sameSite: "Lax" });
   Cookies.remove(name, { secure: false, sameSite: "None" });
+}
+
+/**
+ * Remove all auth cookies (access, id, refresh).
+ */
+function removeAllCookies() {
+  removeCookie(store.accessTokenName);
+  removeCookie(store.idTokenName);
+  removeCookie(store.refreshTokenName);
+  store.accessToken = undefined;
+  store.idToken = undefined;
+  store.refreshToken = undefined;
+}
+
+/**
+ * Define the store token values from the cookie values.
+ */
+function setTokensFromCookies() {
+  store.accessToken = Cookies.get(store.accessTokenName);
+  store.idToken = Cookies.get(store.idTokenName);
+  store.refreshToken = Cookies.get(store.refreshTokenName);
+}
+
+/**
+ * Set the cookies from a tokens object, and add to the local store.
+ * @param {Object} tokens
+ */
+function setCookiesAndTokens(tokens) {
+  setCookie(tokens.access.value, tokens.access.cookieOptions, "access");
+  setCookie(tokens.id.value, tokens.id.cookieOptions, "id");
+  setCookie(tokens.refresh.value, tokens.refresh.cookieOptions, "refresh");
+  setTokensFromCookies();
 }
 
 export default {
@@ -236,6 +280,7 @@ export default {
   login,
   loginWithTokenAndUuid,
   logout,
+  redirectIfLoggedIn,
   sendLoginLink,
   sendResetLink,
   setCookie,

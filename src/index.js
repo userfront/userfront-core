@@ -110,7 +110,7 @@ async function login({ email, username, emailOrUsername, password }) {
  * @param {String} token
  * @param {UUID} uuid
  */
-async function loginWithTokenAndUuid({ token, uuid }) {
+async function loginWithTokenAndUuid(token, uuid) {
   if (!token) token = getQueryAttr("token");
   if (!uuid) uuid = getQueryAttr("uuid");
   if (!token || !uuid) return;

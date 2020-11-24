@@ -75,7 +75,7 @@ async function logout() {
   if (!token) return;
 
   try {
-    const { data } = await axios.get(`${apiUrl}/auth/logout`, {
+    const { data } = await axios.get(`${apiUrl}auth/logout`, {
       headers: {
         authorization: `Bearer ${token}`,
       },

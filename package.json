@@ -2,8 +2,12 @@
   "name": "@userfront/core",
   "version": "0.1.1",
   "description": "Userfront core JS library",
-  "main": "index.js",
+  "source": "src/index.js",
+  "main": "build/userfront-core.js",
+  "module": "build/userfromt-core.module.js",
+  "unpkg": "build/userfront-core.umd.js",
   "scripts": {
+    "build": "microbundle",
     "test": "NODE_ENV=test mocha ./test --exit",
     "test:watch": "NODE_ENV=test mocha --watch ./test ./"
   },
@@ -31,6 +35,7 @@
   },
   "devDependencies": {
     "chai": "^4.2.0",
+    "microbundle": "^0.12.4",
     "mocha": "^8.2.0"
   }
 }

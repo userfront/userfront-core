@@ -23,6 +23,9 @@ function init(tenantId, opts = {}) {
   scope.loginModId = opts.login;
   scope.logoutModId = opts.logout;
   scope.resetModId = opts.reset;
+  scope.accessTokenName = `access.${tenantId}`;
+  scope.idTokenName = `id.${tenantId}`;
+  scope.refreshTokenName = `refresh.${tenantId}`;
 }
 
 async function getMode() {
@@ -66,6 +69,24 @@ function redirectTo(url) {
   } catch (err) {}
 }
 
+async function logout() {
+  const token = Cookies.get(scope.accessTokenName);
+  if (!token) return;
+
+  try {
+    const { data } = await axios.get(`${apiUrl}/auth/logout`, {
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
+    });
+
+    removeCookie(scope.accessTokenName);
+    removeCookie(scope.idTokenName);
+    removeCookie(scope.refreshTokenName);
+    window.location.href = data.redirectTo;
+  } catch (err) {}
+}
+
 function setCookie(token, options, type) {
   const cookieName = `${type}.${scope.tenantId}`;
   options = options || {
@@ -78,10 +99,20 @@ function setCookie(token, options, type) {
   Cookies.set(cookieName, token, options);
 }
 
+function removeCookie(name) {
+  Cookies.remove(name);
+  Cookies.remove(name, { secure: true, sameSite: "Lax" });
+  Cookies.remove(name, { secure: true, sameSite: "None" });
+  Cookies.remove(name, { secure: false, sameSite: "Lax" });
+  Cookies.remove(name, { secure: false, sameSite: "None" });
+}
+
 module.exports = {
+  getMode,
   init,
   isTestHostname,
-  signup,
-  getMode,
+  logout,
+  scope,
   setCookie,
+  signup,
 };

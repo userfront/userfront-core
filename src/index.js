@@ -161,6 +161,26 @@ async function sendResetLink(email) {
   }
 }
 
+async function resetPassword({ uuid, token, password }) {
+  if (!token) token = getQueryAttr("token");
+  if (!uuid) uuid = getQueryAttr("uuid");
+  if (!token || !uuid) throw new Error("Missing token or uuid");
+  const { data } = await axios.put(`${apiUrl}auth/reset`, {
+    tenantId: store.tenantId,
+    uuid,
+    token,
+    password,
+  });
+  if (data.tokens) {
+    setCookiesAndTokens(data.tokens);
+    redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/");
+  } else {
+    throw new Error(
+      "There was a problem resetting your password. Please try again."
+    );
+  }
+}
+
 // TODO replace with direct check of the access token.
 /**
  * If the access token is valid, redirect the browser to the
@@ -274,15 +294,17 @@ function setCookiesAndTokens(tokens) {
 }
 
 export default {
-  setMode,
+  getQueryAttr,
   init,
   isTestHostname,
   login,
   loginWithTokenAndUuid,
   logout,
   redirectIfLoggedIn,
+  resetPassword,
   sendLoginLink,
   sendResetLink,
+  setMode,
   setCookie,
   signup,
   store,

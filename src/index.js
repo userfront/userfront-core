@@ -36,6 +36,22 @@ function init(tenantId) {
 }
 
 /**
+ * Set and then return the access token
+ */
+function accessToken() {
+  store.accessToken = Cookies.get(store.accessTokenName);
+  return store.accessToken;
+}
+
+/**
+ * Set and then return the ID token
+ */
+function idToken() {
+  store.idToken = Cookies.get(store.idTokenName);
+  return store.idToken;
+}
+
+/**
  * Get the value of a query attribute, e.g. ?attr=value
  * @param {String} attrName
  */
@@ -294,7 +310,9 @@ function setCookiesAndTokens(tokens) {
 }
 
 export default {
+  accessToken,
   getQueryAttr,
+  idToken,
   init,
   isTestHostname,
   login,

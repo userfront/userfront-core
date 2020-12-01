@@ -80,11 +80,28 @@ async function setMode() {
 }
 
 /**
+ * Register a user via the provided method. This method serves to call other
+ * methods, depending on the "method" parameter passed in.
+ * @param {Object} options
+ */
+async function signup({ method, username, name, email, password }) {
+  if (!method) {
+    throw new Error('Userfront.signup called without "method" property');
+  }
+  switch (method) {
+    case "password":
+      return signupWithPassword({ username, name, email, password });
+    default:
+      throw new Error('Userfront.signup called with invalid "method" property');
+  }
+}
+
+/**
  * Register a new user with username, name, email, and password.
  * Redirect the browser after successful signup based on the redirectTo value returned.
- * @param {*} param0
+ * @param {Object} options
  */
-async function signup({ username, name, email, password }) {
+async function signupWithPassword({ username, name, email, password }) {
   const { data } = await axios.post(`${apiUrl}auth/create`, {
     tenantId: store.tenantId,
     username,
@@ -102,11 +119,43 @@ async function signup({ username, name, email, password }) {
 }
 
 /**
+ * Log a user in via the provided method. This method serves to call other
+ * methods, depending on the "method" parameter passed in.
+ * @param {Object} options
+ */
+async function login({
+  method,
+  email,
+  username,
+  emailOrUsername,
+  password,
+  token,
+  uuid,
+}) {
+  if (!method) {
+    throw new Error('Userfront.login called without "method" property');
+  }
+  switch (method) {
+    case "password":
+      return loginWithPassword({ email, username, emailOrUsername, password });
+    case "link":
+      return loginWithLink(token, uuid);
+    default:
+      throw new Error('Userfront.login called with invalid "method" property');
+  }
+}
+
+/**
  * Log a user in with email/username and password.
  * Redirect the browser after successful login based on the redirectTo value returned.
- * @param {*} param0
+ * @param {Object} options
  */
-async function login({ email, username, emailOrUsername, password }) {
+async function loginWithPassword({
+  email,
+  username,
+  emailOrUsername,
+  password,
+}) {
   const { data } = await axios.post(`${apiUrl}auth/basic`, {
     tenantId: store.tenantId,
     emailOrUsername: email || username || emailOrUsername,
@@ -126,7 +175,7 @@ async function login({ email, username, emailOrUsername, password }) {
  * @param {String} token
  * @param {UUID} uuid
  */
-async function loginWithTokenAndUuid(token, uuid) {
+async function loginWithLink(token, uuid) {
   if (!token) token = getQueryAttr("token");
   if (!uuid) uuid = getQueryAttr("uuid");
   if (!token || !uuid) return;
@@ -316,7 +365,6 @@ export default {
   init,
   isTestHostname,
   login,
-  loginWithTokenAndUuid,
   logout,
   redirectIfLoggedIn,
   resetPassword,

@@ -363,28 +363,30 @@ function setCookiesAndTokens(tokens) {
  * whenever the browser URL changes.
  */
 let isRegistered = false;
-function registerLocationChangeEventListener() {
-  if (isRegistered || !history) return;
+function registerUrlChangedEventListener() {
+  if (isRegistered) return;
   isRegistered = true;
-  history.pushState = ((f) =>
-    function pushState() {
-      var ret = f.apply(this, arguments);
-      window.dispatchEvent(new Event("pushstate"));
-      window.dispatchEvent(new Event("urlchanged"));
-      return ret;
-    })(history.pushState);
+  try {
+    history.pushState = ((f) =>
+      function pushState() {
+        var ret = f.apply(this, arguments);
+        window.dispatchEvent(new Event("pushstate"));
+        window.dispatchEvent(new Event("urlchanged"));
+        return ret;
+      })(history.pushState);
 
-  history.replaceState = ((f) =>
-    function replaceState() {
-      var ret = f.apply(this, arguments);
-      window.dispatchEvent(new Event("replacestate"));
-      window.dispatchEvent(new Event("urlchanged"));
-      return ret;
-    })(history.replaceState);
+    history.replaceState = ((f) =>
+      function replaceState() {
+        var ret = f.apply(this, arguments);
+        window.dispatchEvent(new Event("replacestate"));
+        window.dispatchEvent(new Event("urlchanged"));
+        return ret;
+      })(history.replaceState);
 
-  window.addEventListener("popstate", () => {
-    window.dispatchEvent(new Event("urlchanged"));
-  });
+    window.addEventListener("popstate", () => {
+      window.dispatchEvent(new Event("urlchanged"));
+    });
+  } catch (error) {}
 }
 
 export default {
@@ -396,7 +398,7 @@ export default {
   login,
   logout,
   redirectIfLoggedIn,
-  registerLocationChangeEventListener,
+  registerUrlChangedEventListener,
   resetPassword,
   sendLoginLink,
   sendResetLink,

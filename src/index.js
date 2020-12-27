@@ -358,6 +358,35 @@ function setCookiesAndTokens(tokens) {
   setTokensFromCookies();
 }
 
+/**
+ * Register a window-level event called "urlchanged" that will fire
+ * whenever the browser URL changes.
+ */
+let isRegistered = false;
+function registerLocationChangeEventListener() {
+  if (isRegistered || !history) return;
+  isRegistered = true;
+  history.pushState = ((f) =>
+    function pushState() {
+      var ret = f.apply(this, arguments);
+      window.dispatchEvent(new Event("pushstate"));
+      window.dispatchEvent(new Event("urlchanged"));
+      return ret;
+    })(history.pushState);
+
+  history.replaceState = ((f) =>
+    function replaceState() {
+      var ret = f.apply(this, arguments);
+      window.dispatchEvent(new Event("replacestate"));
+      window.dispatchEvent(new Event("urlchanged"));
+      return ret;
+    })(history.replaceState);
+
+  window.addEventListener("popstate", () => {
+    window.dispatchEvent(new Event("urlchanged"));
+  });
+}
+
 export default {
   accessToken,
   getQueryAttr,
@@ -367,6 +396,7 @@ export default {
   login,
   logout,
   redirectIfLoggedIn,
+  registerLocationChangeEventListener,
   resetPassword,
   sendLoginLink,
   sendResetLink,

@@ -67,6 +67,12 @@ function getQueryAttr(attrName) {
   );
 }
 
+function getProviderLink(provider) {
+  if (!provider) throw new Error("Missing provider");
+  if (!store.tenantId) throw new Error("Missing tenant ID");
+  return `https://api.userfront.com/v0/auth/${provider}/login?tenant_id=${store.tenantId}&origin=${window.location.origin}&pathname=${window.location.pathname}`;
+}
+
 /**
  * Define the mode of operation (live or test)
  */
@@ -89,11 +95,28 @@ async function signup({ method, username, name, email, password }) {
     throw new Error('Userfront.signup called without "method" property');
   }
   switch (method) {
+    case "azure":
+    case "facebook":
+    case "github":
+    case "google":
+    case "linkedin":
+      return signupWithSSO(method);
     case "password":
       return signupWithPassword({ username, name, email, password });
     default:
       throw new Error('Userfront.signup called with invalid "method" property');
   }
+}
+
+/**
+ * Register a new user in via SSO provider.
+ * Redirect the browser after successful authentication and 302 redirect from server.
+ * @param {String} provider Name of SSO provider
+ */
+function signupWithSSO(provider) {
+  if (!provider) throw new Error("Missing provider");
+  const url = getProviderLink(provider);
+  window.location.assign(url);
 }
 
 /**
@@ -136,6 +159,12 @@ async function login({
     throw new Error('Userfront.login called without "method" property');
   }
   switch (method) {
+    case "azure":
+    case "facebook":
+    case "github":
+    case "google":
+    case "linkedin":
+      return loginWithSSO(method);
     case "password":
       return loginWithPassword({ email, username, emailOrUsername, password });
     case "link":
@@ -143,6 +172,17 @@ async function login({
     default:
       throw new Error('Userfront.login called with invalid "method" property');
   }
+}
+
+/**
+ * Log a user in via SSO provider.
+ * Redirect the browser after successful authentication and 302 redirect from server.
+ * @param {String} provider Name of SSO provider
+ */
+function loginWithSSO(provider) {
+  if (!provider) throw new Error("Missing provider");
+  const url = getProviderLink(provider);
+  window.location.assign(url);
 }
 
 /**

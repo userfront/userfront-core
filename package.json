@@ -4,7 +4,7 @@
   "description": "Userfront core JS library",
   "source": "src/index.js",
   "main": "build/userfront-core.js",
-  "module": "build/userfromt-core.module.js",
+  "module": "build/userfront-core.module.js",
   "unpkg": "build/userfront-core.umd.js",
   "scripts": {
     "build": "microbundle",

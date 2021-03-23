@@ -5,6 +5,8 @@ import Cookies from "js-cookie";
 import constants from "./constants";
 const { apiUrl, privateIPRegex } = constants;
 
+const initCallbacks = [];
+
 /**
  * Determine whether a hostname is in test mode.
  * @param {String} hn
@@ -33,6 +35,23 @@ function init(tenantId) {
   store.idTokenName = `id.${tenantId}`;
   store.refreshTokenName = `refresh.${tenantId}`;
   setTokensFromCookies();
+  try {
+    if (initCallbacks.length > 0) {
+      initCallbacks.forEach((cb) => {
+        if (!cb || typeof cb !== "function") return;
+        cb({ tenantId });
+      });
+    }
+  } catch (error) {}
+}
+
+/**
+ * Add a callback function to be called upon Userfront.init()
+ * @param {Function} cb
+ */
+function addInitCallback(cb) {
+  if (!cb || typeof cb !== "function") return;
+  initCallbacks.push(cb);
 }
 
 /**
@@ -430,6 +449,7 @@ function registerUrlChangedEventListener() {
 }
 
 export default {
+  addInitCallback,
   accessToken,
   getQueryAttr,
   idToken,

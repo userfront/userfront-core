@@ -69,5 +69,12 @@ describe("addInitCallback", () => {
     expect(callbackA).toHaveBeenCalledWith({ tenantId });
     expect(callbackB).toHaveBeenCalled();
     expect(callbackB).toHaveBeenCalledWith({ tenantId });
+
+    // Calling Userfront.init() again should not call the callbacks again
+    jest.clearAllMocks();
+    Userfront.init(tenantId);
+
+    expect(callbackA).not.toHaveBeenCalled();
+    expect(callbackB).not.toHaveBeenCalled();
   });
 });

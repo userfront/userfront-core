@@ -5,7 +5,7 @@ import Cookies from "js-cookie";
 import constants from "./constants";
 const { apiUrl, privateIPRegex } = constants;
 
-const initCallbacks = [];
+let initCallbacks = [];
 
 /**
  * Determine whether a hostname is in test mode.
@@ -42,6 +42,7 @@ function init(tenantId) {
         cb({ tenantId });
       });
     }
+    initCallbacks = [];
   } catch (error) {}
 }
 

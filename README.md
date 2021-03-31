@@ -11,7 +11,7 @@ The library must always be initialized with a project or tenant ID, after which 
 
 ## init (tenantId)
 
-Initializes the Userfront library.
+Initializes the Userfront library with your project or tenant ID.
 
 ```js
 import Userfront from "@userfront/core";

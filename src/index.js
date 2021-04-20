@@ -353,7 +353,9 @@ async function logout() {
     });
     removeAllCookies();
     redirectToPath(data.redirectTo);
-  } catch (err) {}
+  } catch (err) {
+    removeAllCookies();
+  }
 }
 
 /**

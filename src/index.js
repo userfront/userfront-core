@@ -1,9 +1,10 @@
 import axios from "axios";
 import Cookies from "js-cookie";
-// import jwt from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 
-import constants from "./constants";
-const { apiUrl, privateIPRegex } = constants;
+import { apiUrl, privateIPRegex } from "./constants.js";
+import apiResource from "./api-resource.js";
+import user from "./user.js";
 
 let initCallbacks = [];
 
@@ -22,6 +23,7 @@ const isTestHostname = (hn) => {
 
 const store = {
   mode: isTestHostname() ? "test" : "live",
+  user: {},
 };
 
 /**
@@ -35,6 +37,11 @@ function init(tenantId) {
   store.idTokenName = `id.${tenantId}`;
   store.refreshTokenName = `refresh.${tenantId}`;
   setTokensFromCookies();
+
+  if (store.idToken) {
+    setUser();
+  }
+
   try {
     if (initCallbacks.length > 0) {
       initCallbacks.forEach((cb) => {
@@ -418,11 +425,60 @@ function setTokensFromCookies() {
  * Set the cookies from a tokens object, and add to the local store.
  * @param {Object} tokens
  */
-function setCookiesAndTokens(tokens) {
+function setCookiesAndTokens(tokens, hello) {
   setCookie(tokens.access.value, tokens.access.cookieOptions, "access");
   setCookie(tokens.id.value, tokens.id.cookieOptions, "id");
   setCookie(tokens.refresh.value, tokens.refresh.cookieOptions, "refresh");
   setTokensFromCookies();
+  setUser();
+}
+
+/**
+ * Define user attributes based on access & ID token.
+ */
+function setUser() {
+  if (!store.idToken) {
+    throw new Error("ID token has not been set.");
+  }
+  if (!store.accessToken) {
+    throw new Error("Access token has not been set.");
+  }
+
+  const idToken = jwt.decode(store.idToken);
+  const accessToken = jwt.decode(store.accessToken);
+  const userObj = user({ idToken, accessToken });
+
+  store.user = {
+    ...userObj,
+    ...apiResource({
+      tenantId: store.tenantId,
+      path: "/users",
+      id: userObj.userId,
+      afterUpdate: refresh,
+    }),
+  };
+}
+
+function refresh() {
+  // const { data } = await axios.get(`${apiUrl}tenants/${store.tenantId}/refresh`);
+
+  // Imitate token fetch
+  // prettier-ignore
+  const data = {
+    tokens: {
+      access: {
+        value: jwt.sign( { mode: "test", tenantId: store.tenantId, userId: 3, userUuid: "aaaa-bbbb-cccc-dddd", isConfirmed: true, authorization: { [store.tenantId]: { roles: ["member"], }, }, sessionId: "bbbb-cccc-dddd-eeee", }, "testAccessTokenSecret"),
+      },
+      id: {
+        value: jwt.sign( { ...store.user, data: { nickname: "ace", }, }, "testIdTokenSecret"),
+      },
+      refresh: {
+        value: "",
+      },
+    },
+  };
+
+  setCookiesAndTokens(data.tokens);
 }
 
 /**
@@ -466,6 +522,7 @@ export default {
   login,
   logout,
   redirectIfLoggedIn,
+  refresh,
   registerUrlChangedEventListener,
   resetPassword,
   sendLoginLink,

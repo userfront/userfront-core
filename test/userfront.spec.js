@@ -1,10 +1,10 @@
 import Userfront from "../src/index.js";
 
 /**
- * Using Rewire, we can get an unexported function from our module:
+ * Using Rewire, we can get an unexported function from our Userfront module:
  * const signupWithSSO = Userfront.__get__("signupWithSSO");
  *
- * and also set a function this way:
+ * We can also set a function like so:
  * const mockFn = jest.fn()
  * Userfront.__set__("signupWithSSO", mockFn);
  */

@@ -1,8 +1,8 @@
 /**
  * Create a user object based on tokens
  * @param {Object} tokens
- * @property {Object} idToken
- * @property {Object} accessToken
+ * @property {Object} idToken Decoded ID token
+ * @property {Object} accessToken Decoded access token
  * @returns {Object}
  */
 export default (tokens = {}) => {

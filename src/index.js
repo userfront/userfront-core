@@ -425,7 +425,7 @@ function setTokensFromCookies() {
  * Set the cookies from a tokens object, and add to the local store.
  * @param {Object} tokens
  */
-function setCookiesAndTokens(tokens, hello) {
+function setCookiesAndTokens(tokens) {
   setCookie(tokens.access.value, tokens.access.cookieOptions, "access");
   setCookie(tokens.id.value, tokens.id.cookieOptions, "id");
   setCookie(tokens.refresh.value, tokens.refresh.cookieOptions, "refresh");
@@ -434,7 +434,7 @@ function setCookiesAndTokens(tokens, hello) {
 }
 
 /**
- * Define user attributes based on access & ID token.
+ * Define user attributes & methods based on access & ID token.
  */
 function setUser() {
   if (!store.idToken) {
@@ -444,41 +444,33 @@ function setUser() {
     throw new Error("Access token has not been set.");
   }
 
-  const idToken = jwt.decode(store.idToken);
-  const accessToken = jwt.decode(store.accessToken);
-  const userObj = user({ idToken, accessToken });
+  const decodedIdToken = jwt.decode(store.idToken);
+  const decodedAccessToken = jwt.decode(store.accessToken);
 
   store.user = {
-    ...userObj,
+    ...user({ idToken: decodedIdToken, accessToken: decodedAccessToken }),
     ...apiResource({
-      tenantId: store.tenantId,
+      store,
       path: "/users",
-      id: userObj.userId,
+      id: decodedAccessToken.userId,
       afterUpdate: refresh,
     }),
   };
 }
 
-function refresh() {
-  // const { data } = await axios.get(`${apiUrl}tenants/${store.tenantId}/refresh`);
-
-  // Imitate token fetch
-  // prettier-ignore
-  const data = {
-    tokens: {
-      access: {
-        value: jwt.sign( { mode: "test", tenantId: store.tenantId, userId: 3, userUuid: "aaaa-bbbb-cccc-dddd", isConfirmed: true, authorization: { [store.tenantId]: { roles: ["member"], }, }, sessionId: "bbbb-cccc-dddd-eeee", }, "testAccessTokenSecret"),
-      },
-      id: {
-        value: jwt.sign( { ...store.user, data: { nickname: "ace", }, }, "testIdTokenSecret"),
-      },
-      refresh: {
-        value: "",
-      },
+async function refresh() {
+  const { data } = await axios.get({
+    url: `${apiUrl}tenants/${store.tenantId}/refresh`,
+    headers: {
+      authorization: `Bearer ${store.accessToken}`,
     },
-  };
+  });
 
-  setCookiesAndTokens(data.tokens);
+  if (data.tokens) {
+    setCookiesAndTokens(data.tokens);
+  } else {
+    throw new Error("Problem refreshing tokens.");
+  }
 }
 
 /**

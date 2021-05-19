@@ -7,11 +7,25 @@ import user from "../src/user.js";
 
 jest.mock("axios");
 
-const tenantId = "abcdefg";
-Userfront.init(tenantId);
+const tenantId = "abcdefgh";
 
 describe("User", () => {
-  const dummyUser = {
+  // Make available for testing
+  Userfront.setCookiesAndTokens = Userfront.__get__("setCookiesAndTokens");
+
+  const accessTokenUserDefaults = {
+    userId: 3,
+    userUuid: "aaaa-bbbb-cccc-dddd",
+    isConfirmed: true,
+    authorization: {
+      [tenantId]: {
+        roles: ["member"],
+      },
+    },
+    sessionId: "bbbb-cccc-dddd-eeee",
+  };
+
+  const idTokenUserDefaults = {
     name: "John Doe",
     email: "johndoe@example.com",
     username: "johndoe",
@@ -32,8 +46,6 @@ describe("User", () => {
     updatedAt: new Date(),
   };
 
-  Userfront.setCookiesAndTokens = Userfront.__get__("setCookiesAndTokens");
-
   beforeAll(() => {
     Userfront.init(tenantId);
 
@@ -42,19 +54,11 @@ describe("User", () => {
       {
         mode: "test",
         tenantId,
-        userId: 3,
-        userUuid: "aaaa-bbbb-cccc-dddd",
-        isConfirmed: true,
-        authorization: {
-          [tenantId]: {
-            roles: ["member"],
-          },
-        },
-        sessionId: "bbbb-cccc-dddd-eeee",
+        ...accessTokenUserDefaults,
       },
       "accessTokenSecret"
     );
-    const idToken = jwt.sign(dummyUser, "idTokenSecret");
+    const idToken = jwt.sign(idTokenUserDefaults, "idTokenSecret");
 
     Userfront.setCookiesAndTokens({
       access: {
@@ -77,11 +81,11 @@ describe("User", () => {
       });
 
       const parsedUser = {
-        ...JSON.parse(JSON.stringify(dummyUser)),
-        ...JSON.parse(JSON.stringify(dummyUser.data)),
+        ...JSON.parse(JSON.stringify(idTokenUserDefaults)),
+        ...JSON.parse(JSON.stringify(idTokenUserDefaults.data)),
       };
 
-      for (const prop in dummyUser) {
+      for (const prop in idTokenUserDefaults) {
         expect(parsedUser[prop]).toEqual(ufUser[prop]);
       }
     });
@@ -89,38 +93,80 @@ describe("User", () => {
 
   it("should get user's information", () => {
     const parsedUser = {
-      ...JSON.parse(JSON.stringify(dummyUser)),
-      ...JSON.parse(JSON.stringify(dummyUser.data)),
+      ...JSON.parse(JSON.stringify(idTokenUserDefaults)),
+      ...JSON.parse(JSON.stringify(idTokenUserDefaults.data)),
     };
 
-    for (const prop in dummyUser) {
+    for (const prop in idTokenUserDefaults) {
       expect(parsedUser[prop]).toEqual(Userfront.store.user[prop]);
     }
   });
 
   it("should update user's information via API and call refresh()", async () => {
     const updates = {
+      username: "john-doe-updated",
       data: {
-        nickname: "ace",
+        country: "Spain",
       },
     };
 
-    axios.put.mockImplementationOnce(() => Promise.resolve(updates));
+    // Create mock tokens & refresh response
+    const accessToken = jwt.sign(
+      {
+        mode: "test",
+        tenantId,
+        ...accessTokenUserDefaults,
+      },
+      "updatedAccessTokenSecret"
+    );
+    const idToken = jwt.sign(
+      {
+        ...idTokenUserDefaults,
+        ...updates,
+      },
+      "updatedIdTokenSecret"
+    );
+    axios.get.mockImplementationOnce(() =>
+      Promise.resolve({
+        data: {
+          tokens: {
+            access: {
+              value: accessToken,
+            },
+            id: {
+              value: idToken,
+            },
+            refresh: {
+              value: "",
+            },
+          },
+        },
+      })
+    );
 
     const originalTokens = {
-      idToken: JSON.parse(JSON.stringify(Userfront.store.idToken)),
-      accessToken: JSON.parse(JSON.stringify(Userfront.store.accessToken)),
+      idToken: Userfront.store.idToken,
+      accessToken: Userfront.store.accessToken,
     };
-    expect(Userfront.store.user.nickname).toBeUndefined;
-
     await Userfront.store.user.update(updates);
 
     const { userId } = Userfront.store.user;
-    expect(axios.put).toBeCalledWith(
-      `${apiUrl}tenants/${tenantId}/users/${userId}`,
-      updates
-    );
-    expect(Userfront.store.user.nickname).toEqual(updates.data.nickname);
+    expect(axios.put).toBeCalledWith({
+      url: `${apiUrl}tenants/${tenantId}/users/${userId}`,
+      headers: {
+        authorization: `Bearer ${originalTokens.accessToken}`,
+      },
+      payload: updates,
+    });
+    expect(axios.get).toBeCalledWith({
+      url: `${apiUrl}tenants/${tenantId}/refresh`,
+      headers: {
+        authorization: `Bearer ${originalTokens.accessToken}`,
+      },
+    });
+
+    expect(Userfront.store.user.username).toEqual(updates.username);
+    expect(Userfront.store.user.country).toEqual(updates.data.country);
 
     expect(originalTokens.idToken).not.toEqual(Userfront.store.idToken);
     expect(originalTokens.accessToken).not.toEqual(Userfront.store.accessToken);

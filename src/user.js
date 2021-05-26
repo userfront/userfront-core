@@ -19,7 +19,6 @@ export default ({ store, afterUpdate }) => {
 
   const user = {};
   const decodedIdToken = jwt.decode(store.idToken);
-  const decodedAccessToken = jwt.decode(store.accessToken);
 
   // Set basic user information properties from ID token
   const idTokenProps = [
@@ -49,16 +48,16 @@ export default ({ store, afterUpdate }) => {
      * @returns {Promise<void>}
      */
     async update(updates) {
-      if (!decodedAccessToken.userId) {
+      if (!decodedIdToken.userId) {
         throw new Error("API resource update error: Missing ID");
       }
-      if (!updates || !Object.keys(updates).length) {
+      if (!updates || Object.keys(updates).length < 1) {
         throw new Error("Missing user properties to update");
       }
 
       try {
         await axios.put({
-          url: `${apiUrl}tenants/${store.tenantId}/users/${decodedAccessToken.userId}`,
+          url: `${apiUrl}tenants/${store.tenantId}/users/${decodedIdToken.userId}`,
           headers: {
             authorization: `Bearer ${store.accessToken}`,
           },

@@ -84,15 +84,13 @@ function idToken() {
  * @returns {Promise<void>} The provided token has been verified if `verifyToken` resolves without error
  */
 async function verifyToken(token) {
-  if (!token) {
-    return Promise.reject(new Error("Missing token"));
-  }
+  if (!token) throw new Error("Missing token");
 
   let publicKey;
   try {
     const decodedToken = jwt.decode(token, { complete: true });
     if (!decodedToken.header || !decodedToken.header.kid) {
-      return Promise.reject(new Error("Token kid not defined"));
+      throw new Error("Token kid not defined");
     }
 
     const client = new JwksClient({
@@ -103,17 +101,17 @@ async function verifyToken(token) {
     const key = await client.getSigningKey(decodedToken.header.kid);
     publicKey = key.getPublicKey();
   } catch (error) {
-    return Promise.reject(error);
+    throw error;
   }
 
   if (!publicKey) {
-    return Promise.reject(new Error("Public key not found"));
+    throw new Error("Public key not found");
   }
 
   try {
     jwt.verify(token, publicKey);
   } catch (error) {
-    return Promise.reject(new Error("Token verification failed"));
+    throw new Error("Token verification failed");
   }
 
   return Promise.resolve();
@@ -492,18 +490,17 @@ function setUser() {
 }
 
 async function refresh() {
-  const { data } = await axios.post({
-    url: `${apiUrl}tenants/${store.tenantId}/refresh`,
+  const res = await axios.get({
+    url: `${apiUrl}auth/refresh`,
     headers: {
       authorization: `Bearer ${store.accessToken}`,
     },
   });
-
-  if (data.tokens) {
-    setCookiesAndTokens(data.tokens);
-  } else {
+  if (!res || !res.data || !res.data.tokens) {
     throw new Error("Problem refreshing tokens.");
   }
+
+  setCookiesAndTokens(res.data.tokens);
 }
 
 /**

@@ -126,7 +126,7 @@ describe("User", () => {
         },
         utils.randomString()
       );
-      axios.post.mockImplementationOnce(() =>
+      axios.get.mockImplementationOnce(() =>
         Promise.resolve({
           data: {
             tokens: {
@@ -169,11 +169,83 @@ describe("User", () => {
       expect(Userfront.user.data.birthdate).toBeUndefined;
       expect(Userfront.user.data.metadata).toBeUndefined;
 
+      // Token refresh should not have been issued
+      expect(axios.get).toHaveBeenCalled();
+      axios.get.mockClear();
+
       // Assert tokens were updated
       expect(originalTokens.idToken).not.toEqual(Userfront.store.idToken);
       expect(originalTokens.accessToken).not.toEqual(
         Userfront.store.accessToken
       );
+    });
+
+    it("should throw if `updates` object not provided", async () => {
+      const originalUser = { ...Userfront.user };
+      const originalTokens = {
+        idToken: Userfront.store.idToken,
+        accessToken: Userfront.store.accessToken,
+      };
+
+      // Attempt update without object
+      expect(Userfront.user.update()).rejects.toThrow(
+        "Missing user properties to update"
+      );
+      // Attempt update with empty object
+      expect(Userfront.user.update({})).rejects.toThrow(
+        "Missing user properties to update"
+      );
+
+      // Assert user was not modified
+      for (const prop of utils.defaultIdTokenProperties) {
+        expect(Userfront.user[prop]).toEqual(originalUser[prop]);
+      }
+
+      // Token refresh should not have been issued
+      expect(axios.get).not.toHaveBeenCalled();
+
+      // Assert tokens were not modified
+      expect(originalTokens.idToken).toEqual(Userfront.store.idToken);
+      expect(originalTokens.accessToken).toEqual(Userfront.store.accessToken);
+    });
+
+    it("should throw if Userfront API throws error", async () => {
+      const originalUser = { ...Userfront.user };
+      const originalTokens = {
+        idToken: Userfront.store.idToken,
+        accessToken: Userfront.store.accessToken,
+      };
+
+      const updates = { name: "Jane Doe" };
+
+      axios.put.mockImplementationOnce(() =>
+        Promise.reject(new Error("Bad Request"))
+      );
+
+      // Attempt update without object
+      expect(Userfront.user.update(updates)).rejects.toThrow("Bad Request");
+
+      // Should have made "update user" API request
+      const { userId } = jwt.decode(Userfront.store.accessToken);
+      expect(axios.put).toBeCalledWith({
+        url: `${apiUrl}tenants/${tenantId}/users/${userId}`,
+        headers: {
+          authorization: `Bearer ${originalTokens.accessToken}`,
+        },
+        payload: updates,
+      });
+
+      // Assert user was not modified
+      for (const prop of utils.defaultIdTokenProperties) {
+        expect(Userfront.user[prop]).toEqual(originalUser[prop]);
+      }
+
+      // Token refresh should not have been issued
+      expect(axios.get).not.toHaveBeenCalled();
+
+      // Assert tokens were not modified
+      expect(originalTokens.idToken).toEqual(Userfront.store.idToken);
+      expect(originalTokens.accessToken).toEqual(Userfront.store.accessToken);
     });
   });
 });

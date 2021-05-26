@@ -52,6 +52,9 @@ export default ({ store, afterUpdate }) => {
       if (!decodedAccessToken.userId) {
         throw new Error("API resource update error: Missing ID");
       }
+      if (!updates || !Object.keys(updates).length) {
+        throw new Error("Missing user properties to update");
+      }
 
       try {
         await axios.put({

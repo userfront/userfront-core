@@ -38,7 +38,6 @@ describe("User", () => {
     it("should set user's information based on ID token and return user object", () => {
       const parsedUser = {
         ...JSON.parse(JSON.stringify(utils.idTokenUserDefaults)),
-        ...JSON.parse(JSON.stringify(utils.idTokenUserDefaults.data)),
       };
 
       const ufUser = user({ store: Userfront.store });
@@ -47,6 +46,11 @@ describe("User", () => {
       for (const prop in utils.defaultIdTokenProperties) {
         expect(parsedUser[prop]).toEqual(ufUser[prop]);
       }
+
+      // Assert ufUser.data values were set correctly
+      for (const prop in parsedUser.data) {
+        expect(parsedUser.data[prop]).toEqual(ufUser.data[prop]);
+      }
     });
   });
 
@@ -54,7 +58,6 @@ describe("User", () => {
     it("should get user's information", () => {
       const parsedUser = {
         ...JSON.parse(JSON.stringify(utils.idTokenUserDefaults)),
-        ...JSON.parse(JSON.stringify(utils.idTokenUserDefaults.data)),
       };
 
       // ufUser has been updated via ID token in beforeAll
@@ -63,6 +66,11 @@ describe("User", () => {
       // ufUser values from ID token should match the defaults given
       for (const prop in utils.defaultIdTokenProperties) {
         expect(parsedUser[prop]).toEqual(ufUser[prop]);
+      }
+
+      // Assert ufUser.data values were set correctly
+      for (const prop in parsedUser.data) {
+        expect(parsedUser.data[prop]).toEqual(ufUser.data[prop]);
       }
     });
   });
@@ -103,7 +111,9 @@ describe("User", () => {
     it("should update user's information via API", async () => {
       const updates = {
         username: "john-doe-updated",
-        country: "Spain",
+        data: {
+          country: "Spain",
+        },
       };
 
       // Create mock tokens & refresh response
@@ -112,10 +122,7 @@ describe("User", () => {
         {
           ...utils.idTokenUserDefaults,
           ...utils.sharedTokenProperties.token,
-          username: updates.username,
-          data: {
-            country: updates.country,
-          },
+          ...updates,
         },
         utils.randomString()
       );
@@ -151,21 +158,16 @@ describe("User", () => {
         headers: {
           authorization: `Bearer ${originalTokens.accessToken}`,
         },
-        payload: {
-          username: updates.username,
-          data: {
-            country: updates.country,
-          },
-        },
+        payload: updates,
       });
 
       // Assert user was updated
       expect(Userfront.user.username).toEqual(updates.username);
-      expect(Userfront.user.country).toEqual(updates.country);
-      expect(Userfront.user.age).toBeUndefined;
-      expect(Userfront.user.color).toBeUndefined;
-      expect(Userfront.user.birthdate).toBeUndefined;
-      expect(Userfront.user.metadata).toBeUndefined;
+      expect(Userfront.user.data.country).toEqual(updates.data.country);
+      expect(Userfront.user.data.age).toBeUndefined;
+      expect(Userfront.user.data.color).toBeUndefined;
+      expect(Userfront.user.data.birthdate).toBeUndefined;
+      expect(Userfront.user.data.metadata).toBeUndefined;
 
       // Assert tokens were updated
       expect(originalTokens.idToken).not.toEqual(Userfront.store.idToken);

@@ -27,6 +27,7 @@ export default ({ store, afterUpdate }) => {
     "username",
     "name",
     "image",
+    "data",
     "confirmedAt",
     "createdAt",
     "updatedAt",
@@ -38,13 +39,6 @@ export default ({ store, afterUpdate }) => {
   ];
   for (const prop of idTokenProps) {
     user[prop] = decodedIdToken[prop];
-  }
-
-  // Unnest user data properties if present
-  if (decodedIdToken.data) {
-    for (const prop of Object.keys(decodedIdToken.data)) {
-      user[prop] = decodedIdToken.data[prop];
-    }
   }
 
   return {
@@ -59,37 +53,13 @@ export default ({ store, afterUpdate }) => {
         throw new Error("API resource update error: Missing ID");
       }
 
-      const payload = {
-        ...updates,
-      };
-
-      // Restructure data updates
-      if (updates.hasOwnProperty("data")) {
-        delete payload.data;
-        payload.data = {
-          data: updates.data,
-        };
-      }
-
-      // Restructure any properties outside of default ID token properties into data object
-      for (const prop in updates) {
-        if (!idTokenProps.includes(prop) && prop !== "data") {
-          if (!updates.hasOwnProperty("data")) {
-            payload.data = {};
-          }
-
-          payload.data[prop] = updates[prop];
-          delete payload[prop];
-        }
-      }
-
       try {
         await axios.put({
           url: `${apiUrl}tenants/${store.tenantId}/users/${decodedAccessToken.userId}`,
           headers: {
             authorization: `Bearer ${store.accessToken}`,
           },
-          payload,
+          payload: updates,
         });
       } catch (error) {
         throw new Error(error.message);

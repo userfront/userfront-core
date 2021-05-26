@@ -1,9 +1,9 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 import jwt from "jsonwebtoken";
+import { JwksClient } from "jwks-rsa";
 
 import { apiUrl, privateIPRegex } from "./constants.js";
-import apiResource from "./api-resource.js";
 import user from "./user.js";
 
 let initCallbacks = [];
@@ -76,6 +76,44 @@ function accessToken() {
 function idToken() {
   store.idToken = Cookies.get(store.idTokenName);
   return store.idToken;
+}
+
+/**
+ * Verify provided token was issued by Userfront API
+ * @param {String} token
+ * @returns {Promise<void>} The provided token has been verified if `verifyToken` resolves without error
+ */
+async function verifyToken(token) {
+  let publicKey;
+
+  try {
+    const decodedToken = jwt.decode(token, { complete: true });
+    if (!(decodedToken.header && decodedToken.header.kid)) {
+      return Promise.reject("Token kid not defined");
+    }
+
+    const client = new JwksClient({
+      jwksUri: `${apiUrl}tenants/${store.tenantId}/jwks/${store.mode}`,
+      requestHeaders: { origin: window.location.origin },
+    });
+
+    const key = await client.getSigningKey(decodedToken.header.kid);
+    publicKey = key.getPublicKey();
+  } catch (error) {
+    return Promise.reject(error);
+  }
+
+  if (!publicKey) {
+    return Promise.reject("Public key not found");
+  }
+
+  try {
+    jwt.verify(token, publicKey);
+  } catch (error) {
+    return Promise.reject("Token verification failed");
+  }
+
+  return Promise.resolve();
 }
 
 /**
@@ -444,22 +482,14 @@ function setUser() {
     throw new Error("Access token has not been set.");
   }
 
-  const decodedIdToken = jwt.decode(store.idToken);
-  const decodedAccessToken = jwt.decode(store.accessToken);
-
-  store.user = {
-    ...user({ idToken: decodedIdToken, accessToken: decodedAccessToken }),
-    ...apiResource({
-      store,
-      path: "/users",
-      id: decodedAccessToken.userId,
-      afterUpdate: refresh,
-    }),
-  };
+  store.user = user({
+    store,
+    afterUpdate: refresh,
+  });
 }
 
 async function refresh() {
-  const { data } = await axios.get({
+  const { data } = await axios.post({
     url: `${apiUrl}tenants/${store.tenantId}/refresh`,
     headers: {
       authorization: `Bearer ${store.accessToken}`,
@@ -523,4 +553,8 @@ export default {
   setCookie,
   signup,
   store,
+  get user() {
+    return store.user;
+  },
+  verifyToken,
 };

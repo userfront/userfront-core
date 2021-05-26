@@ -84,12 +84,15 @@ function idToken() {
  * @returns {Promise<void>} The provided token has been verified if `verifyToken` resolves without error
  */
 async function verifyToken(token) {
-  let publicKey;
+  if (!token) {
+    return Promise.reject(new Error("Missing token"));
+  }
 
+  let publicKey;
   try {
     const decodedToken = jwt.decode(token, { complete: true });
-    if (!(decodedToken.header && decodedToken.header.kid)) {
-      return Promise.reject("Token kid not defined");
+    if (!decodedToken.header || !decodedToken.header.kid) {
+      return Promise.reject(new Error("Token kid not defined"));
     }
 
     const client = new JwksClient({
@@ -104,13 +107,13 @@ async function verifyToken(token) {
   }
 
   if (!publicKey) {
-    return Promise.reject("Public key not found");
+    return Promise.reject(new Error("Public key not found"));
   }
 
   try {
     jwt.verify(token, publicKey);
   } catch (error) {
-    return Promise.reject("Token verification failed");
+    return Promise.reject(new Error("Token verification failed"));
   }
 
   return Promise.resolve();

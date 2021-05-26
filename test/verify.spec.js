@@ -23,7 +23,7 @@ jest.mock("jwks-rsa", () => {
 describe("verifyToken", () => {
   Userfront.setCookiesAndTokens = Userfront.__get__("setCookiesAndTokens");
 
-  beforeAll(() => {
+  beforeEach(() => {
     Userfront.init(tenantId);
 
     // Create and set access & ID tokens
@@ -106,6 +106,60 @@ describe("verifyToken", () => {
     expect(jwt.verify).toHaveBeenCalledWith(
       Userfront.store.accessToken,
       publicKey
+    );
+  });
+
+  it("should throw if no token provided", async () => {
+    expect(Userfront.verifyToken()).rejects.toThrow("Missing token");
+  });
+
+  it("should throw if token kid is not provided", async () => {
+    // Return decoded token without `kid` in header
+    jwt.decode.mockImplementationOnce(() => {
+      return {
+        header: {
+          alg: "RS256",
+          typ: "JWT",
+        },
+        payload: {},
+        signature: "mock-signature",
+      };
+    });
+
+    expect(Userfront.verifyToken(Userfront.store.accessToken)).rejects.toThrow(
+      "Token kid not defined"
+    );
+  });
+
+  it("should throw if public key is not found", async () => {
+    const getPublicKey = jest.fn(() => null);
+    const getSigningKey = jest.fn(() => {
+      return { getPublicKey };
+    });
+    JwksClient.mockImplementationOnce(() => {
+      return { getSigningKey };
+    });
+
+    expect(Userfront.verifyToken(Userfront.store.accessToken)).rejects.toThrow(
+      "Public key not found"
+    );
+  });
+
+  it("should throw if token verification fails", async () => {
+    const getPublicKey = jest.fn(() => publicKey);
+    const getSigningKey = jest.fn(() => {
+      return { getPublicKey };
+    });
+    JwksClient.mockImplementation(() => {
+      return { getSigningKey };
+    });
+
+    jwt.verify.mockImplementationOnce(() => {
+      throw new Error("JWT malformed");
+    });
+
+    expect(Userfront.verifyToken(Userfront.store.accessToken)).rejects.toThrow(
+      "Token verification failed"
     );
   });
 });

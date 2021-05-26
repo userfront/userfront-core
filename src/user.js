@@ -41,8 +41,10 @@ export default ({ store, afterUpdate }) => {
   }
 
   // Unnest user data properties if present
-  for (const prop of Object.keys(decodedIdToken.data)) {
-    user[prop] = decodedIdToken.data[prop];
+  if (decodedIdToken.data) {
+    for (const prop of Object.keys(decodedIdToken.data)) {
+      user[prop] = decodedIdToken.data[prop];
+    }
   }
 
   return {

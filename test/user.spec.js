@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import axios from "axios";
 
-import utils from "./utils";
+import utils from "./utils.js";
 import { apiUrl } from "../src/constants.js";
 import Userfront from "../src/index.js";
 import user from "../src/user.js";
@@ -10,28 +10,36 @@ jest.mock("axios");
 const tenantId = "abcdefgh";
 
 describe("User", () => {
-  // Make non-exported functions available for testing
+  // Expose non-exported functions
   Userfront.setCookiesAndTokens = Userfront.__get__("setCookiesAndTokens");
   Userfront.setUser = Userfront.__get__("setUser");
+
+  // Mock `Userfront.verifyToken` to prevent implementation
+  Userfront.__set__("verifyToken", () => jest.fn(() => Promise.resolve()));
+
+  // Mock `Userfront.refresh` to assert calls later
+  Userfront.__set__("refresh", jest.fn());
+  Userfront.refresh = Userfront.__get__("refresh");
 
   beforeAll(() => {
     Userfront.init(tenantId);
 
     // Create and set access & ID tokens
-    const accessToken = utils.createAccessToken();
-    const idToken = utils.createIdToken();
+    Userfront.store.accessToken = utils.createAccessToken();
+    Userfront.store.idToken = utils.createIdToken();
 
     Userfront.setCookiesAndTokens({
       access: {
-        value: accessToken,
+        value: Userfront.store.accessToken,
       },
       id: {
-        value: idToken,
+        value: Userfront.store.idToken,
       },
       refresh: {
         value: "",
       },
     });
+    Userfront.setUser();
   });
 
   describe("user constructor", () => {
@@ -76,17 +84,13 @@ describe("User", () => {
   });
 
   describe("user.update()", () => {
-    it("should call afterUpdate hook after updating", async () => {
+    it("should update user's information via API then call afterUpdate hook", async () => {
       const updates = {
-        name: "Jane Doe",
+        username: "john-doe-updated",
+        data: {
+          country: "Spain",
+        },
       };
-
-      // Manually assign user object and pass in spy in place of `Userfront.refresh()`
-      const refresh = jest.fn();
-      Userfront.store.user = user({
-        store: Userfront.store,
-        afterUpdate: refresh,
-      });
 
       // Update user via Userfront API
       await Userfront.user.update(updates);
@@ -102,82 +106,8 @@ describe("User", () => {
       });
 
       // Should have called `afterUpdate` function
-      expect(refresh).toHaveBeenCalledTimes(1);
-
-      // Revert Userfront.user without refresh spy
-      Userfront.setUser();
-    });
-
-    it("should update user's information via API", async () => {
-      const updates = {
-        username: "john-doe-updated",
-        data: {
-          country: "Spain",
-        },
-      };
-
-      // Create mock tokens & refresh response
-      const accessToken = utils.createAccessToken();
-      const idToken = jwt.sign(
-        {
-          ...utils.idTokenUserDefaults,
-          ...utils.sharedTokenProperties.token,
-          ...updates,
-        },
-        utils.randomString()
-      );
-      axios.get.mockImplementationOnce(() =>
-        Promise.resolve({
-          data: {
-            tokens: {
-              access: {
-                value: accessToken,
-              },
-              id: {
-                value: idToken,
-              },
-              refresh: {
-                value: "",
-              },
-            },
-          },
-        })
-      );
-      const originalTokens = {
-        idToken: Userfront.store.idToken,
-        accessToken: Userfront.store.accessToken,
-      };
-
-      // Update user via Userfront API
-      await Userfront.user.update(updates);
-
-      // Should have made "update user" API request
-      const { userId } = jwt.decode(Userfront.store.accessToken);
-      expect(axios.put).toBeCalledWith({
-        url: `${apiUrl}tenants/${tenantId}/users/${userId}`,
-        headers: {
-          authorization: `Bearer ${originalTokens.accessToken}`,
-        },
-        payload: updates,
-      });
-
-      // Assert user was updated
-      expect(Userfront.user.username).toEqual(updates.username);
-      expect(Userfront.user.data.country).toEqual(updates.data.country);
-      expect(Userfront.user.data.age).toBeUndefined;
-      expect(Userfront.user.data.color).toBeUndefined;
-      expect(Userfront.user.data.birthdate).toBeUndefined;
-      expect(Userfront.user.data.metadata).toBeUndefined;
-
-      // Token refresh should not have been issued
-      expect(axios.get).toHaveBeenCalled();
-      axios.get.mockClear();
-
-      // Assert tokens were updated
-      expect(originalTokens.idToken).not.toEqual(Userfront.store.idToken);
-      expect(originalTokens.accessToken).not.toEqual(
-        Userfront.store.accessToken
-      );
+      expect(Userfront.refresh).toHaveBeenCalledTimes(1);
+      Userfront.refresh.mockClear();
     });
 
     it("should throw if `updates` object not provided", async () => {
@@ -202,7 +132,8 @@ describe("User", () => {
       }
 
       // Token refresh should not have been issued
-      expect(axios.get).not.toHaveBeenCalled();
+      expect(Userfront.refresh).not.toHaveBeenCalled();
+      Userfront.refresh.mockClear();
 
       // Assert tokens were not modified
       expect(originalTokens.idToken).toEqual(Userfront.store.idToken);
@@ -241,7 +172,8 @@ describe("User", () => {
       }
 
       // Token refresh should not have been issued
-      expect(axios.get).not.toHaveBeenCalled();
+      expect(Userfront.refresh).not.toHaveBeenCalled();
+      Userfront.refresh.mockClear();
 
       // Assert tokens were not modified
       expect(originalTokens.idToken).toEqual(Userfront.store.idToken);

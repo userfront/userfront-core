@@ -1,15 +1,10 @@
 import Userfront from "../src/index.js";
 
-/**
- * Using Rewire, we can get an unexported function from our Userfront module:
- * const signupWithSSO = Userfront.__get__("signupWithSSO");
- *
- * We can also set a function like so:
- * const mockFn = jest.fn()
- * Userfront.__set__("signupWithSSO", mockFn);
- */
-
 const tenantId = "abcdefg";
+
+// Mock `setUser` - we don't need Userfront.store.user in this suite
+Userfront.__set__("setUser", jest.fn());
+Userfront.setUser = Userfront.__get__("setUser");
 Userfront.init(tenantId);
 
 describe("signupWithSSO", () => {

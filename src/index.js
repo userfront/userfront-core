@@ -201,6 +201,7 @@ async function signupWithPassword({ username, name, email, password }) {
 
   if (data.tokens) {
     setCookiesAndTokens(data.tokens);
+    setUser();
     redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/");
   } else {
     throw new Error("Please try again.");
@@ -269,6 +270,7 @@ async function loginWithPassword({
   });
   if (data.tokens) {
     setCookiesAndTokens(data.tokens);
+    setUser();
     redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/");
   } else {
     throw new Error("Please try again.");
@@ -294,6 +296,7 @@ async function loginWithLink(token, uuid) {
 
   if (data.tokens) {
     setCookiesAndTokens(data.tokens);
+    setUser();
     redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/");
   } else {
     throw new Error("Problem logging in.");
@@ -344,6 +347,7 @@ async function resetPassword({ uuid, token, password }) {
   });
   if (data.tokens) {
     setCookiesAndTokens(data.tokens);
+    setUser();
     redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/");
   } else {
     throw new Error(
@@ -469,18 +473,23 @@ function setCookiesAndTokens(tokens) {
   setCookie(tokens.id.value, tokens.id.cookieOptions, "id");
   setCookie(tokens.refresh.value, tokens.refresh.cookieOptions, "refresh");
   setTokensFromCookies();
-  setUser();
 }
 
 /**
  * Define user attributes & methods based on access & ID token.
  */
-function setUser() {
+async function setUser() {
   if (!store.idToken) {
     throw new Error("ID token has not been set.");
   }
   if (!store.accessToken) {
     throw new Error("Access token has not been set.");
+  }
+
+  try {
+    await verifyToken(store.idToken);
+  } catch (error) {
+    throw error;
   }
 
   store.user = user({
@@ -501,6 +510,7 @@ async function refresh() {
   }
 
   setCookiesAndTokens(res.data.tokens);
+  setUser();
 }
 
 /**

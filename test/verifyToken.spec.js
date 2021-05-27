@@ -2,7 +2,7 @@ import axios from "axios";
 import jwt from "jsonwebtoken";
 import { JwksClient } from "jwks-rsa";
 
-import utils from "./utils";
+import utils from "./utils.js";
 import Userfront from "../src/index.js";
 import { apiUrl } from "../src/constants.js";
 
@@ -10,7 +10,6 @@ import { apiUrl } from "../src/constants.js";
 const publicKey = "-----BEGIN PUBLIC KEY-----MFwwDQYJKovIhvcNAQEBBQADSwAwSAJBAMcUP/uWxcSaY40nmh6gmgCBxMQA5XD7YS2UOq+Vd8zKA7QjUUHY+besrZ3Dzol/BCrHne6npLjr4deX1IQw/VkCAwEAAQ==-----END PUBLIC KEY-----"
 const jwkId = "foo-bar-baz-qux";
 const tenantId = "abcdefg";
-Userfront.init(tenantId);
 
 jest.mock("axios");
 jest.mock("jwks-rsa", () => {
@@ -24,6 +23,7 @@ describe("verifyToken", () => {
   Userfront.setCookiesAndTokens = Userfront.__get__("setCookiesAndTokens");
 
   beforeEach(() => {
+    Userfront.__set__("setUser", jest.fn());
     Userfront.init(tenantId);
 
     // Create and set access & ID tokens

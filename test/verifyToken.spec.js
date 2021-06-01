@@ -15,7 +15,7 @@ jest.mock("jwks-rsa", () => {
 });
 
 // prettier-ignore
-const publicKey = "-----BEGIN PUBLIC KEY-----MFwwDQYJKovIhvcNAQEBBQADSwAwSAJBAMcUP/uWxcSaY40nmh6gmgCBxMQA5XD7YS2UOq+Vd8zKA7QjUUHY+besrZ3Dzol/BCrHne6npLjr4deX1IQw/VkCAwEAAQ==-----END PUBLIC KEY-----"
+const mockPublicKey = "mock-public-key"
 const jwkId = "foo-bar-baz-qux";
 const tenantId = "abcdefg";
 
@@ -76,7 +76,7 @@ describe("verifyToken", () => {
     // 1. const client = new JwksClient()
     // 2. const key = client.getSigningKey()
     // 3. const publicKey = key.getPublicKey()
-    const getPublicKey = jest.fn(() => publicKey);
+    const getPublicKey = jest.fn(() => mockPublicKey);
     const getSigningKey = jest.fn(() => {
       return { getPublicKey };
     });
@@ -99,13 +99,13 @@ describe("verifyToken", () => {
     expect(getSigningKey).toHaveBeenCalledTimes(1);
     expect(getSigningKey).toHaveBeenCalledWith(jwkId);
     expect(getPublicKey).toHaveBeenCalledTimes(1);
-    expect(getPublicKey).toHaveReturnedWith(publicKey);
+    expect(getPublicKey).toHaveReturnedWith(mockPublicKey);
 
     // Assert verification
     expect(jwt.verify).toHaveBeenCalledTimes(1);
     expect(jwt.verify).toHaveBeenCalledWith(
       Userfront.store.accessToken,
-      publicKey
+      mockPublicKey
     );
   });
 
@@ -146,7 +146,7 @@ describe("verifyToken", () => {
   });
 
   it("should throw if token verification fails", async () => {
-    const getPublicKey = jest.fn(() => publicKey);
+    const getPublicKey = jest.fn(() => mockPublicKey);
     const getSigningKey = jest.fn(() => {
       return { getPublicKey };
     });

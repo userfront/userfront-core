@@ -4,7 +4,9 @@ import axios from "axios";
 import utils from "./utils.js";
 import { apiUrl } from "../src/constants.js";
 import Userfront from "../src/index.js";
-import user from "../src/user.js";
+import userConstructor from "../src/user.js";
+
+const { user } = Userfront;
 
 jest.mock("axios");
 const tenantId = "abcdefgh";
@@ -48,9 +50,9 @@ describe("User", () => {
         ...JSON.parse(JSON.stringify(utils.idTokenUserDefaults)),
       };
 
-      const ufUser = user({ store: Userfront.store });
+      const ufUser = userConstructor({ store: Userfront.store });
 
-      // Assert ufUser values were set correctly in user() constructor
+      // Assert ufUser values were set correctly in user constructor
       for (const prop in utils.defaultIdTokenProperties) {
         expect(parsedUser[prop]).toEqual(ufUser[prop]);
       }
@@ -69,7 +71,7 @@ describe("User", () => {
       };
 
       // ufUser has been updated via ID token in beforeAll
-      const ufUser = Userfront.user;
+      const ufUser = user;
 
       // ufUser values from ID token should match the defaults given
       for (const prop in utils.defaultIdTokenProperties) {
@@ -93,7 +95,7 @@ describe("User", () => {
       };
 
       // Update user via Userfront API
-      await Userfront.user.update(updates);
+      await user.update(updates);
 
       // Should have made "update user" API request
       const { userId } = jwt.decode(Userfront.store.accessToken);
@@ -111,24 +113,24 @@ describe("User", () => {
     });
 
     it("should throw if `updates` object not provided", async () => {
-      const originalUser = { ...Userfront.user };
+      const originalUser = { ...user };
       const originalTokens = {
         idToken: Userfront.store.idToken,
         accessToken: Userfront.store.accessToken,
       };
 
       // Attempt update without object
-      expect(Userfront.user.update()).rejects.toThrow(
+      expect(user.update()).rejects.toThrow(
         "Missing user properties to update"
       );
       // Attempt update with empty object
-      expect(Userfront.user.update({})).rejects.toThrow(
+      expect(user.update({})).rejects.toThrow(
         "Missing user properties to update"
       );
 
       // Assert user was not modified
       for (const prop of utils.defaultIdTokenProperties) {
-        expect(Userfront.user[prop]).toEqual(originalUser[prop]);
+        expect(user[prop]).toEqual(originalUser[prop]);
       }
 
       // Token refresh should not have been issued
@@ -141,7 +143,7 @@ describe("User", () => {
     });
 
     it("should throw if Userfront API throws error", async () => {
-      const originalUser = { ...Userfront.user };
+      const originalUser = { ...user };
       const originalTokens = {
         idToken: Userfront.store.idToken,
         accessToken: Userfront.store.accessToken,
@@ -154,7 +156,7 @@ describe("User", () => {
       );
 
       // Attempt update without object
-      expect(Userfront.user.update(updates)).rejects.toThrow("Bad Request");
+      expect(user.update(updates)).rejects.toThrow("Bad Request");
 
       // Should have made "update user" API request
       const { userId } = jwt.decode(Userfront.store.accessToken);
@@ -168,7 +170,7 @@ describe("User", () => {
 
       // Assert user was not modified
       for (const prop of utils.defaultIdTokenProperties) {
-        expect(Userfront.user[prop]).toEqual(originalUser[prop]);
+        expect(user[prop]).toEqual(originalUser[prop]);
       }
 
       // Token refresh should not have been issued

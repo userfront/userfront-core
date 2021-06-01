@@ -14,7 +14,7 @@ export default ({ store, afterUpdate }) => {
     throw new Error("User: Missing ID token");
   }
   if (!store.accessToken) {
-    throw new Error("User: Missing ID token");
+    throw new Error("User: Missing access token");
   }
 
   const user = {};

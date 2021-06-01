@@ -3,44 +3,38 @@ import axios from "axios";
 
 import utils from "./utils.js";
 import { apiUrl } from "../src/constants.js";
-import Userfront from "../src/index.js";
 import createUser from "../src/user.js";
 
-jest.mock("axios");
+import Userfront from "../src/index.js";
 const { user } = Userfront;
+
+jest.mock("axios");
 const tenantId = "abcdefgh";
 
 describe("User", () => {
-  // Expose non-exported functions
-  Userfront.setCookiesAndTokens = Userfront.__get__("setCookiesAndTokens");
-  Userfront.setUser = Userfront.__get__("setUser");
-
-  // Mock `Userfront.verifyToken` to prevent implementation
-  Userfront.__set__("verifyToken", () => jest.fn(() => Promise.resolve()));
-
-  // Mock `Userfront.refresh` to assert calls later
-  Userfront.__set__("refresh", jest.fn());
-  Userfront.refresh = Userfront.__get__("refresh");
-
   beforeAll(async () => {
+    // Set the factory access and ID tokens as cookies
+    Userfront.store.tenantId = tenantId;
+    Userfront.setCookie(
+      utils.createAccessToken(),
+      { secure: "true", sameSite: "Lax" },
+      "access"
+    );
+    Userfront.setCookie(
+      utils.createIdToken(),
+      { secure: "true", sameSite: "Lax" },
+      "id"
+    );
+
+    // Mock `Userfront.verifyToken` to prevent implementation
+    Userfront.__set__("verifyToken", () => jest.fn(() => Promise.resolve()));
+
+    // Mock `Userfront.refresh` to assert calls later
+    Userfront.__set__("refresh", jest.fn());
+    Userfront.refresh = Userfront.__get__("refresh");
+
+    // Initialize the library
     Userfront.init(tenantId);
-
-    // Create and set access & ID tokens
-    Userfront.store.accessToken = utils.createAccessToken();
-    Userfront.store.idToken = utils.createIdToken();
-
-    Userfront.setCookiesAndTokens({
-      access: {
-        value: Userfront.store.accessToken,
-      },
-      id: {
-        value: Userfront.store.idToken,
-      },
-      refresh: {
-        value: "",
-      },
-    });
-    await Userfront.setUser();
     return Promise.resolve();
   });
 

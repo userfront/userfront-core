@@ -11,7 +11,7 @@ const assignMock = jest.fn();
 window.location = {
   assign: assignMock,
   origin: "https://example.com",
-  pathname: "/user/signup",
+  href: "https://example.com/login?redirect=%2Fdashboard",
 };
 
 const tenantId = "abcdefg";
@@ -43,7 +43,12 @@ describe("SSO", () => {
       Userfront.signup({ method: provider });
       expect(signupWithSSOSpy).toHaveBeenCalledWith(provider);
       expect(assignMock).toHaveBeenCalledWith(
-        `https://api.userfront.com/v0/auth/${provider}/login?tenant_id=${tenantId}&origin=${window.location.origin}&pathname=${window.location.pathname}`
+        `https://api.userfront.com/v0/auth/${provider}/login?` +
+          `tenant_id=${tenantId}&` +
+          `origin=${window.location.origin}&` +
+          `redirect=${encodeURIComponent(
+            getQueryAttr(window.location.href, "redirect")
+          )}`
       );
     });
 
@@ -84,7 +89,12 @@ describe("SSO", () => {
       Userfront.login({ method: provider });
       expect(loginWithSSOSpy).toHaveBeenCalledWith(provider);
       expect(assignMock).toHaveBeenCalledWith(
-        `https://api.userfront.com/v0/auth/${provider}/login?tenant_id=${tenantId}&origin=${window.location.origin}&pathname=${window.location.pathname}`
+        `https://api.userfront.com/v0/auth/${provider}/login?` +
+          `tenant_id=${tenantId}&` +
+          `origin=${window.location.origin}&` +
+          `redirect=${encodeURIComponent(
+            getQueryAttr(window.location.href, "redirect")
+          )}`
       );
     });
 
@@ -105,3 +115,10 @@ describe("SSO", () => {
     });
   });
 });
+
+function getQueryAttr(url, attrName) {
+  if (!url || url.indexOf(`${attrName}=`) < 0) {
+    return;
+  }
+  return decodeURIComponent(url.split(`${attrName}=`)[1].split("&")[0]);
+}

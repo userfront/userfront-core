@@ -136,7 +136,15 @@ function getQueryAttr(attrName) {
 function getProviderLink(provider) {
   if (!provider) throw new Error("Missing provider");
   if (!store.tenantId) throw new Error("Missing tenant ID");
-  return `https://api.userfront.com/v0/auth/${provider}/login?tenant_id=${store.tenantId}&origin=${window.location.origin}&pathname=${window.location.pathname}`;
+
+  let url = `https://api.userfront.com/v0/auth/${provider}/login?tenant_id=${store.tenantId}&origin=${window.location.origin}`;
+
+  const redirect = getQueryAttr("redirect");
+  if (redirect) {
+    url += `&redirect=${encodeURIComponent(redirect)}`;
+  }
+
+  return url;
 }
 
 /**

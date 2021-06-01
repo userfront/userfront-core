@@ -23,7 +23,7 @@ describe("User", () => {
   Userfront.__set__("refresh", jest.fn());
   Userfront.refresh = Userfront.__get__("refresh");
 
-  beforeAll(() => {
+  beforeAll(async () => {
     Userfront.init(tenantId);
 
     // Create and set access & ID tokens
@@ -41,7 +41,10 @@ describe("User", () => {
         value: "",
       },
     });
-    Userfront.setUser();
+    console.log("set it", Userfront.setUser);
+    await Userfront.setUser();
+    console.log({ user });
+    return Promise.resolve();
   });
 
   describe("user constructor", () => {

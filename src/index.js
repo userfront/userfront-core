@@ -491,7 +491,7 @@ async function setUser() {
   } catch (error) {
     throw error;
   }
-
+  console.log("Setting user", store);
   store.user = user({
     store,
     afterUpdate: refresh,

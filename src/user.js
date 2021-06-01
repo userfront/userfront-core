@@ -39,7 +39,6 @@ export default ({ store, afterUpdate }) => {
   for (const prop of idTokenProps) {
     user[prop] = decodedIdToken[prop];
   }
-
   return {
     ...user,
     /**

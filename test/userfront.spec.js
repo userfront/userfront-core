@@ -1,10 +1,10 @@
 import Userfront from "../src/index.js";
 
-const tenantId = "abcdefg";
-
 // Mock `setUser` - we don't need Userfront.store.user in this suite
 Userfront.__set__("setUser", jest.fn());
 Userfront.setUser = Userfront.__get__("setUser");
+
+const tenantId = "abcdefg";
 Userfront.init(tenantId);
 
 describe("signupWithSSO", () => {

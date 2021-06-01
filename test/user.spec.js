@@ -4,11 +4,10 @@ import axios from "axios";
 import utils from "./utils.js";
 import { apiUrl } from "../src/constants.js";
 import Userfront from "../src/index.js";
-import userConstructor from "../src/user.js";
-
-const { user } = Userfront;
+import createUser from "../src/user.js";
 
 jest.mock("axios");
+const { user } = Userfront;
 const tenantId = "abcdefgh";
 
 describe("User", () => {
@@ -41,9 +40,7 @@ describe("User", () => {
         value: "",
       },
     });
-    console.log("set it", Userfront.setUser);
     await Userfront.setUser();
-    console.log({ user });
     return Promise.resolve();
   });
 
@@ -53,7 +50,7 @@ describe("User", () => {
         ...JSON.parse(JSON.stringify(utils.idTokenUserDefaults)),
       };
 
-      const ufUser = userConstructor({ store: Userfront.store });
+      const ufUser = createUser({ store: Userfront.store });
 
       // Assert ufUser values were set correctly in user constructor
       for (const prop in utils.defaultIdTokenProperties) {

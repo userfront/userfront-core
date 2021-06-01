@@ -6,11 +6,6 @@ import utils from "./utils.js";
 import Userfront from "../src/index.js";
 import { apiUrl } from "../src/constants.js";
 
-// prettier-ignore
-const publicKey = "-----BEGIN PUBLIC KEY-----MFwwDQYJKovIhvcNAQEBBQADSwAwSAJBAMcUP/uWxcSaY40nmh6gmgCBxMQA5XD7YS2UOq+Vd8zKA7QjUUHY+besrZ3Dzol/BCrHne6npLjr4deX1IQw/VkCAwEAAQ==-----END PUBLIC KEY-----"
-const jwkId = "foo-bar-baz-qux";
-const tenantId = "abcdefg";
-
 jest.mock("axios");
 jest.mock("jwks-rsa", () => {
   return {
@@ -18,6 +13,11 @@ jest.mock("jwks-rsa", () => {
     JwksClient: jest.fn(),
   };
 });
+
+// prettier-ignore
+const publicKey = "-----BEGIN PUBLIC KEY-----MFwwDQYJKovIhvcNAQEBBQADSwAwSAJBAMcUP/uWxcSaY40nmh6gmgCBxMQA5XD7YS2UOq+Vd8zKA7QjUUHY+besrZ3Dzol/BCrHne6npLjr4deX1IQw/VkCAwEAAQ==-----END PUBLIC KEY-----"
+const jwkId = "foo-bar-baz-qux";
+const tenantId = "abcdefg";
 
 describe("verifyToken", () => {
   Userfront.setCookiesAndTokens = Userfront.__get__("setCookiesAndTokens");

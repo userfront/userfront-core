@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import { JwksClient } from "jwks-rsa";
 
 import { apiUrl, privateIPRegex } from "./constants.js";
-import user from "./user.js";
+import createUser from "./user.js";
 
 let initCallbacks = [];
 
@@ -491,11 +491,14 @@ async function setUser() {
   } catch (error) {
     throw error;
   }
-  console.log("Setting user", store);
-  store.user = user({
-    store,
-    afterUpdate: refresh,
-  });
+
+  Object.assign(
+    store.user,
+    createUser({
+      store,
+      afterUpdate: refresh,
+    })
+  );
 }
 
 async function refresh() {

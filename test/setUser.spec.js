@@ -1,6 +1,6 @@
 import utils from "./utils.js";
 import Userfront from "../src/index.js";
-import user from "../src/user.js";
+import createUser from "../src/user.js";
 
 // Mock user factory to skip implementation and return object with mock update method
 jest.mock("../src/user.js", () => {
@@ -19,6 +19,7 @@ Userfront.setUser = Userfront.__get__("setUser");
 Userfront.__set__("verifyToken", jest.fn());
 Userfront.verifyToken = Userfront.__get__("verifyToken");
 
+const { user } = Userfront;
 const tenantId = "abcdefg";
 
 describe("setUser", () => {
@@ -38,21 +39,21 @@ describe("setUser", () => {
   });
 
   it("should set user after verifying ID token", async () => {
-    Userfront.store.user = {};
+    Object.assign(Userfront.store.user, {});
 
     await Userfront.setUser();
 
     expect(Userfront.verifyToken).toHaveBeenCalledTimes(1);
     expect(Userfront.verifyToken).toHaveBeenCalledWith(Userfront.store.idToken);
 
-    expect(user).toHaveBeenCalledTimes(1);
-    expect(user).toHaveBeenCalledWith({
+    expect(createUser).toHaveBeenCalledTimes(1);
+    expect(createUser).toHaveBeenCalledWith({
       store: Userfront.store,
       afterUpdate: Userfront.refresh,
     });
 
     // Should have assigned mocked user object to Userfront.store.user
-    expect(Userfront.user).toBeDefined;
-    expect(Userfront.user).toHaveProperty("mockUpdate");
+    expect(user).toBeDefined;
+    expect(user).toHaveProperty("mockUpdate");
   });
 });

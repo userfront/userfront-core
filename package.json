@@ -7,11 +7,11 @@
   "module": "build/userfront-core.module.js",
   "unpkg": "build/userfront-core.umd.js",
   "scripts": {
+    "test": "jest --watch",
     "build": "npm version patch && microbundle",
-    "build:beta": "npm version prerelease --preid=beta && microbundle",
-    "pub:beta": "npm publish --tag beta",
     "pub": "npm publish",
-    "test": "jest --watch"
+    "build:beta": "npm version prerelease --preid=beta && microbundle",
+    "pub:beta": "npm publish --tag beta"
   },
   "repository": {
     "type": "git",

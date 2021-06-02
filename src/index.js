@@ -2,8 +2,9 @@ import axios from "axios";
 import Cookies from "js-cookie";
 // import jwt from "jsonwebtoken";
 
-import constants from "./constants";
+import constants from "./constants.js";
 const { apiUrl, privateIPRegex } = constants;
+import { addIframe } from "./iframe.js";
 
 let initCallbacks = [];
 
@@ -34,6 +35,7 @@ function init(tenantId) {
   store.accessTokenName = `access.${tenantId}`;
   store.idTokenName = `id.${tenantId}`;
   store.refreshTokenName = `refresh.${tenantId}`;
+  addIframe();
   setTokensFromCookies();
   try {
     if (initCallbacks.length > 0) {

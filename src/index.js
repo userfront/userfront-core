@@ -4,7 +4,7 @@ import Cookies from "js-cookie";
 
 import constants from "./constants.js";
 const { apiUrl, privateIPRegex } = constants;
-import { addIframe } from "./iframe.js";
+import { setIframe } from "./iframe.js";
 
 let initCallbacks = [];
 
@@ -35,7 +35,7 @@ function init(tenantId) {
   store.accessTokenName = `access.${tenantId}`;
   store.idTokenName = `id.${tenantId}`;
   store.refreshTokenName = `refresh.${tenantId}`;
-  addIframe();
+  setIframe();
   setTokensFromCookies();
   try {
     if (initCallbacks.length > 0) {

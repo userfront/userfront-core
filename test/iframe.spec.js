@@ -3,8 +3,7 @@ import Userfront from "../src/index.js";
 
 const tenantId = "abcdefg";
 
-describe("Refresh iframe", () => {
-  beforeAll(() => {});
+describe("iframe tests", () => {
   afterEach(() => {
     utils.resetStore(Userfront);
   });

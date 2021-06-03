@@ -1,23 +1,31 @@
 const frameUrl = "https://auth.userfront.net";
 const frameId = "uf-auth-frame";
 
+let iframe;
+
 /**
  * Add the auth iframe to the document body, if the iframe
  * has not been added already.
  */
-export function addIframe() {
+export function setIframe() {
   try {
-    const existing = document.getElementById(frameId);
-    if (existing) return;
-    const newEl = document.createElement("iframe");
-    newEl.src = frameUrl;
-    newEl.id = frameId;
-    newEl.style.width = "0px";
-    newEl.style.height = "0px";
-    newEl.style.display = "none";
-    document.body.appendChild(newEl);
+    if (iframe) return;
+    iframe = document.createElement("iframe");
+    iframe.src = frameUrl;
+    iframe.id = frameId;
+    iframe.style.width = "0px";
+    iframe.style.height = "0px";
+    iframe.style.display = "none";
+    document.body.appendChild(iframe);
     addIframeMessageListener();
   } catch (error) {}
+}
+
+/**
+ * Return the iframe element
+ */
+export function getIframe() {
+  return iframe;
 }
 
 /**
@@ -27,13 +35,13 @@ export function addIframe() {
 function addIframeMessageListener() {
   try {
     window.addEventListener("message", (e) => {
-      console.log(e);
+      console.log("received", e);
       if (e.origin !== frameUrl) return;
-      console.log("origins match");
     });
   } catch (error) {}
 }
 
 export default {
-  addIframe,
+  setIframe,
+  getIframe,
 };

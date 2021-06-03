@@ -322,7 +322,13 @@ export async function resetPassword({ uuid, token, password }) {
  * tenant's login redirection path (path after login).
  */
 export async function redirectIfLoggedIn() {
-  if (!store.accessToken) return removeAllCookies();
+  if (!store.accessToken) {
+    return removeAllCookies();
+  }
+  if (getQueryAttr("redirect")) {
+    return redirectToPath(getQueryAttr("redirect"));
+  }
+
   try {
     const { data } = await axios.get(`${apiUrl}self`, {
       headers: {
@@ -351,7 +357,7 @@ function redirectToPath(pathOrUrl) {
   el.href = pathOrUrl;
   let path = `${el.pathname}${el.hash}${el.search}`;
   if (el.pathname !== window.location.pathname) {
-    window.location.href = path;
+    window.location.assign(path);
   }
 }
 

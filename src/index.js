@@ -12,16 +12,16 @@ let initCallbacks = [];
  * Determine whether a hostname is in test mode.
  * @param {String} hn
  */
-const isTestHostname = (hn) => {
+export function isTestHostname(hn) {
   try {
     const hostname = hn || window.location.hostname;
     return !!(hostname.match(/localhost/g) || hostname.match(privateIPRegex));
   } catch (err) {
     return true;
   }
-};
+}
 
-const store = {
+export const store = {
   mode: isTestHostname() ? "test" : "live",
 };
 
@@ -29,7 +29,7 @@ const store = {
  * Initialize the Userfront library.
  * @param {String} tenantId
  */
-function init(tenantId) {
+export function init(tenantId) {
   if (!tenantId) return console.warn("Userfront initialized without tenant ID");
   store.tenantId = tenantId;
   store.accessTokenName = `access.${tenantId}`;
@@ -52,7 +52,7 @@ function init(tenantId) {
  * Add a callback function to be called upon Userfront.init()
  * @param {Function} cb
  */
-function addInitCallback(cb) {
+export function addInitCallback(cb) {
   if (!cb || typeof cb !== "function") return;
   initCallbacks.push(cb);
 }
@@ -60,7 +60,7 @@ function addInitCallback(cb) {
 /**
  * Set and then return the access token
  */
-function accessToken() {
+export function accessToken() {
   store.accessToken = Cookies.get(store.accessTokenName);
   return store.accessToken;
 }
@@ -68,7 +68,7 @@ function accessToken() {
 /**
  * Set and then return the ID token
  */
-function idToken() {
+export function idToken() {
   store.idToken = Cookies.get(store.idTokenName);
   return store.idToken;
 }
@@ -77,7 +77,7 @@ function idToken() {
  * Get the value of a query attribute, e.g. ?attr=value
  * @param {String} attrName
  */
-function getQueryAttr(attrName) {
+export function getQueryAttr(attrName) {
   if (
     !window.location.href ||
     window.location.href.indexOf(`${attrName}=`) < 0
@@ -106,7 +106,7 @@ function getProviderLink(provider) {
 /**
  * Define the mode of operation (live or test)
  */
-async function setMode() {
+export async function setMode() {
   try {
     const { data } = await axios.get(`${apiUrl}tenants/${store.tenantId}/mode`);
     store.mode = data.mode || "test";
@@ -120,7 +120,7 @@ async function setMode() {
  * methods, depending on the "method" parameter passed in.
  * @param {Object} options
  */
-async function signup({ method, username, name, email, password }) {
+export async function signup({ method, username, name, email, password }) {
   if (!method) {
     throw new Error('Userfront.signup called without "method" property');
   }
@@ -176,7 +176,7 @@ async function signupWithPassword({ username, name, email, password }) {
  * methods, depending on the "method" parameter passed in.
  * @param {Object} options
  */
-async function login({
+export async function login({
   method,
   email,
   username,
@@ -268,7 +268,7 @@ async function loginWithLink(token, uuid) {
  * Send a login link to the provided email.
  * @param {String} email
  */
-async function sendLoginLink(email) {
+export async function sendLoginLink(email) {
   try {
     const { data } = await axios.post(`${apiUrl}auth/link`, {
       email,
@@ -284,7 +284,7 @@ async function sendLoginLink(email) {
  * Send a password reset link to the provided email.
  * @param {String} email
  */
-async function sendResetLink(email) {
+export async function sendResetLink(email) {
   try {
     const { data } = await axios.post(`${apiUrl}auth/reset/link`, {
       email,
@@ -296,7 +296,7 @@ async function sendResetLink(email) {
   }
 }
 
-async function resetPassword({ uuid, token, password }) {
+export async function resetPassword({ uuid, token, password }) {
   if (!token) token = getQueryAttr("token");
   if (!uuid) uuid = getQueryAttr("uuid");
   if (!token || !uuid) throw new Error("Missing token or uuid");
@@ -321,7 +321,7 @@ async function resetPassword({ uuid, token, password }) {
  * If the access token is valid, redirect the browser to the
  * tenant's login redirection path (path after login).
  */
-async function redirectIfLoggedIn() {
+export async function redirectIfLoggedIn() {
   if (!store.accessToken) return removeAllCookies();
   try {
     const { data } = await axios.get(`${apiUrl}self`, {
@@ -358,7 +358,7 @@ function redirectToPath(pathOrUrl) {
 /**
  * Log a user out and redirect to the logout path.
  */
-async function logout() {
+export async function logout() {
   if (!store.accessToken) return removeAllCookies();
   try {
     const { data } = await axios.get(`${apiUrl}auth/logout`, {
@@ -379,7 +379,7 @@ async function logout() {
  * @param {Object} options
  * @param {String} type
  */
-function setCookie(value, options, type) {
+export function setCookie(value, options, type) {
   const cookieName = `${type}.${store.tenantId}`;
   options = options || {
     secure: store.mode === "live",
@@ -433,6 +433,15 @@ function setCookiesAndTokens(tokens) {
   setCookie(tokens.id.value, tokens.id.cookieOptions, "id");
   setCookie(tokens.refresh.value, tokens.refresh.cookieOptions, "refresh");
   setTokensFromCookies();
+}
+
+/**
+ * Receive an event object and use it to call setCookiesAndTokens
+ * @param {Object} e - iframe event sent via postMessage to parent window
+ */
+function setCookiesAndTokensFromIframe(e) {
+  const { tokens } = e.data;
+  setCookiesAndTokens(tokens);
 }
 
 /**

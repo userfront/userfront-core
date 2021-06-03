@@ -1,8 +1,8 @@
 import utils from "./config/utils.js";
 import Userfront from "../src/index.js";
 
-import { getIframe } from "../src/iframe.js";
-import { refresh } from "../src/refresh.js";
+import Iframe, { getIframe } from "../src/iframe.js";
+import Refresh, { refresh } from "../src/refresh.js";
 
 const tenantId = "abcdefg";
 
@@ -17,28 +17,44 @@ describe("refresh method", () => {
     utils.resetStore(Userfront);
   });
 
-  it("should send options into iframe to refresh and update based on response", async () => {
-    window.postMessage = jest.fn();
+  it("should send correct options into iframe", async () => {
+    // Initialize the library
     Userfront.init(tenantId);
+
+    // Mock the iframe response to input
     const iframe = getIframe();
     let resolver;
     const promise = new Promise((resolve) => {
       resolver = resolve;
     });
     iframe.contentWindow.addEventListener("message", async (e) => {
-      await window.postMessage({ hi: "hello" }, "*");
       resolver(e.data);
     });
 
-    // Refresh
+    // Call refresh()
     await refresh();
 
     // Should have sent correct info into the iframe
     await expect(promise).resolves.toEqual({ type: "refresh" });
-    expect(window.postMessage).toHaveBeenCalledTimes(1);
-    expect(window.postMessage).toHaveBeenCalledWith({}, "*");
-    expect(iframe).toBeTruthy();
-    expect(iframe.src).toMatch(/^https:\/\/auth.userfront.net/);
-    expect(iframe.style.display).toEqual("none");
+  });
+
+  it("should set tokens correctly based on iframe response", async () => {
+    // Initialize the library
+    Userfront.init(tenantId);
+
+    // Mock fire an iframe refresh response
+    const event = {
+      data: {
+        type: "refresh",
+        status: 200,
+        body: {},
+      },
+      origin: "https://auth.userfront.net",
+    };
+    Iframe.triageEvent = Iframe.__get__("triageEvent");
+    Iframe.triageEvent(event);
+
+    // Assert that the tokens and cookies are properly set
+    expect(setCookie).toHaveBeenCalledWith();
   });
 });

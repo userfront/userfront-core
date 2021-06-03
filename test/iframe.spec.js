@@ -35,5 +35,7 @@ describe("iframe tests", () => {
       // will only run if the test has failed.
       expect(error).toBeFalsey();
     }
+    // Expect should not have been called above
+    expect.assertions(0);
   });
 });

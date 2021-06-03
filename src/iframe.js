@@ -29,15 +29,35 @@ export function getIframe() {
 }
 
 /**
+ * Separated this call out from addIframeMessageListener
+ * in order to make it testable.
+ *
+ * @param {*} e - iframe event
+ */
+function triageEvent(e) {
+  if (!e || e.origin !== frameUrl || e.data || !e.data.type) return;
+  switch (e.data.type) {
+    case "exchange":
+      console.log("exchange");
+      break;
+    case "refresh":
+      console.log("refresh");
+      break;
+    case "logout":
+      console.log("logout");
+      break;
+    default:
+      return;
+  }
+}
+
+/**
  * Add an event listener to the window that will accept messages
  * from the iframe.
  */
 function addIframeMessageListener() {
   try {
-    window.addEventListener("message", (e) => {
-      console.log("received", e);
-      if (e.origin !== frameUrl) return;
-    });
+    window.addEventListener("message", triageEvent);
   } catch (error) {}
 }
 

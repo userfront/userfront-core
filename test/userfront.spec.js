@@ -1,8 +1,11 @@
 import axios from "axios";
 
 import Userfront from "../src/index.js";
-import constants from "../src/constants.js";
-const { apiUrl } = constants;
+import Signon from "../src/signon.js";
+
+import { apiUrl } from "../src/constants.js";
+import Cookies, { setCookie } from "../src/cookies.js";
+import { store } from "../src/store.js";
 
 /**
  * Using Rewire, we can get an unexported function from our module:
@@ -62,34 +65,34 @@ describe("signupWithSSO", () => {
 
   beforeAll(() => {
     // Expose non-exported function
-    Userfront.signupWithSSO = Userfront.__get__("signupWithSSO");
+    Signon.signupWithSSO = Signon.__get__("signupWithSSO");
 
     // Mock getProviderLink
-    Userfront.__set__(
+    Signon.__set__(
       "getProviderLink",
       jest.fn(() => loginUrl)
     );
-    Userfront.getProviderLink = Userfront.__get__("getProviderLink");
+    Signon.getProviderLink = Signon.__get__("getProviderLink");
   });
 
   afterAll(() => {
     // Revert getProviderLink
-    Userfront.__ResetDependency__("getProviderLink");
-    Userfront.getProviderLink = Userfront.__get__("getProviderLink");
+    Signon.__ResetDependency__("getProviderLink");
+    Signon.getProviderLink = Signon.__get__("getProviderLink");
     window.location.assign.mockClear();
   });
 
   it("should throw if provider is missing", () => {
-    expect(() => Userfront.signupWithSSO()).toThrow("Missing provider");
-    expect(Userfront.getProviderLink).not.toHaveBeenCalled();
+    expect(() => Signon.signupWithSSO()).toThrow("Missing provider");
+    expect(Signon.getProviderLink).not.toHaveBeenCalled();
   });
 
   it("should get provider link and redirect", () => {
-    Userfront.signupWithSSO(provider);
+    Signon.signupWithSSO(provider);
 
     // Assert getProviderLink was called and user is redirected
-    expect(Userfront.getProviderLink).toHaveBeenCalledTimes(1);
-    expect(Userfront.getProviderLink).toHaveBeenCalledWith(provider);
+    expect(Signon.getProviderLink).toHaveBeenCalledTimes(1);
+    expect(Signon.getProviderLink).toHaveBeenCalledWith(provider);
     expect(window.location.assign).toHaveBeenCalledTimes(1);
     expect(window.location.assign).toHaveBeenCalledWith(loginUrl);
   });
@@ -101,34 +104,34 @@ describe("loginWithSSO", () => {
 
   beforeAll(() => {
     // Expose non-exported function
-    Userfront.loginWithSSO = Userfront.__get__("loginWithSSO");
+    Signon.loginWithSSO = Signon.__get__("loginWithSSO");
 
     // Mock getProviderLink
-    Userfront.__set__(
+    Signon.__set__(
       "getProviderLink",
       jest.fn(() => loginUrl)
     );
-    Userfront.getProviderLink = Userfront.__get__("getProviderLink");
+    Signon.getProviderLink = Signon.__get__("getProviderLink");
   });
 
   afterAll(() => {
     // Revert getProviderLink
-    Userfront.__ResetDependency__("getProviderLink");
-    Userfront.getProviderLink = Userfront.__get__("getProviderLink");
+    Signon.__ResetDependency__("getProviderLink");
+    Signon.getProviderLink = Signon.__get__("getProviderLink");
     window.location.assign.mockClear();
   });
 
   it("should throw if provider is missing", () => {
-    expect(() => Userfront.loginWithSSO()).toThrow("Missing provider");
-    expect(Userfront.getProviderLink).not.toHaveBeenCalled();
+    expect(() => Signon.loginWithSSO()).toThrow("Missing provider");
+    expect(Signon.getProviderLink).not.toHaveBeenCalled();
   });
 
   it("should get provider link and redirect", () => {
-    Userfront.loginWithSSO(provider);
+    Signon.loginWithSSO(provider);
 
     // Assert getProviderLink was called and user is redirected
-    expect(Userfront.getProviderLink).toHaveBeenCalledTimes(1);
-    expect(Userfront.getProviderLink).toHaveBeenCalledWith(provider);
+    expect(Signon.getProviderLink).toHaveBeenCalledTimes(1);
+    expect(Signon.getProviderLink).toHaveBeenCalledWith(provider);
     expect(window.location.assign).toHaveBeenCalledTimes(1);
     expect(window.location.assign).toHaveBeenCalledWith(loginUrl);
   });
@@ -142,23 +145,21 @@ describe("getProviderLink", () => {
     `origin=${window.location.origin}`;
 
   it("should throw if provider is missing", () => {
-    expect(() => Userfront.getProviderLink()).toThrow("Missing provider");
+    expect(() => Signon.getProviderLink()).toThrow("Missing provider");
   });
 
   it("should throw if tenant ID is missing", () => {
-    Userfront.store.tenantId = "";
-    expect(() => Userfront.getProviderLink(provider)).toThrow(
-      "Missing tenant ID"
-    );
+    store.tenantId = "";
+    expect(() => Signon.getProviderLink(provider)).toThrow("Missing tenant ID");
 
     // Revert tenantId
-    Userfront.store.tenantId = tenantId;
+    store.tenantId = tenantId;
   });
 
   it("should return link with correct tenant_id, and origin", () => {
     window.location.href = "https://example.com/login";
 
-    const url = Userfront.getProviderLink(provider);
+    const url = Signon.getProviderLink(provider);
     expect(getQueryAttr(url, "tenant_id")).toEqual(tenantId);
     expect(getQueryAttr(url, "origin")).toEqual(window.location.origin);
     expect(getQueryAttr(url, "redirect")).toBeUndefined();
@@ -173,7 +174,7 @@ describe("getProviderLink", () => {
     );
     loginUrl += `&redirect=${redirectParam}`;
 
-    const url = Userfront.getProviderLink(provider);
+    const url = Signon.getProviderLink(provider);
     expect(getQueryAttr(url, "tenant_id")).toEqual(tenantId);
     expect(getQueryAttr(url, "origin")).toEqual(window.location.origin);
     expect(getQueryAttr(url, "redirect")).toEqual("/dashboard");
@@ -186,8 +187,8 @@ describe("redirectIfLoggedIn", () => {
 
   beforeAll(() => {
     // Mock removeAllCookies
-    Userfront.__set__("removeAllCookies", jest.fn());
-    Userfront.removeAllCookies = Userfront.__get__("removeAllCookies");
+    Cookies.__set__("removeAllCookies", jest.fn());
+    Cookies.removeAllCookies = Cookies.__get__("removeAllCookies");
 
     // Set default href
     window.location.href = "https://example.com/login";
@@ -195,19 +196,19 @@ describe("redirectIfLoggedIn", () => {
 
   it("should call removeAllCookies if store.accessToken isn't defined", async () => {
     await Userfront.redirectIfLoggedIn();
-    expect(Userfront.removeAllCookies).toHaveBeenCalledTimes(1);
+    expect(Cookies.removeAllCookies).toHaveBeenCalledTimes(1);
 
     // Should not have made request to Userfront API or redirected the user
     expect(axios.get).not.toHaveBeenCalled();
     expect(window.location.assign).not.toHaveBeenCalled();
 
     // Clear mock
-    Userfront.removeAllCookies.mockClear();
+    Cookies.removeAllCookies.mockClear();
   });
 
   it("should call removeAllCookies if request to Userfront API is an error", async () => {
-    Userfront.setCookie(mockAccessToken, null, "access");
-    Userfront.store.accessToken = mockAccessToken;
+    setCookie(mockAccessToken, null, "access");
+    store.accessToken = mockAccessToken;
 
     axios.get.mockImplementationOnce(() => {
       throw new Error("Bad Request");
@@ -218,21 +219,21 @@ describe("redirectIfLoggedIn", () => {
     expect(axios.get).toHaveBeenCalledTimes(1);
     expect(axios.get).toHaveBeenCalledWith(`${apiUrl}self`, {
       headers: {
-        authorization: `Bearer ${Userfront.store.accessToken}`,
+        authorization: `Bearer ${store.accessToken}`,
       },
     });
 
     // Should have cleared cookies
-    expect(Userfront.removeAllCookies).toHaveBeenCalledTimes(1);
-    Userfront.removeAllCookies.mockClear();
+    expect(Cookies.removeAllCookies).toHaveBeenCalledTimes(1);
+    Cookies.removeAllCookies.mockClear();
 
     // Clear mock
     axios.get.mockReset();
   });
 
   it("should not make request to Userfront API and immediately redirect user to path defined in `redirect` param", async () => {
-    Userfront.setCookie(mockAccessToken, null, "access");
-    Userfront.store.accessToken = mockAccessToken;
+    setCookie(mockAccessToken, null, "access");
+    store.accessToken = mockAccessToken;
     const originalHref = window.location.href;
 
     // Append ?redirect= override path
@@ -242,7 +243,7 @@ describe("redirectIfLoggedIn", () => {
     await Userfront.redirectIfLoggedIn();
 
     // Should redirected immediately without calling Userfront API
-    expect(Userfront.removeAllCookies).not.toHaveBeenCalled();
+    expect(Cookies.removeAllCookies).not.toHaveBeenCalled();
     expect(axios.get).not.toHaveBeenCalled();
     expect(window.location.assign).toHaveBeenCalledTimes(1);
     expect(window.location.assign).toHaveBeenCalledWith(targetPath);
@@ -253,8 +254,8 @@ describe("redirectIfLoggedIn", () => {
   });
 
   it("should make request to Userfront API and redirect user to tenant's loginRedirectPath when `redirect` param is not specified", async () => {
-    Userfront.setCookie(mockAccessToken, null, "access");
-    Userfront.store.accessToken = mockAccessToken;
+    setCookie(mockAccessToken, null, "access");
+    store.accessToken = mockAccessToken;
     const originalHref = window.location.href;
 
     const loginRedirectPath = "/after/login/path";
@@ -278,10 +279,10 @@ describe("redirectIfLoggedIn", () => {
     expect(axios.get).toHaveBeenCalledTimes(1);
     expect(axios.get).toHaveBeenCalledWith(`${apiUrl}self`, {
       headers: {
-        authorization: `Bearer ${Userfront.store.accessToken}`,
+        authorization: `Bearer ${store.accessToken}`,
       },
     });
-    expect(Userfront.removeAllCookies).not.toHaveBeenCalled();
+    expect(Cookies.removeAllCookies).not.toHaveBeenCalled();
 
     // Was redirected to tenant's loginRedirectPath
     expect(window.location.assign).toHaveBeenCalledTimes(1);

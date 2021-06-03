@@ -1,5 +1,4 @@
-import Userfront from "../src/index.js";
-const { isTestHostname } = Userfront;
+import { isTestHostname } from "../src/mode.js";
 
 describe("Mode tests", () => {
   it("isTestHostname", () => {

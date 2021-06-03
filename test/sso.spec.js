@@ -1,4 +1,5 @@
 import Userfront from "../src/index.js";
+import Signon from "../src/signon.js";
 
 const providers = ["azure", "facebook", "github", "google", "linkedin"];
 
@@ -23,15 +24,13 @@ describe("SSO", () => {
     let signupWithSSOSpy;
 
     beforeAll(() => {
-      // Userfront.signupWithSSO is originally undefined because it's not exported.
-      // Using Rewire, we can get the function and set it to our Userfront instance
-      Userfront.signupWithSSO = Userfront.__get__("signupWithSSO");
-
-      // Now we can spy on the defined Userfront.signupWithSSO
-      signupWithSSOSpy = jest.spyOn(Userfront, "signupWithSSO");
-
+      // Signon.signupWithSSO is originally undefined because it's not exported.
+      // Using Rewire, we can get the function and set it to our Signon instance
+      Signon.signupWithSSO = Signon.__get__("signupWithSSO");
+      // Now we can spy on the defined Signon.signupWithSSO
+      signupWithSSOSpy = jest.spyOn(Signon, "signupWithSSO");
       // and inject the spy into the module
-      Userfront.__set__("signupWithSSO", signupWithSSOSpy);
+      Signon.__set__("signupWithSSO", signupWithSSOSpy);
     });
 
     afterEach(() => {
@@ -59,7 +58,7 @@ describe("SSO", () => {
       });
 
       // Mock this function with option to revert later
-      revertGetProviderLink = Userfront.__set__("getProviderLink", mock);
+      revertGetProviderLink = Signon.__set__("getProviderLink", mock);
 
       try {
         await Userfront.signup({ method: "google" });
@@ -75,9 +74,15 @@ describe("SSO", () => {
 
     beforeAll(() => {
       revertGetProviderLink(); // Revert from mock to original function
-      Userfront.loginWithSSO = Userfront.__get__("loginWithSSO");
-      loginWithSSOSpy = jest.spyOn(Userfront, "loginWithSSO");
-      Userfront.__set__("loginWithSSO", loginWithSSOSpy);
+      // Signon.loginWithSSO is originally undefined because it's not exported.
+      // Using Rewire, we can get the function and set it to our Signon instance
+      Signon.loginWithSSO = Signon.__get__("loginWithSSO");
+
+      // Now we can spy on the defined Signon.loginWithSSO
+      loginWithSSOSpy = jest.spyOn(Signon, "loginWithSSO");
+
+      // and inject the spy into the module
+      Signon.__set__("loginWithSSO", loginWithSSOSpy);
     });
 
     afterEach(() => {
@@ -104,7 +109,7 @@ describe("SSO", () => {
         throw new Error("Missing tenant ID");
       });
 
-      revertGetProviderLink = Userfront.__set__("getProviderLink", mock);
+      revertGetProviderLink = Signon.__set__("getProviderLink", mock);
 
       try {
         await Userfront.login({ method: "google" });

@@ -51,7 +51,14 @@ describe("refresh method", () => {
         status: 200,
         body: {
           tokens: {
-            access: "special",
+            access: {
+              value: "abcde",
+              options: {},
+            },
+            id: {
+              value: "abcde",
+              options: {},
+            },
           },
         },
       },

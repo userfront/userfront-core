@@ -1,6 +1,8 @@
 import Userfront from "../src/index.js";
 import Signon from "../src/signon.js";
 
+import { getQueryAttr } from "../src/url.js";
+
 const providers = ["azure", "facebook", "github", "google", "linkedin"];
 
 // Using `window.location.assign` rather than `window.location.href =` because
@@ -45,9 +47,7 @@ describe("SSO", () => {
         `https://api.userfront.com/v0/auth/${provider}/login?` +
           `tenant_id=${tenantId}&` +
           `origin=${window.location.origin}&` +
-          `redirect=${encodeURIComponent(
-            getQueryAttr(window.location.href, "redirect")
-          )}`
+          `redirect=${encodeURIComponent(getQueryAttr("redirect"))}`
       );
     });
 
@@ -97,9 +97,7 @@ describe("SSO", () => {
         `https://api.userfront.com/v0/auth/${provider}/login?` +
           `tenant_id=${tenantId}&` +
           `origin=${window.location.origin}&` +
-          `redirect=${encodeURIComponent(
-            getQueryAttr(window.location.href, "redirect")
-          )}`
+          `redirect=${encodeURIComponent(getQueryAttr("redirect"))}`
       );
     });
 
@@ -120,10 +118,3 @@ describe("SSO", () => {
     });
   });
 });
-
-function getQueryAttr(url, attrName) {
-  if (!url || url.indexOf(`${attrName}=`) < 0) {
-    return;
-  }
-  return decodeURIComponent(url.split(`${attrName}=`)[1].split("&")[0]);
-}

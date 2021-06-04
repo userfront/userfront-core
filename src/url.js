@@ -50,7 +50,7 @@ export async function redirectIfLoggedIn() {
 /**
  * Redirect to path portion of a URL.
  */
-function redirectToPath(pathOrUrl) {
+export function redirectToPath(pathOrUrl) {
   try {
     document;
   } catch (error) {

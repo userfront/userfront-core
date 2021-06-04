@@ -52,7 +52,7 @@ export function addInitCallback(cb) {
  * whenever the browser URL changes.
  */
 let isRegistered = false;
-function registerUrlChangedEventListener() {
+export function registerUrlChangedEventListener() {
   if (isRegistered) return;
   isRegistered = true;
   try {

@@ -26,9 +26,3 @@ export function setTokensFromCookies() {
   store.idToken = Cookies.get(store.idTokenName);
   store.refreshToken = Cookies.get(store.refreshTokenName);
 }
-
-export default {
-  accessToken,
-  idToken,
-  setTokensFromCookies,
-};

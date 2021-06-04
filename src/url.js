@@ -64,7 +64,3 @@ export function redirectToPath(pathOrUrl) {
     window.location.assign(path);
   }
 }
-
-export default {
-  redirectIfLoggedIn,
-};

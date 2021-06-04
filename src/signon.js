@@ -219,11 +219,3 @@ export async function resetPassword({ uuid, token, password }) {
     );
   }
 }
-
-export default {
-  signup,
-  login,
-  sendLoginLink,
-  sendResetLink,
-  resetPassword,
-};

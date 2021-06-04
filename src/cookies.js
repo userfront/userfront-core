@@ -54,9 +54,3 @@ export function setCookiesAndTokens(tokens) {
   setCookie(tokens.refresh.value, tokens.refresh.cookieOptions, "refresh");
   setTokensFromCookies();
 }
-
-export default {
-  setCookie,
-  removeAllCookies,
-  setCookiesAndTokens,
-};

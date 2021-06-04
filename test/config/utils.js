@@ -1,6 +1,8 @@
+import { isTestHostname } from "../../src/utils.js";
+
 function resetStore(Userfront) {
   Userfront.store = {
-    mode: Userfront.isTestHostname() ? "test" : "live",
+    mode: isTestHostname() ? "test" : "live",
   };
 }
 

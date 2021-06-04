@@ -62,8 +62,3 @@ function addIframeMessageListener() {
     window.addEventListener("message", triageEvent);
   } catch (error) {}
 }
-
-export default {
-  setIframe,
-  getIframe,
-};

@@ -126,5 +126,7 @@ export default {
   // url
   redirectIfLoggedIn,
 
-  exports: "named",
+  output: {
+    exports: "named",
+  },
 };

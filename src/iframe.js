@@ -38,6 +38,10 @@ export function getIframe() {
  */
 export function triageEvent(e) {
   if (!e || e.origin !== frameUrl || !e.data || !e.data.type) return;
+  if (e.data.status !== 200 && e.data.type !== "logout") {
+    return console.warn(`Problem with ${e.data.type} request.`);
+  }
+
   switch (e.data.type) {
     case "exchange":
       console.log("exchange");

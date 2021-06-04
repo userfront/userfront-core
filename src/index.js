@@ -106,7 +106,6 @@ export default {
   logout,
 
   // mode
-  isTestHostname,
   setMode,
 
   // signon
@@ -125,4 +124,7 @@ export default {
 
   // url
   redirectIfLoggedIn,
+
+  // utils
+  isTestHostname,
 };

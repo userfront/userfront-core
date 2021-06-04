@@ -82,19 +82,19 @@ export function registerUrlChangedEventListener() {
  * EXPORTS
  */
 
-export { logout } from "./logout.js";
-export { setMode } from "./mode";
-export {
-  login,
-  resetPassword,
-  sendLoginLink,
-  sendResetLink,
-  signup,
-} from "./signon.js";
-export { store } from "./store";
-export { accessToken, idToken } from "./tokens";
-export { redirectIfLoggedIn } from "./url.js";
-export { isTestHostname } from "./utils.js";
+// export { logout } from "./logout.js";
+// export { setMode } from "./mode";
+// export {
+//   login,
+//   resetPassword,
+//   sendLoginLink,
+//   sendResetLink,
+//   signup,
+// } from "./signon.js";
+// export { store } from "./store";
+// export { accessToken, idToken } from "./tokens";
+// export { redirectIfLoggedIn } from "./url.js";
+// export { isTestHostname } from "./utils.js";
 
 export default {
   // index
@@ -125,8 +125,4 @@ export default {
 
   // url
   redirectIfLoggedIn,
-
-  output: {
-    exports: "named",
-  },
 };

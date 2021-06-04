@@ -1,8 +1,16 @@
 import utils from "./config/utils.js";
 import Userfront from "../src/index.js";
 
-import Iframe, { getIframe } from "../src/iframe.js";
-import Refresh, { refresh } from "../src/refresh.js";
+import { getIframe, triageEvent } from "../src/iframe.js";
+import { refresh } from "../src/refresh.js";
+import { setCookiesAndTokens } from "../src/cookies.js";
+
+jest.mock("../src/cookies", () => {
+  return {
+    __esModule: true,
+    setCookiesAndTokens: jest.fn(),
+  };
+});
 
 const tenantId = "abcdefg";
 
@@ -47,14 +55,18 @@ describe("refresh method", () => {
       data: {
         type: "refresh",
         status: 200,
-        body: {},
+        body: {
+          tokens: {
+            access: "special",
+          },
+        },
       },
       origin: "https://auth.userfront.net",
     };
-    Iframe.triageEvent = Iframe.__get__("triageEvent");
-    Iframe.triageEvent(event);
+    triageEvent(event);
 
     // Assert that the tokens and cookies are properly set
-    // expect(setCookie).toHaveBeenCalledWith();
+    expect(setCookiesAndTokens).toHaveBeenCalled();
+    expect(setCookiesAndTokens).toHaveBeenCalledWith(event.data.body.tokens);
   });
 });

@@ -1,3 +1,5 @@
+import { setCookiesAndTokens } from "./cookies.js";
+
 const frameUrl = "https://auth.userfront.net";
 const frameId = "uf-auth-frame";
 
@@ -34,14 +36,14 @@ export function getIframe() {
  *
  * @param {*} e - iframe event
  */
-function triageEvent(e) {
-  if (!e || e.origin !== frameUrl || e.data || !e.data.type) return;
+export function triageEvent(e) {
+  if (!e || e.origin !== frameUrl || !e.data || !e.data.type) return;
   switch (e.data.type) {
     case "exchange":
       console.log("exchange");
       break;
     case "refresh":
-      console.log("refresh");
+      setCookiesAndTokens(e.data.body.tokens);
       break;
     case "logout":
       console.log("logout");

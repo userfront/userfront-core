@@ -9,8 +9,9 @@ import {
   signup,
 } from "./signon.js";
 import { logout } from "./logout.js";
-import { isTestHostname, setMode } from "./mode.js";
+import { setMode } from "./mode.js";
 import { setIframe } from "./iframe.js";
+import { isTestHostname } from "./utils.js";
 
 let initCallbacks = [];
 
@@ -82,7 +83,7 @@ function registerUrlChangedEventListener() {
  */
 
 export { logout } from "./logout.js";
-export { isTestHostname, setMode } from "./mode";
+export { setMode } from "./mode";
 export {
   login,
   resetPassword,
@@ -93,6 +94,7 @@ export {
 export { store } from "./store";
 export { accessToken, idToken } from "./tokens";
 export { redirectIfLoggedIn } from "./url.js";
+export { isTestHostname } from "./utils.js";
 
 export default {
   // index

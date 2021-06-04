@@ -1,4 +1,4 @@
-import { isTestHostname } from "../src/mode.js";
+import { isTestHostname } from "../src/utils.js";
 
 describe("Mode tests", () => {
   it("isTestHostname", () => {

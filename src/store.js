@@ -1,4 +1,4 @@
-import { isTestHostname } from "./mode.js";
+import { isTestHostname } from "./utils.js";
 
 export const store = {
   mode: isTestHostname() ? "test" : "live",

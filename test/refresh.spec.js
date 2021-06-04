@@ -17,6 +17,7 @@ const tenantId = "abcdefg";
 describe("refresh method", () => {
   afterEach(() => {
     utils.resetStore(Userfront);
+    setCookiesAndTokens.mockClear();
   });
 
   it("should send correct options into iframe", async () => {
@@ -69,5 +70,35 @@ describe("refresh method", () => {
     // Assert that the tokens and cookies are properly set
     expect(setCookiesAndTokens).toHaveBeenCalled();
     expect(setCookiesAndTokens).toHaveBeenCalledWith(event.data.body.tokens);
+  });
+
+  it("should handle a non-200 response by logging an error", async () => {
+    // Initialize the library
+    Userfront.init(tenantId);
+
+    // Mock console.warn
+    console.warn = jest.fn();
+
+    // Mock fire an iframe refresh response
+    const event = {
+      data: {
+        type: "refresh",
+        status: 404,
+        body: {
+          message: "Not Found",
+        },
+      },
+      origin: "https://auth.userfront.net",
+    };
+    triageEvent(event);
+
+    // Assert that the tokens and cookies are properly set
+    expect(setCookiesAndTokens).not.toHaveBeenCalled();
+
+    // Assert that the console warning was logged
+    expect(console.warn).toHaveBeenCalled();
+    expect(console.warn).toHaveBeenCalledWith(
+      `Problem with ${event.data.type} request.`
+    );
   });
 });

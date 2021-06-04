@@ -1,10 +1,5 @@
-import axios from "axios";
-
 import Userfront from "../src/index.js";
 import Signon from "../src/signon.js";
-
-import { apiUrl } from "../src/constants.js";
-import Cookies, { setCookie } from "../src/cookies.js";
 import { store } from "../src/store.js";
 
 /**
@@ -16,7 +11,6 @@ import { store } from "../src/store.js";
  * Userfront.__set__("signupWithSSO", mockFn);
  */
 
-jest.mock("axios");
 const tenantId = "abcdefg";
 Userfront.init(tenantId);
 
@@ -179,118 +173,6 @@ describe("getProviderLink", () => {
     expect(getQueryAttr(url, "origin")).toEqual(window.location.origin);
     expect(getQueryAttr(url, "redirect")).toEqual("/dashboard");
     expect(url).toEqual(loginUrl);
-  });
-});
-
-describe("redirectIfLoggedIn", () => {
-  const mockAccessToken = "mockAccessToken";
-
-  beforeAll(() => {
-    // Mock removeAllCookies
-    Cookies.__set__("removeAllCookies", jest.fn());
-    Cookies.removeAllCookies = Cookies.__get__("removeAllCookies");
-
-    // Set default href
-    window.location.href = "https://example.com/login";
-  });
-
-  it("should call removeAllCookies if store.accessToken isn't defined", async () => {
-    await Userfront.redirectIfLoggedIn();
-    expect(Cookies.removeAllCookies).toHaveBeenCalledTimes(1);
-
-    // Should not have made request to Userfront API or redirected the user
-    expect(axios.get).not.toHaveBeenCalled();
-    expect(window.location.assign).not.toHaveBeenCalled();
-
-    // Clear mock
-    Cookies.removeAllCookies.mockClear();
-  });
-
-  it("should call removeAllCookies if request to Userfront API is an error", async () => {
-    setCookie(mockAccessToken, null, "access");
-    store.accessToken = mockAccessToken;
-
-    axios.get.mockImplementationOnce(() => {
-      throw new Error("Bad Request");
-    });
-    await Userfront.redirectIfLoggedIn();
-
-    // Should have called Userfront API
-    expect(axios.get).toHaveBeenCalledTimes(1);
-    expect(axios.get).toHaveBeenCalledWith(`${apiUrl}self`, {
-      headers: {
-        authorization: `Bearer ${store.accessToken}`,
-      },
-    });
-
-    // Should have cleared cookies
-    expect(Cookies.removeAllCookies).toHaveBeenCalledTimes(1);
-    Cookies.removeAllCookies.mockClear();
-
-    // Clear mock
-    axios.get.mockReset();
-  });
-
-  it("should not make request to Userfront API and immediately redirect user to path defined in `redirect` param", async () => {
-    setCookie(mockAccessToken, null, "access");
-    store.accessToken = mockAccessToken;
-    const originalHref = window.location.href;
-
-    // Append ?redirect= override path
-    const targetPath = "/target/path";
-    window.location.href = `https://example.com/login?redirect=${targetPath}`;
-
-    await Userfront.redirectIfLoggedIn();
-
-    // Should redirected immediately without calling Userfront API
-    expect(Cookies.removeAllCookies).not.toHaveBeenCalled();
-    expect(axios.get).not.toHaveBeenCalled();
-    expect(window.location.assign).toHaveBeenCalledTimes(1);
-    expect(window.location.assign).toHaveBeenCalledWith(targetPath);
-
-    // Revert href and clear mock
-    window.location.href = originalHref;
-    window.location.assign.mockClear();
-  });
-
-  it("should make request to Userfront API and redirect user to tenant's loginRedirectPath when `redirect` param is not specified", async () => {
-    setCookie(mockAccessToken, null, "access");
-    store.accessToken = mockAccessToken;
-    const originalHref = window.location.href;
-
-    const loginRedirectPath = "/after/login/path";
-    axios.get.mockResolvedValue({
-      data: {
-        userId: 1,
-        tenantId,
-        name: "John Doe",
-        tenant: {
-          tenantId,
-          name: "Project Foo",
-          loginRedirectPath,
-          logoutRedirectPath: "/login",
-        },
-      },
-    });
-
-    await Userfront.redirectIfLoggedIn();
-
-    // Should have made request to Userfront API without error
-    expect(axios.get).toHaveBeenCalledTimes(1);
-    expect(axios.get).toHaveBeenCalledWith(`${apiUrl}self`, {
-      headers: {
-        authorization: `Bearer ${store.accessToken}`,
-      },
-    });
-    expect(Cookies.removeAllCookies).not.toHaveBeenCalled();
-
-    // Was redirected to tenant's loginRedirectPath
-    expect(window.location.assign).toHaveBeenCalledTimes(1);
-    expect(window.location.assign).toHaveBeenCalledWith(loginRedirectPath);
-
-    // Revert href and clear mock
-    window.location.href = originalHref;
-    window.location.assign.mockClear();
   });
 });
 

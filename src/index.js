@@ -1,20 +1,15 @@
-import axios from "axios";
-import Cookies from "js-cookie";
-
-import { apiUrl } from "./constants.js";
-
-import { store, setTokensFromCookies } from "./store.js";
-import { getQueryAttr } from "./url.js";
+import { store } from "./store.js";
+import { accessToken, idToken, setTokensFromCookies } from "./tokens";
+import { redirectIfLoggedIn } from "./url.js";
 import {
-  signup,
   login,
+  resetPassword,
   sendLoginLink,
   sendResetLink,
-  resetPassword,
+  signup,
 } from "./signon.js";
-import { removeAllCookies } from "./cookies.js";
+import { logout } from "./logout.js";
 import { isTestHostname, setMode } from "./mode.js";
-
 import { setIframe } from "./iframe.js";
 
 let initCallbacks = [];
@@ -52,85 +47,6 @@ export function addInitCallback(cb) {
 }
 
 /**
- * Set and then return the access token
- */
-export function accessToken() {
-  store.accessToken = Cookies.get(store.accessTokenName);
-  return store.accessToken;
-}
-
-/**
- * Set and then return the ID token
- */
-export function idToken() {
-  store.idToken = Cookies.get(store.idTokenName);
-  return store.idToken;
-}
-
-// TODO replace with direct check of the access token.
-/**
- * If the access token is valid, redirect the browser to the
- * tenant's login redirection path (path after login).
- */
-export async function redirectIfLoggedIn() {
-  if (!store.accessToken) {
-    return removeAllCookies();
-  }
-  if (getQueryAttr("redirect")) {
-    return redirectToPath(getQueryAttr("redirect"));
-  }
-
-  try {
-    const { data } = await axios.get(`${apiUrl}self`, {
-      headers: {
-        authorization: `Bearer ${store.accessToken}`,
-      },
-    });
-    if (data.tenant && data.tenant.loginRedirectPath) {
-      redirectToPath(data.tenant.loginRedirectPath);
-    }
-  } catch (err) {
-    removeAllCookies();
-  }
-}
-
-/**
- * Redirect to path portion of a URL.
- */
-function redirectToPath(pathOrUrl) {
-  try {
-    document;
-  } catch (error) {
-    return;
-  }
-  if (!pathOrUrl) return;
-  const el = document.createElement("a");
-  el.href = pathOrUrl;
-  let path = `${el.pathname}${el.hash}${el.search}`;
-  if (el.pathname !== window.location.pathname) {
-    window.location.assign(path);
-  }
-}
-
-/**
- * Log a user out and redirect to the logout path.
- */
-export async function logout() {
-  if (!store.accessToken) return removeAllCookies();
-  try {
-    const { data } = await axios.get(`${apiUrl}auth/logout`, {
-      headers: {
-        authorization: `Bearer ${store.accessToken}`,
-      },
-    });
-    removeAllCookies();
-    redirectToPath(data.redirectTo);
-  } catch (err) {
-    removeAllCookies();
-  }
-}
-
-/**
  * Register a window-level event called "urlchanged" that will fire
  * whenever the browser URL changes.
  */
@@ -165,29 +81,46 @@ function registerUrlChangedEventListener() {
  * EXPORTS
  */
 
+export { logout } from "./logout.js";
+export { isTestHostname, setMode } from "./mode";
 export {
-  signup,
   login,
+  resetPassword,
   sendLoginLink,
   sendResetLink,
-  resetPassword,
+  signup,
 } from "./signon.js";
+export { store } from "./store";
+export { accessToken, idToken } from "./tokens";
+export { redirectIfLoggedIn } from "./url.js";
 
 export default {
+  // index
   addInitCallback,
-  accessToken,
-  getQueryAttr,
-  idToken,
   init,
-  isTestHostname,
-  login,
-  logout,
-  redirectIfLoggedIn,
   registerUrlChangedEventListener,
+
+  //logout
+  logout,
+
+  // mode
+  isTestHostname,
+  setMode,
+
+  // signon
+  login,
   resetPassword,
   sendLoginLink,
   sendResetLink,
-  setMode,
   signup,
+
+  // store
   store,
+
+  // tokens
+  accessToken,
+  idToken,
+
+  // url
+  redirectIfLoggedIn,
 };

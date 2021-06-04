@@ -14,12 +14,6 @@ jest.mock("../src/cookies", () => {
 
 const tenantId = "abcdefg";
 
-/**
- * TODO
- * Get a test working whereby the iframe's response is received
- * by the parent window and used to set the access and ID tokens.
- */
-
 describe("refresh method", () => {
   afterEach(() => {
     utils.resetStore(Userfront);

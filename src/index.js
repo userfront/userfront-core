@@ -19,7 +19,7 @@ let initCallbacks = [];
  * Initialize the Userfront library.
  * @param {String} tenantId
  */
-export function init(tenantId) {
+function init(tenantId) {
   if (!tenantId) return console.warn("Userfront initialized without tenant ID");
   store.tenantId = tenantId;
   store.accessTokenName = `access.${tenantId}`;
@@ -42,7 +42,7 @@ export function init(tenantId) {
  * Add a callback function to be called upon Userfront.init()
  * @param {Function} cb
  */
-export function addInitCallback(cb) {
+function addInitCallback(cb) {
   if (!cb || typeof cb !== "function") return;
   initCallbacks.push(cb);
 }
@@ -52,7 +52,7 @@ export function addInitCallback(cb) {
  * whenever the browser URL changes.
  */
 let isRegistered = false;
-export function registerUrlChangedEventListener() {
+function registerUrlChangedEventListener() {
   if (isRegistered) return;
   isRegistered = true;
   try {

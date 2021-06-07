@@ -11,7 +11,7 @@ import {
 import { logout } from "./logout.js";
 import { setMode } from "./mode.js";
 import { setIframe } from "./iframe.js";
-import { update, setUser } from "./user.js";
+import { user, setUser } from "./user.js";
 import { isTestHostname } from "./utils.js";
 
 let initCallbacks = [];
@@ -119,10 +119,7 @@ export default {
   redirectIfLoggedIn,
 
   // user
-  user: {
-    update,
-    ...store.user,
-  },
+  user,
 
   // utils
   isTestHostname,

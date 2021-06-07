@@ -13,6 +13,8 @@ export function setUser() {
     return console.warn("Cannot define user: missing ID token");
   }
 
+  store.user = store.user || {};
+
   const decodedIdToken = jwt.decode(store.idToken);
 
   // Set basic user information properties from ID token
@@ -63,3 +65,9 @@ export async function update(payload) {
 
   return store.user;
 }
+
+/**
+ * Export the store.user object with the update method added
+ */
+export const user = store.user;
+user.update = update;

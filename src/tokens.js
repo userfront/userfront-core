@@ -22,9 +22,17 @@ export function idToken() {
  * Define the store token values from the cookie values.
  */
 export function setTokensFromCookies() {
-  store.accessToken = Cookies.get(store.accessTokenName);
-  store.idToken = Cookies.get(store.idTokenName);
-  store.refreshToken = Cookies.get(store.refreshTokenName);
+  const tokenNames = ["access", "id", "refresh"];
+  tokenNames.map((tokenName) => {
+    try {
+      const token = Cookies.get(store[`${tokenName}TokenName`]);
+      if (!!token) {
+        store[`${tokenName}Token`] = token;
+      }
+    } catch (error) {
+      console.warn(`Problem setting ${tokenName} token.`);
+    }
+  });
 }
 
 /**

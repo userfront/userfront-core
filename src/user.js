@@ -14,7 +14,6 @@ export function setUser() {
   }
 
   store.user = store.user || {};
-
   const decodedIdToken = jwt.decode(store.idToken);
 
   // Set basic user information properties from ID token

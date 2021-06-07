@@ -1,14 +1,22 @@
-import jwt from "jsonwebtoken";
 import axios from "axios";
 
-import utils from "./config/utils.js";
 import { apiUrl } from "../src/constants.js";
 import { setCookie } from "../src/cookies.js";
-
-import Userfront from "../src/index.js";
 import { setUser } from "../src/user.js";
+import { refresh } from "../src/refresh.js";
+import { setTokensFromCookies } from "../src/tokens.js";
+import utils from "./config/utils.js";
+import Userfront from "../src/index.js";
 
 jest.mock("axios");
+jest.mock("../src/refresh.js", () => {
+  return {
+    __esModule: true,
+    refresh: jest.fn(),
+  };
+});
+console.warn = jest.fn();
+
 const tenantId = "abcdefgh";
 
 describe("User", () => {
@@ -22,21 +30,16 @@ describe("User", () => {
     );
     setCookie(utils.createIdToken(), { secure: "true", sameSite: "Lax" }, "id");
 
-    // Mock `Userfront.refresh` to assert calls later
-    Userfront.__set__("refresh", jest.fn());
-    Userfront.refresh = Userfront.__get__("refresh");
-
     // Initialize the library
     Userfront.init(tenantId);
     return Promise.resolve();
   });
 
-  describe("setUser", () => {
-    it("should set user's information based on ID token", () => {
-      const defaultUserValues = utils.idTokenUserDefaults;
+  afterEach(jest.resetAllMocks);
 
-      // Call setUser
-      setUser();
+  describe("user object", () => {
+    it("should get user's information", () => {
+      const defaultUserValues = utils.idTokenUserDefaults;
 
       // Assert primary values were set correctly
       for (const prop in defaultUserValues) {
@@ -50,29 +53,39 @@ describe("User", () => {
     });
   });
 
-  xdescribe("user object", () => {
-    it("should get user's information", () => {
-      const parsedUser = {
-        ...JSON.parse(JSON.stringify(utils.idTokenUserDefaults)),
-      };
+  describe("setUser", () => {
+    it("should set store.user object based on ID token", () => {
+      const newUserValues = JSON.parse(
+        JSON.stringify(utils.idTokenUserDefaults)
+      );
 
-      // ufUser has been updated via ID token in beforeAll
-      const ufUser = user;
+      // Change the ID token value
+      newUserValues.name = "Johnny B. Good";
+      newUserValues.data.color = "greenish";
+      setCookie(
+        utils.createIdToken(newUserValues),
+        { secure: "true", sameSite: "Lax" },
+        "id"
+      );
+      setTokensFromCookies();
 
-      // ufUser values from ID token should match the defaults given
-      for (const prop in utils.defaultIdTokenProperties) {
-        expect(parsedUser[prop]).toEqual(ufUser[prop]);
+      // Call setUser
+      setUser();
+
+      // Assert primary values were set correctly
+      for (const prop in newUserValues) {
+        expect(Userfront.user[prop]).toEqual(newUserValues[prop]);
       }
 
-      // Assert ufUser.data values were set correctly
-      for (const prop in parsedUser.data) {
-        expect(parsedUser.data[prop]).toEqual(ufUser.data[prop]);
+      // Assert data values were set correctly
+      for (const prop in newUserValues.data) {
+        expect(Userfront.user.data[prop]).toEqual(newUserValues.data[prop]);
       }
     });
   });
 
-  xdescribe("user.update()", () => {
-    it("should update user's information via API then call afterUpdate hook", async () => {
+  describe("user.update()", () => {
+    it("should update user's information via API", async () => {
       const updates = {
         username: "john-doe-updated",
         data: {
@@ -80,48 +93,54 @@ describe("User", () => {
         },
       };
 
-      // Update user via Userfront API
-      await user.update(updates);
+      // Call the update method
+      await Userfront.user.update(updates);
 
-      // Should have made "update user" API request
-      const { userId } = jwt.decode(Userfront.store.accessToken);
+      // Should have made API request
       expect(axios.put).toBeCalledWith({
-        url: `${apiUrl}tenants/${tenantId}/users/${userId}`,
+        url: `${apiUrl}self`,
         headers: {
           authorization: `Bearer ${Userfront.store.accessToken}`,
         },
         payload: updates,
       });
 
-      // Should have called `afterUpdate` function
-      expect(Userfront.refresh).toHaveBeenCalledTimes(1);
-      Userfront.refresh.mockClear();
+      // Should have called `refresh` function
+      expect(refresh).toHaveBeenCalledTimes(1);
+      expect(refresh).toHaveBeenCalledWith();
+      refresh.mockClear();
     });
 
     it("should throw if `updates` object not provided", async () => {
-      const originalUser = { ...user };
+      const originalUser = { ...Userfront.user };
       const originalTokens = {
         idToken: Userfront.store.idToken,
         accessToken: Userfront.store.accessToken,
       };
 
-      // Attempt update without object
-      expect(user.update()).rejects.toThrow(
+      // Attempt update without object, should log a warning
+      expect(console.warn).not.toHaveBeenCalled();
+      await Userfront.user.update();
+      expect(console.warn).toHaveBeenCalledWith(
         "Missing user properties to update"
       );
-      // Attempt update with empty object
-      expect(user.update({})).rejects.toThrow(
+
+      console.warn.mockClear();
+
+      // Attempt update with empty object, should log a warning
+      expect(console.warn).not.toHaveBeenCalled();
+      await Userfront.user.update({});
+      expect(console.warn).toHaveBeenCalledWith(
         "Missing user properties to update"
       );
 
       // Assert user was not modified
       for (const prop of utils.defaultIdTokenProperties) {
-        expect(user[prop]).toEqual(originalUser[prop]);
+        expect(Userfront.user[prop]).toEqual(originalUser[prop]);
       }
 
       // Token refresh should not have been issued
-      expect(Userfront.refresh).not.toHaveBeenCalled();
-      Userfront.refresh.mockClear();
+      expect(refresh).not.toHaveBeenCalled();
 
       // Assert tokens were not modified
       expect(originalTokens.idToken).toEqual(Userfront.store.idToken);
@@ -129,39 +148,37 @@ describe("User", () => {
     });
 
     it("should throw if Userfront API throws error", async () => {
-      const originalUser = { ...user };
+      const originalUser = { ...Userfront.user };
       const originalTokens = {
         idToken: Userfront.store.idToken,
         accessToken: Userfront.store.accessToken,
       };
 
-      const updates = { name: "Jane Doe" };
+      const payload = { name: "Jane Doe" };
 
       axios.put.mockImplementationOnce(() =>
         Promise.reject(new Error("Bad Request"))
       );
 
       // Attempt update without object
-      expect(user.update(updates)).rejects.toThrow("Bad Request");
+      expect(Userfront.user.update(payload)).rejects.toThrow("Bad Request");
 
       // Should have made "update user" API request
-      const { userId } = jwt.decode(Userfront.store.accessToken);
       expect(axios.put).toBeCalledWith({
-        url: `${apiUrl}tenants/${tenantId}/users/${userId}`,
+        url: `${apiUrl}self`,
         headers: {
           authorization: `Bearer ${originalTokens.accessToken}`,
         },
-        payload: updates,
+        payload,
       });
 
       // Assert user was not modified
       for (const prop of utils.defaultIdTokenProperties) {
-        expect(user[prop]).toEqual(originalUser[prop]);
+        expect(Userfront.user[prop]).toEqual(originalUser[prop]);
       }
 
       // Token refresh should not have been issued
-      expect(Userfront.refresh).not.toHaveBeenCalled();
-      Userfront.refresh.mockClear();
+      expect(refresh).not.toHaveBeenCalled();
 
       // Assert tokens were not modified
       expect(originalTokens.idToken).toEqual(Userfront.store.idToken);

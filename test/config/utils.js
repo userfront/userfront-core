@@ -71,24 +71,20 @@ const idTokenUserDefaults = {
   ...sharedTokenProperties.user,
 };
 
-function createAccessToken() {
-  return jwt.sign(
-    {
-      ...accessTokenUserDefaults,
-      ...sharedTokenProperties.token,
-    },
-    randomString()
-  );
+function createAccessToken(payload) {
+  payload = payload || {
+    ...accessTokenUserDefaults,
+    ...sharedTokenProperties.token,
+  };
+  return jwt.sign(payload, randomString());
 }
 
-function createIdToken() {
-  return jwt.sign(
-    {
-      ...idTokenUserDefaults,
-      ...sharedTokenProperties.token,
-    },
-    randomString()
-  );
+function createIdToken(payload) {
+  payload = payload || {
+    ...idTokenUserDefaults,
+    ...sharedTokenProperties.token,
+  };
+  return jwt.sign(payload, randomString());
 }
 
 function randomString() {

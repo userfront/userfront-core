@@ -1,30 +1,20 @@
-import axios from "axios";
-import Cookies from "js-cookie";
-import jwt from "jsonwebtoken";
-import { JwksClient } from "jwks-rsa";
-
-import { apiUrl, privateIPRegex } from "./constants.js";
-import createUser from "./user.js";
+import { store } from "./store.js";
+import { accessToken, idToken, setTokensFromCookies } from "./tokens";
+import { redirectIfLoggedIn } from "./url.js";
+import {
+  login,
+  resetPassword,
+  sendLoginLink,
+  sendResetLink,
+  signup,
+} from "./signon.js";
+import { logout } from "./logout.js";
+import { setMode } from "./mode.js";
+import { setIframe } from "./iframe.js";
+import { update, setUser } from "./user.js";
+import { isTestHostname } from "./utils.js";
 
 let initCallbacks = [];
-
-/**
- * Determine whether a hostname is in test mode.
- * @param {String} hn
- */
-const isTestHostname = (hn) => {
-  try {
-    const hostname = hn || window.location.hostname;
-    return !!(hostname.match(/localhost/g) || hostname.match(privateIPRegex));
-  } catch (err) {
-    return true;
-  }
-};
-
-const store = {
-  mode: isTestHostname() ? "test" : "live",
-  user: {},
-};
 
 /**
  * Initialize the Userfront library.
@@ -36,6 +26,7 @@ function init(tenantId) {
   store.accessTokenName = `access.${tenantId}`;
   store.idTokenName = `id.${tenantId}`;
   store.refreshTokenName = `refresh.${tenantId}`;
+  setIframe();
   setTokensFromCookies();
 
   if (store.idToken) {
@@ -63,468 +54,7 @@ function addInitCallback(cb) {
 }
 
 /**
- * Set and then return the access token
- */
-function accessToken() {
-  store.accessToken = Cookies.get(store.accessTokenName);
-  return store.accessToken;
-}
 
-/**
- * Set and then return the ID token
- */
-function idToken() {
-  store.idToken = Cookies.get(store.idTokenName);
-  return store.idToken;
-}
-
-/**
- * Verify provided token was issued by Userfront API
- * @param {String} token
- * @returns {Promise<void>} The provided token has been verified if `verifyToken` resolves without error
- */
-async function verifyToken(token) {
-  if (!token) throw new Error("Missing token");
-
-  let publicKey;
-  try {
-    const decodedToken = jwt.decode(token, { complete: true });
-    if (!decodedToken.header || !decodedToken.header.kid) {
-      throw new Error("Token kid not defined");
-    }
-
-    const client = new JwksClient({
-      jwksUri: `${apiUrl}tenants/${store.tenantId}/jwks/${store.mode}`,
-      requestHeaders: { origin: window.location.origin },
-    });
-
-    const key = await client.getSigningKey(decodedToken.header.kid);
-    publicKey = key.getPublicKey();
-  } catch (error) {
-    throw error;
-  }
-
-  if (!publicKey) {
-    throw new Error("Public key not found");
-  }
-
-  try {
-    jwt.verify(token, publicKey);
-  } catch (error) {
-    throw new Error("Token verification failed");
-  }
-
-  return Promise.resolve();
-}
-
-/**
- * Get the value of a query attribute, e.g. ?attr=value
- * @param {String} attrName
- */
-function getQueryAttr(attrName) {
-  if (
-    !window.location.href ||
-    window.location.href.indexOf(`${attrName}=`) < 0
-  ) {
-    return;
-  }
-  return decodeURIComponent(
-    window.location.href.split(`${attrName}=`)[1].split("&")[0]
-  );
-}
-
-function getProviderLink(provider) {
-  if (!provider) throw new Error("Missing provider");
-  if (!store.tenantId) throw new Error("Missing tenant ID");
-
-  let url = `https://api.userfront.com/v0/auth/${provider}/login?tenant_id=${store.tenantId}&origin=${window.location.origin}`;
-
-  const redirect = getQueryAttr("redirect");
-  if (redirect) {
-    url += `&redirect=${encodeURIComponent(redirect)}`;
-  }
-
-  return url;
-}
-
-/**
- * Define the mode of operation (live or test)
- */
-async function setMode() {
-  try {
-    const { data } = await axios.get(`${apiUrl}tenants/${store.tenantId}/mode`);
-    store.mode = data.mode || "test";
-  } catch (err) {
-    store.mode = "test";
-  }
-}
-
-/**
- * Register a user via the provided method. This method serves to call other
- * methods, depending on the "method" parameter passed in.
- * @param {Object} options
- */
-async function signup({ method, username, name, email, password }) {
-  if (!method) {
-    throw new Error('Userfront.signup called without "method" property');
-  }
-  switch (method) {
-    case "azure":
-    case "facebook":
-    case "github":
-    case "google":
-    case "linkedin":
-      return signupWithSSO(method);
-    case "password":
-      return signupWithPassword({ username, name, email, password });
-    default:
-      throw new Error('Userfront.signup called with invalid "method" property');
-  }
-}
-
-/**
- * Register a new user in via SSO provider.
- * Redirect the browser after successful authentication and 302 redirect from server.
- * @param {String} provider Name of SSO provider
- */
-function signupWithSSO(provider) {
-  if (!provider) throw new Error("Missing provider");
-  const url = getProviderLink(provider);
-  window.location.assign(url);
-}
-
-/**
- * Register a new user with username, name, email, and password.
- * Redirect the browser after successful signup based on the redirectTo value returned.
- * @param {Object} options
- */
-async function signupWithPassword({ username, name, email, password }) {
-  const { data } = await axios.post(`${apiUrl}auth/create`, {
-    tenantId: store.tenantId,
-    username,
-    name,
-    email,
-    password,
-  });
-
-  if (data.tokens) {
-    setCookiesAndTokens(data.tokens);
-    setUser();
-    redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/");
-  } else {
-    throw new Error("Please try again.");
-  }
-}
-
-/**
- * Log a user in via the provided method. This method serves to call other
- * methods, depending on the "method" parameter passed in.
- * @param {Object} options
- */
-async function login({
-  method,
-  email,
-  username,
-  emailOrUsername,
-  password,
-  token,
-  uuid,
-}) {
-  if (!method) {
-    throw new Error('Userfront.login called without "method" property');
-  }
-  switch (method) {
-    case "azure":
-    case "facebook":
-    case "github":
-    case "google":
-    case "linkedin":
-      return loginWithSSO(method);
-    case "password":
-      return loginWithPassword({ email, username, emailOrUsername, password });
-    case "link":
-      return loginWithLink(token, uuid);
-    default:
-      throw new Error('Userfront.login called with invalid "method" property');
-  }
-}
-
-/**
- * Log a user in via SSO provider.
- * Redirect the browser after successful authentication and 302 redirect from server.
- * @param {String} provider Name of SSO provider
- */
-function loginWithSSO(provider) {
-  if (!provider) throw new Error("Missing provider");
-  const url = getProviderLink(provider);
-  window.location.assign(url);
-}
-
-/**
- * Log a user in with email/username and password.
- * Redirect the browser after successful login based on the redirectTo value returned.
- * @param {Object} options
- */
-async function loginWithPassword({
-  email,
-  username,
-  emailOrUsername,
-  password,
-}) {
-  const { data } = await axios.post(`${apiUrl}auth/basic`, {
-    tenantId: store.tenantId,
-    emailOrUsername: email || username || emailOrUsername,
-    password,
-  });
-  if (data.tokens) {
-    setCookiesAndTokens(data.tokens);
-    setUser();
-    redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/");
-  } else {
-    throw new Error("Please try again.");
-  }
-}
-
-/**
- * Log a user in with a token/uuid combo passed into the function or
- * in the URL querystring. ?token=...&uuid=...
- * @param {String} token
- * @param {UUID} uuid
- */
-async function loginWithLink(token, uuid) {
-  if (!token) token = getQueryAttr("token");
-  if (!uuid) uuid = getQueryAttr("uuid");
-  if (!token || !uuid) return;
-
-  const { data } = await axios.put(`${apiUrl}auth/link`, {
-    token,
-    uuid,
-    tenantId: store.tenantId,
-  });
-
-  if (data.tokens) {
-    setCookiesAndTokens(data.tokens);
-    setUser();
-    redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/");
-  } else {
-    throw new Error("Problem logging in.");
-  }
-}
-
-/**
- * Send a login link to the provided email.
- * @param {String} email
- */
-async function sendLoginLink(email) {
-  try {
-    const { data } = await axios.post(`${apiUrl}auth/link`, {
-      email,
-      tenantId: store.tenantId,
-    });
-    return data;
-  } catch (err) {
-    throw new Error("Problem sending link");
-  }
-}
-
-/**
- * Send a password reset link to the provided email.
- * @param {String} email
- */
-async function sendResetLink(email) {
-  try {
-    const { data } = await axios.post(`${apiUrl}auth/reset/link`, {
-      email,
-      tenantId: store.tenantId,
-    });
-    return data;
-  } catch (err) {
-    throw new Error("Problem sending link");
-  }
-}
-
-async function resetPassword({ uuid, token, password }) {
-  if (!token) token = getQueryAttr("token");
-  if (!uuid) uuid = getQueryAttr("uuid");
-  if (!token || !uuid) throw new Error("Missing token or uuid");
-  const { data } = await axios.put(`${apiUrl}auth/reset`, {
-    tenantId: store.tenantId,
-    uuid,
-    token,
-    password,
-  });
-  if (data.tokens) {
-    setCookiesAndTokens(data.tokens);
-    setUser();
-    redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/");
-  } else {
-    throw new Error(
-      "There was a problem resetting your password. Please try again."
-    );
-  }
-}
-
-// TODO replace with direct check of the access token.
-/**
- * If the access token is valid, redirect the browser to the
- * tenant's login redirection path (path after login).
- */
-async function redirectIfLoggedIn() {
-  if (!store.accessToken) return removeAllCookies();
-  try {
-    const { data } = await axios.get(`${apiUrl}self`, {
-      headers: {
-        authorization: `Bearer ${store.accessToken}`,
-      },
-    });
-    if (data.tenant && data.tenant.loginRedirectPath) {
-      redirectToPath(data.tenant.loginRedirectPath);
-    }
-  } catch (err) {
-    removeAllCookies();
-  }
-}
-
-/**
- * Redirect to path portion of a URL.
- */
-function redirectToPath(pathOrUrl) {
-  try {
-    document;
-  } catch (error) {
-    return;
-  }
-  if (!pathOrUrl) return;
-  const el = document.createElement("a");
-  el.href = pathOrUrl;
-  let path = `${el.pathname}${el.hash}${el.search}`;
-  if (el.pathname !== window.location.pathname) {
-    window.location.href = path;
-  }
-}
-
-/**
- * Log a user out and redirect to the logout path.
- */
-async function logout() {
-  if (!store.accessToken) return removeAllCookies();
-  try {
-    const { data } = await axios.get(`${apiUrl}auth/logout`, {
-      headers: {
-        authorization: `Bearer ${store.accessToken}`,
-      },
-    });
-    removeAllCookies();
-    redirectToPath(data.redirectTo);
-  } catch (err) {
-    removeAllCookies();
-  }
-}
-
-/**
- * Set a cookie value based on the given options.
- * @param {String} value
- * @param {Object} options
- * @param {String} type
- */
-function setCookie(value, options, type) {
-  const cookieName = `${type}.${store.tenantId}`;
-  options = options || {
-    secure: store.mode === "live",
-    sameSite: "Lax",
-  };
-  if (type === "refresh") {
-    options.sameSite = "Strict";
-  }
-  Cookies.set(cookieName, value, options);
-}
-
-/**
- * Remove a cookie by name, regardless of its cookie setting(s).
- * @param {String} name
- */
-function removeCookie(name) {
-  Cookies.remove(name);
-  Cookies.remove(name, { secure: true, sameSite: "Lax" });
-  Cookies.remove(name, { secure: true, sameSite: "None" });
-  Cookies.remove(name, { secure: false, sameSite: "Lax" });
-  Cookies.remove(name, { secure: false, sameSite: "None" });
-}
-
-/**
- * Remove all auth cookies (access, id, refresh).
- */
-function removeAllCookies() {
-  removeCookie(store.accessTokenName);
-  removeCookie(store.idTokenName);
-  removeCookie(store.refreshTokenName);
-  store.accessToken = undefined;
-  store.idToken = undefined;
-  store.refreshToken = undefined;
-}
-
-/**
- * Define the store token values from the cookie values.
- */
-function setTokensFromCookies() {
-  store.accessToken = Cookies.get(store.accessTokenName);
-  store.idToken = Cookies.get(store.idTokenName);
-  store.refreshToken = Cookies.get(store.refreshTokenName);
-}
-
-/**
- * Set the cookies from a tokens object, and add to the local store.
- * @param {Object} tokens
- */
-function setCookiesAndTokens(tokens) {
-  setCookie(tokens.access.value, tokens.access.cookieOptions, "access");
-  setCookie(tokens.id.value, tokens.id.cookieOptions, "id");
-  setCookie(tokens.refresh.value, tokens.refresh.cookieOptions, "refresh");
-  setTokensFromCookies();
-}
-
-/**
- * Define user attributes & methods based on access & ID token.
- */
-async function setUser() {
-  if (!store.idToken) {
-    throw new Error("ID token has not been set.");
-  }
-  if (!store.accessToken) {
-    throw new Error("Access token has not been set.");
-  }
-
-  try {
-    await verifyToken(store.idToken);
-  } catch (error) {
-    throw error;
-  }
-
-  Object.assign(
-    store.user,
-    createUser({
-      store,
-      afterUpdate: refresh,
-    })
-  );
-}
-
-async function refresh() {
-  const res = await axios.get({
-    url: `${apiUrl}auth/refresh`,
-    headers: {
-      authorization: `Bearer ${store.accessToken}`,
-    },
-  });
-  if (!res || !res.data || !res.data.tokens) {
-    throw new Error("Problem refreshing tokens.");
-  }
-
-  setCookiesAndTokens(res.data.tokens);
-  setUser();
-}
-
-/**
  * Register a window-level event called "urlchanged" that will fire
  * whenever the browser URL changes.
  */
@@ -555,27 +85,45 @@ function registerUrlChangedEventListener() {
   } catch (error) {}
 }
 
+/**
+ * EXPORTS
+ */
+
 export default {
+  // index
   addInitCallback,
-  accessToken,
-  getQueryAttr,
-  idToken,
   init,
-  isTestHostname,
-  login,
-  logout,
-  redirectIfLoggedIn,
-  refresh,
   registerUrlChangedEventListener,
+
+  //logout
+  logout,
+
+  // mode
+  setMode,
+
+  // signon
+  login,
   resetPassword,
   sendLoginLink,
   sendResetLink,
-  setMode,
-  setCookie,
   signup,
+
+  // store
   store,
-  get user() {
-    return store.user;
+
+  // tokens
+  accessToken,
+  idToken,
+
+  // url
+  redirectIfLoggedIn,
+
+  // user
+  user: {
+    update,
+    ...store.user,
   },
-  verifyToken,
+
+  // utils
+  isTestHostname,
 };

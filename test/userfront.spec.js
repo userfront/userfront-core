@@ -1,4 +1,6 @@
 import Userfront from "../src/index.js";
+import Signon from "../src/signon.js";
+import { store } from "../src/store.js";
 
 // Mock `setUser` - we don't need Userfront.store.user in this suite
 Userfront.__set__("setUser", jest.fn());
@@ -52,34 +54,34 @@ describe("signupWithSSO", () => {
 
   beforeAll(() => {
     // Expose non-exported function
-    Userfront.signupWithSSO = Userfront.__get__("signupWithSSO");
+    Signon.signupWithSSO = Signon.__get__("signupWithSSO");
 
     // Mock getProviderLink
-    Userfront.__set__(
+    Signon.__set__(
       "getProviderLink",
       jest.fn(() => loginUrl)
     );
-    Userfront.getProviderLink = Userfront.__get__("getProviderLink");
+    Signon.getProviderLink = Signon.__get__("getProviderLink");
   });
 
   afterAll(() => {
     // Revert getProviderLink
-    Userfront.__ResetDependency__("getProviderLink");
-    Userfront.getProviderLink = Userfront.__get__("getProviderLink");
+    Signon.__ResetDependency__("getProviderLink");
+    Signon.getProviderLink = Signon.__get__("getProviderLink");
     window.location.assign.mockClear();
   });
 
   it("should throw if provider is missing", () => {
-    expect(() => Userfront.signupWithSSO()).toThrow("Missing provider");
-    expect(Userfront.getProviderLink).not.toHaveBeenCalled();
+    expect(() => Signon.signupWithSSO()).toThrow("Missing provider");
+    expect(Signon.getProviderLink).not.toHaveBeenCalled();
   });
 
   it("should get provider link and redirect", () => {
-    Userfront.signupWithSSO(provider);
+    Signon.signupWithSSO(provider);
 
     // Assert getProviderLink was called and user is redirected
-    expect(Userfront.getProviderLink).toHaveBeenCalledTimes(1);
-    expect(Userfront.getProviderLink).toHaveBeenCalledWith(provider);
+    expect(Signon.getProviderLink).toHaveBeenCalledTimes(1);
+    expect(Signon.getProviderLink).toHaveBeenCalledWith(provider);
     expect(window.location.assign).toHaveBeenCalledTimes(1);
     expect(window.location.assign).toHaveBeenCalledWith(loginUrl);
   });
@@ -91,34 +93,34 @@ describe("loginWithSSO", () => {
 
   beforeAll(() => {
     // Expose non-exported function
-    Userfront.loginWithSSO = Userfront.__get__("loginWithSSO");
+    Signon.loginWithSSO = Signon.__get__("loginWithSSO");
 
     // Mock getProviderLink
-    Userfront.__set__(
+    Signon.__set__(
       "getProviderLink",
       jest.fn(() => loginUrl)
     );
-    Userfront.getProviderLink = Userfront.__get__("getProviderLink");
+    Signon.getProviderLink = Signon.__get__("getProviderLink");
   });
 
   afterAll(() => {
     // Revert getProviderLink
-    Userfront.__ResetDependency__("getProviderLink");
-    Userfront.getProviderLink = Userfront.__get__("getProviderLink");
+    Signon.__ResetDependency__("getProviderLink");
+    Signon.getProviderLink = Signon.__get__("getProviderLink");
     window.location.assign.mockClear();
   });
 
   it("should throw if provider is missing", () => {
-    expect(() => Userfront.loginWithSSO()).toThrow("Missing provider");
-    expect(Userfront.getProviderLink).not.toHaveBeenCalled();
+    expect(() => Signon.loginWithSSO()).toThrow("Missing provider");
+    expect(Signon.getProviderLink).not.toHaveBeenCalled();
   });
 
   it("should get provider link and redirect", () => {
-    Userfront.loginWithSSO(provider);
+    Signon.loginWithSSO(provider);
 
     // Assert getProviderLink was called and user is redirected
-    expect(Userfront.getProviderLink).toHaveBeenCalledTimes(1);
-    expect(Userfront.getProviderLink).toHaveBeenCalledWith(provider);
+    expect(Signon.getProviderLink).toHaveBeenCalledTimes(1);
+    expect(Signon.getProviderLink).toHaveBeenCalledWith(provider);
     expect(window.location.assign).toHaveBeenCalledTimes(1);
     expect(window.location.assign).toHaveBeenCalledWith(loginUrl);
   });
@@ -132,23 +134,21 @@ describe("getProviderLink", () => {
     `origin=${window.location.origin}`;
 
   it("should throw if provider is missing", () => {
-    expect(() => Userfront.getProviderLink()).toThrow("Missing provider");
+    expect(() => Signon.getProviderLink()).toThrow("Missing provider");
   });
 
   it("should throw if tenant ID is missing", () => {
-    Userfront.store.tenantId = "";
-    expect(() => Userfront.getProviderLink(provider)).toThrow(
-      "Missing tenant ID"
-    );
+    store.tenantId = "";
+    expect(() => Signon.getProviderLink(provider)).toThrow("Missing tenant ID");
 
     // Revert tenantId
-    Userfront.store.tenantId = tenantId;
+    store.tenantId = tenantId;
   });
 
   it("should return link with correct tenant_id, and origin", () => {
     window.location.href = "https://example.com/login";
 
-    const url = Userfront.getProviderLink(provider);
+    const url = Signon.getProviderLink(provider);
     expect(getQueryAttr(url, "tenant_id")).toEqual(tenantId);
     expect(getQueryAttr(url, "origin")).toEqual(window.location.origin);
     expect(getQueryAttr(url, "redirect")).toBeUndefined();
@@ -163,7 +163,7 @@ describe("getProviderLink", () => {
     );
     loginUrl += `&redirect=${redirectParam}`;
 
-    const url = Userfront.getProviderLink(provider);
+    const url = Signon.getProviderLink(provider);
     expect(getQueryAttr(url, "tenant_id")).toEqual(tenantId);
     expect(getQueryAttr(url, "origin")).toEqual(window.location.origin);
     expect(getQueryAttr(url, "redirect")).toEqual("/dashboard");

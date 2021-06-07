@@ -1,27 +1,22 @@
 import axios from "axios";
 import jwt from "jsonwebtoken";
+
 import { apiUrl } from "./constants.js";
+import { refresh } from "./refresh.js";
+import { store } from "./store.js";
 
 /**
- * Create a user object based on ID token
- * @param {Object} options
- * @property {Object} options.store Userfront store
- * @property {Function} options.afterUpdate Function to call after update is finished
- * @returns {Object}
+ * Define the store.user object based on the ID token
  */
-export default ({ store, afterUpdate }) => {
+export function setUser() {
   if (!store.idToken) {
-    throw new Error("User: Missing ID token");
-  }
-  if (!store.accessToken) {
-    throw new Error("User: Missing access token");
+    return console.warn("Cannot define user: missing ID token");
   }
 
-  const user = {};
   const decodedIdToken = jwt.decode(store.idToken);
 
   // Set basic user information properties from ID token
-  const idTokenProps = [
+  const propsToDefine = [
     "email",
     "username",
     "name",
@@ -36,41 +31,35 @@ export default ({ store, afterUpdate }) => {
     "tenantId",
     "isConfirmed",
   ];
-  for (const prop of idTokenProps) {
-    user[prop] = decodedIdToken[prop];
+  for (const prop of propsToDefine) {
+    if (prop === "update") return;
+    store.user[prop] = decodedIdToken[prop];
   }
-  return {
-    ...user,
-    /**
-     * Update user information via Userfront API
-     * @param {Object} updates User properties to update e.g. { name: 'John Doe' }
-     * @returns {Promise<void>}
-     */
-    async update(updates) {
-      if (!decodedIdToken.userId) {
-        throw new Error("API resource update error: Missing ID");
-      }
-      if (!updates || Object.keys(updates).length < 1) {
-        throw new Error("Missing user properties to update");
-      }
+}
 
-      try {
-        await axios.put({
-          url: `${apiUrl}tenants/${store.tenantId}/users/${decodedIdToken.userId}`,
-          headers: {
-            authorization: `Bearer ${store.accessToken}`,
-          },
-          payload: updates,
-        });
-      } catch (error) {
-        throw new Error(error.message);
-      }
+/**
+ * Update the user record on Userfront
+ * @param {Object} payload User properties to update e.g. { name: 'John Doe' }
+ */
+export async function update(payload) {
+  if (!payload || Object.keys(payload).length < 1) {
+    return console.warn("Missing user properties to update");
+  }
 
-      if (afterUpdate && typeof afterUpdate === "function") {
-        afterUpdate();
-      }
-
-      return Promise.resolve();
+  // Make request to update the user
+  await axios.put({
+    url: `${apiUrl}self`,
+    headers: {
+      authorization: `Bearer ${store.accessToken}`,
     },
-  };
-};
+    payload,
+  });
+
+  // Refresh the access and ID tokens
+  await refresh();
+
+  // Set the store.user object from the ID token
+  setUser();
+
+  return store.user;
+}

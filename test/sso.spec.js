@@ -18,10 +18,14 @@ window.location = {
 };
 
 const tenantId = "abcdefg";
-Userfront.init(tenantId);
 let revertGetProviderLink;
 
 describe("SSO", () => {
+  beforeAll(() => {
+    Userfront.__set__("setUser", jest.fn());
+    Userfront.init(tenantId);
+  });
+
   describe("Signup", () => {
     let signupWithSSOSpy;
 

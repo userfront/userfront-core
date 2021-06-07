@@ -11,6 +11,7 @@ import {
 import { logout } from "./logout.js";
 import { setMode } from "./mode.js";
 import { setIframe } from "./iframe.js";
+import { user, setUser } from "./user.js";
 import { isTestHostname } from "./utils.js";
 
 let initCallbacks = [];
@@ -27,6 +28,11 @@ function init(tenantId) {
   store.refreshTokenName = `refresh.${tenantId}`;
   setIframe();
   setTokensFromCookies();
+
+  if (store.idToken) {
+    setUser();
+  }
+
   try {
     if (initCallbacks.length > 0) {
       initCallbacks.forEach((cb) => {
@@ -48,6 +54,7 @@ function addInitCallback(cb) {
 }
 
 /**
+
  * Register a window-level event called "urlchanged" that will fire
  * whenever the browser URL changes.
  */
@@ -82,20 +89,6 @@ function registerUrlChangedEventListener() {
  * EXPORTS
  */
 
-// export { logout } from "./logout.js";
-// export { setMode } from "./mode";
-// export {
-//   login,
-//   resetPassword,
-//   sendLoginLink,
-//   sendResetLink,
-//   signup,
-// } from "./signon.js";
-// export { store } from "./store";
-// export { accessToken, idToken } from "./tokens";
-// export { redirectIfLoggedIn } from "./url.js";
-// export { isTestHostname } from "./utils.js";
-
 export default {
   // index
   addInitCallback,
@@ -124,6 +117,9 @@ export default {
 
   // url
   redirectIfLoggedIn,
+
+  // user
+  user,
 
   // utils
   isTestHostname,

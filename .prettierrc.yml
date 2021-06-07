@@ -1,0 +1,23 @@
+# VSCode Prettier extension: https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode
+
+# These are the default options as of 2021: https://prettier.io/docs/en/options.html
+arrowParens: "always"
+bracketSpacing: true
+embeddedLanguageFormatting: "auto"
+endOfLine: "lf"
+eslintIntegration: true
+htmlWhitespaceSensitivity: "css"
+ignorePath: ".prettierignore"
+jsxBracketSameLine: false
+jsxSingleQuote: false
+printWidth: 80
+proseWrap: "preserve"
+requireConfig: false
+semi: true
+singleQuote: false
+stylelintIntegration: false
+tabWidth: 2
+trailingComma: "es5"
+tslintIntegration: false
+useTabs: false
+vueIndentScriptAndStyle: false

@@ -86,7 +86,7 @@ describe("User", () => {
 
   describe("user.update()", () => {
     it("should update user's information via API", async () => {
-      const updates = {
+      const payload = {
         username: "john-doe-updated",
         data: {
           country: "Spain",
@@ -94,15 +94,13 @@ describe("User", () => {
       };
 
       // Call the update method
-      await Userfront.user.update(updates);
+      await Userfront.user.update(payload);
 
       // Should have made API request
-      expect(axios.put).toBeCalledWith({
-        url: `${apiUrl}self`,
+      expect(axios.put).toBeCalledWith(`${apiUrl}self`, payload, {
         headers: {
           authorization: `Bearer ${Userfront.store.accessToken}`,
         },
-        payload: updates,
       });
 
       // Should have called `refresh` function
@@ -164,12 +162,10 @@ describe("User", () => {
       expect(Userfront.user.update(payload)).rejects.toThrow("Bad Request");
 
       // Should have made "update user" API request
-      expect(axios.put).toBeCalledWith({
-        url: `${apiUrl}self`,
+      expect(axios.put).toBeCalledWith(`${apiUrl}self`, payload, {
         headers: {
           authorization: `Bearer ${originalTokens.accessToken}`,
         },
-        payload,
       });
 
       // Assert user was not modified

@@ -48,12 +48,10 @@ export async function update(payload) {
   }
 
   // Make request to update the user
-  await axios.put({
-    url: `${apiUrl}self`,
+  await axios.put(`${apiUrl}self`, payload, {
     headers: {
       authorization: `Bearer ${store.accessToken}`,
     },
-    payload,
   });
 
   // Refresh the access and ID tokens

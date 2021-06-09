@@ -10,7 +10,7 @@ import { getQueryAttr } from "./url.js";
  * methods, depending on the "method" parameter passed in.
  * @param {Object} options
  */
-export async function signup({ method, username, name, email, password }) {
+export async function signup({ method, username, name, email, password } = {}) {
   if (!method) {
     throw new Error('Userfront.signup called without "method" property');
   }
@@ -55,6 +55,8 @@ async function signupWithPassword({ username, name, email, password }) {
 
   if (data.tokens) {
     setCookiesAndTokens(data.tokens);
+    // TODO add test for nonce exchange as part of signup/login
+    // await exchange(data);
     redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/");
   } else {
     throw new Error("Please try again.");
@@ -74,7 +76,7 @@ export async function login({
   password,
   token,
   uuid,
-}) {
+} = {}) {
   if (!method) {
     throw new Error('Userfront.login called without "method" property');
   }
@@ -105,7 +107,7 @@ function loginWithSSO(provider) {
   window.location.assign(url);
 }
 
-function getProviderLink(provider) {
+export function getProviderLink(provider) {
   if (!provider) throw new Error("Missing provider");
   if (!store.tenantId) throw new Error("Missing tenant ID");
 

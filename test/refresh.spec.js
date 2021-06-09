@@ -5,7 +5,7 @@ import { getIframe, triageEvent, resolvers } from "../src/iframe.js";
 import { refresh } from "../src/refresh.js";
 import { setCookiesAndTokens } from "../src/cookies.js";
 
-jest.mock("../src/cookies", () => {
+jest.mock("../src/cookies.js", () => {
   return {
     __esModule: true,
     setCookiesAndTokens: jest.fn(),

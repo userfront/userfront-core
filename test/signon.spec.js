@@ -1,8 +1,17 @@
+import axios from "axios";
 import Userfront from "../src/index.js";
-import { signup, login, getProviderLink } from "../src/signon.js";
-import { store } from "../src/store.js";
+import { signup, login } from "../src/signon.js";
+import { exchange } from "../src/refresh.js";
 
-const tenantId = "abcdefg";
+jest.mock("../src/refresh.js", () => {
+  return {
+    __esModule: true,
+    exchange: jest.fn(),
+  };
+});
+jest.mock("axios");
+
+const tenantId = "abcd9876";
 Userfront.init(tenantId);
 
 // Using `window.location.assign` rather than `window.location.href =` because
@@ -17,17 +26,63 @@ window.location = {
 };
 
 describe("signup", () => {
+  afterEach(() => {
+    window.location.assign.mockClear();
+  });
+  describe("with username & password", () => {
+    it("should send a request, set access and ID cookies, and initiate nonce exchange", async () => {
+      // Mock the API response
+      const mockResponse = {
+        data: {
+          tokens: {
+            id: { value: "id-token-value" },
+            access: { value: "access-token-value" },
+            refresh: { value: "refresh-token-value" },
+          },
+          nonce: "nonce-value",
+          redirectTo: "/path",
+        },
+      };
+      axios.post.mockImplementationOnce(() => mockResponse);
+
+      // Call signup()
+      const payload = {
+        email: "someone@example.com",
+        name: "Someone",
+        password: "something",
+      };
+      await signup({
+        method: "password",
+        ...payload,
+      });
+
+      // Should have sent the proper API request
+      expect(axios.post).toHaveBeenCalledWith(
+        `https://api.userfront.com/v0/auth/create`,
+        {
+          tenantId,
+          username: undefined,
+          ...payload,
+        }
+      );
+
+      // Should have called exchange() with the API's response
+      expect(exchange).toHaveBeenCalledWith(mockResponse.data);
+
+      // Should have redirected correctly
+      expect(window.location.assign).toHaveBeenCalledWith(
+        mockResponse.data.redirectTo
+      );
+    });
+  });
+
   describe("with an SSO provider", () => {
     const provider = "github";
     const loginUrl = `https://api.userfront.com/v0/auth/${provider}/login?tenant_id=${tenantId}&origin=${window.location.origin}`;
 
-    afterAll(() => {
-      window.location.assign.mockClear();
-    });
-
     it("should throw if provider is missing", () => {
       expect(signup()).rejects.toEqual(
-        new Error(`Userfront.signup called without "method" property`)
+        `Userfront.signup called without "method" property`
       );
       expect(window.location.assign).not.toHaveBeenCalled();
     });
@@ -43,17 +98,62 @@ describe("signup", () => {
 });
 
 describe("login", () => {
+  afterEach(() => {
+    window.location.assign.mockClear();
+  });
+
+  describe("with username & password", () => {
+    it("should send a request, set access and ID cookies, and initiate nonce exchange", async () => {
+      // Mock the API response
+      const mockResponse = {
+        data: {
+          tokens: {
+            id: { value: "id-token-value" },
+            access: { value: "access-token-value" },
+            refresh: { value: "refresh-token-value" },
+          },
+          nonce: "nonce-value",
+          redirectTo: "/dashboard",
+        },
+      };
+      axios.post.mockImplementationOnce(() => mockResponse);
+
+      // Call login()
+      const payload = {
+        emailOrUsername: "someone@example.com",
+        password: "something",
+      };
+      await login({
+        method: "password",
+        ...payload,
+      });
+
+      // Should have sent the proper API request
+      expect(axios.post).toHaveBeenCalledWith(
+        `https://api.userfront.com/v0/auth/basic`,
+        {
+          tenantId,
+          ...payload,
+        }
+      );
+
+      // Should have called exchange() with the API's response
+      expect(exchange).toHaveBeenCalledWith(mockResponse.data);
+
+      // Should have redirected correctly
+      expect(window.location.assign).toHaveBeenCalledWith(
+        mockResponse.data.redirectTo
+      );
+    });
+  });
+
   describe("with an SSO provider", () => {
     const provider = "google";
     const loginUrl = `https://api.userfront.com/v0/auth/${provider}/login?tenant_id=${tenantId}&origin=${window.location.origin}`;
 
-    afterAll(() => {
-      window.location.assign.mockClear();
-    });
-
     it("should throw if provider is missing", () => {
       expect(login()).rejects.toEqual(
-        new Error(`Userfront.login called without "method" property`)
+        `Userfront.login called without "method" property`
       );
       expect(window.location.assign).not.toHaveBeenCalled();
     });

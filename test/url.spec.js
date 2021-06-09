@@ -7,7 +7,7 @@ import { apiUrl } from "../src/constants.js";
 import { removeAllCookies } from "../src/cookies.js";
 import { store } from "../src/store.js";
 
-jest.mock("../src/cookies", () => {
+jest.mock("../src/cookies.js", () => {
   return {
     __esModule: true,
     removeAllCookies: jest.fn(),

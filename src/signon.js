@@ -1,5 +1,9 @@
+import axios from "axios";
+import { apiUrl } from "./constants.js";
+import { setCookiesAndTokens } from "./cookies.js";
 import { store } from "./store.js";
-import { getQueryAttr } from "./url.js";
+import { getQueryAttr, redirectToPath } from "./url.js";
+import { exchange } from "./refresh.js";
 
 /**
  * This file has methods for signing up and logging in
@@ -12,7 +16,7 @@ import { getQueryAttr } from "./url.js";
  */
 export async function signup({ method, username, name, email, password } = {}) {
   if (!method) {
-    throw new Error('Userfront.signup called without "method" property');
+    return Promise.reject('Userfront.signup called without "method" property');
   }
   switch (method) {
     case "azure":
@@ -24,7 +28,9 @@ export async function signup({ method, username, name, email, password } = {}) {
     case "password":
       return signupWithPassword({ username, name, email, password });
     default:
-      throw new Error('Userfront.signup called with invalid "method" property');
+      return Promise.reject(
+        'Userfront.signup called with invalid "method" property'
+      );
   }
 }
 
@@ -56,7 +62,7 @@ async function signupWithPassword({ username, name, email, password }) {
   if (data.tokens) {
     setCookiesAndTokens(data.tokens);
     // TODO add test for nonce exchange as part of signup/login
-    // await exchange(data);
+    await exchange(data);
     redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/");
   } else {
     throw new Error("Please try again.");
@@ -78,7 +84,7 @@ export async function login({
   uuid,
 } = {}) {
   if (!method) {
-    throw new Error('Userfront.login called without "method" property');
+    return Promise.reject('Userfront.login called without "method" property');
   }
   switch (method) {
     case "azure":
@@ -92,7 +98,9 @@ export async function login({
     case "link":
       return loginWithLink(token, uuid);
     default:
-      throw new Error('Userfront.login called with invalid "method" property');
+      return Promise.reject(
+        'Userfront.login called with invalid "method" property'
+      );
   }
 }
 
@@ -139,6 +147,7 @@ async function loginWithPassword({
   });
   if (data.tokens) {
     setCookiesAndTokens(data.tokens);
+    await exchange(data);
     redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/");
   } else {
     throw new Error("Please try again.");

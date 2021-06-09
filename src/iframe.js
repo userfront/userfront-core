@@ -44,8 +44,7 @@ export function triageEvent(e) {
 
   switch (e.data.type) {
     case "exchange":
-      console.log("exchange");
-      break;
+      return; // No action needed for successful exchange.
     case "refresh":
       setCookiesAndTokens(e.data.body.tokens);
       break;

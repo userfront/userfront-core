@@ -13,6 +13,22 @@ export async function refresh() {
   );
 }
 
+export async function exchange({ session, nonce }) {
+  const iframe = getIframe();
+  if (!iframe) return;
+  iframe.contentWindow.postMessage(
+    {
+      type: "exchange",
+      tenantId: store.tenantId,
+      payload: {
+        session,
+        nonce,
+      },
+    },
+    "https://auth.userfront.net"
+  );
+}
+
 // async function refresh() {
 //   const res = await axios.get({
 //     url: `${apiUrl}auth/refresh`,

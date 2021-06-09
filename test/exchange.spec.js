@@ -1,7 +1,7 @@
 import utils from "./config/utils.js";
 import Userfront from "../src/index.js";
 
-import { getIframe, triageEvent } from "../src/iframe.js";
+import { getIframe, triageEvent, resolvers } from "../src/iframe.js";
 import { exchange } from "../src/refresh.js";
 import { setCookiesAndTokens } from "../src/cookies.js";
 
@@ -22,7 +22,10 @@ describe("exchange method", () => {
     const promise = new Promise((resolve) => {
       resolver = resolve;
     });
+    let messageId;
     iframe.contentWindow.addEventListener("message", async (e) => {
+      messageId = e.data.messageId;
+      resolvers[messageId].resolve();
       resolver(e.data);
     });
 
@@ -31,10 +34,12 @@ describe("exchange method", () => {
       session: "aaa96052-4136-4897-9863-046a4bb918ca",
       nonce: "bbb96052-4136-4897-9863-046a4bb918ca",
     };
+
     await exchange(payload);
 
     // Should have sent correct info into the iframe
     await expect(promise).resolves.toEqual({
+      messageId,
       type: "exchange",
       tenantId,
       payload,

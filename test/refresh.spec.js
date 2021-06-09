@@ -1,7 +1,7 @@
 import utils from "./config/utils.js";
 import Userfront from "../src/index.js";
 
-import { getIframe, triageEvent } from "../src/iframe.js";
+import { getIframe, triageEvent, resolvers } from "../src/iframe.js";
 import { refresh } from "../src/refresh.js";
 import { setCookiesAndTokens } from "../src/cookies.js";
 
@@ -30,7 +30,10 @@ describe("refresh method", () => {
     const promise = new Promise((resolve) => {
       resolver = resolve;
     });
+    let messageId;
     iframe.contentWindow.addEventListener("message", async (e) => {
+      messageId = e.data.messageId;
+      resolvers[messageId].resolve();
       resolver(e.data);
     });
 
@@ -38,7 +41,11 @@ describe("refresh method", () => {
     await refresh();
 
     // Should have sent correct info into the iframe
-    await expect(promise).resolves.toEqual({ type: "refresh", tenantId });
+    await expect(promise).resolves.toEqual({
+      type: "refresh",
+      tenantId,
+      messageId,
+    });
   });
 
   it("should set tokens correctly based on iframe response", async () => {

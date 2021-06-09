@@ -1,3 +1,4 @@
+import { store } from "./store.js";
 import { getIframe } from "./iframe.js";
 
 export async function refresh() {
@@ -6,8 +7,9 @@ export async function refresh() {
   iframe.contentWindow.postMessage(
     {
       type: "refresh",
+      tenantId: store.tenantId,
     },
-    "*"
+    "https://auth.userfront.net"
   );
 }
 

@@ -12,7 +12,7 @@ jest.mock("../src/cookies", () => {
   };
 });
 
-const tenantId = "abcdefg";
+const tenantId = "abcd4321";
 
 describe("refresh method", () => {
   afterEach(() => {
@@ -38,7 +38,7 @@ describe("refresh method", () => {
     await refresh();
 
     // Should have sent correct info into the iframe
-    await expect(promise).resolves.toEqual({ type: "refresh" });
+    await expect(promise).resolves.toEqual({ type: "refresh", tenantId });
   });
 
   it("should set tokens correctly based on iframe response", async () => {

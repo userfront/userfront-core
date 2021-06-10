@@ -1,9 +1,8 @@
 import utils from "./config/utils.js";
 import Userfront from "../src/index.js";
 
-import { getIframe, triageEvent, resolvers } from "../src/iframe.js";
+import { getIframe, resolvers } from "../src/iframe.js";
 import { exchange } from "../src/refresh.js";
-import { setCookiesAndTokens } from "../src/cookies.js";
 
 const tenantId = "abcd4321";
 

@@ -77,6 +77,11 @@ export async function postMessageAsPromise(message) {
   message.messageId = messageId;
   iframe.contentWindow.postMessage(message, iframeOrigin);
 
+  // Remove the promise from resolvers in 1 minute
+  setTimeout(() => {
+    delete resolvers[messageId];
+  }, 60000);
+
   // Return the promise
   return promise;
 }
@@ -103,7 +108,7 @@ export function triageEvent(e) {
       resolve(e);
       return;
     case "logout":
-      console.log("logout");
+      resolve(e); // Logout method handles the rest
       break;
     default:
       return;

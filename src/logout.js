@@ -1,24 +1,25 @@
-import axios from "axios";
-
-import { apiUrl } from "./constants";
+import { getIframe, postMessageAsPromise } from "./iframe.js";
 import { store } from "./store.js";
 import { removeAllCookies } from "./cookies.js";
+import { setTokensFromCookies } from "./tokens.js";
 import { redirectToPath } from "./url";
 
 /**
  * Log a user out and redirect to the logout path.
  */
 export async function logout() {
-  if (!store.accessToken) return removeAllCookies();
+  const iframe = getIframe();
+  if (!iframe) return;
   try {
-    const { data } = await axios.get(`${apiUrl}auth/logout`, {
-      headers: {
-        authorization: `Bearer ${store.accessToken}`,
-      },
+    const { data } = await postMessageAsPromise({
+      type: "logout",
+      tenantId: store.tenantId,
     });
     removeAllCookies();
-    redirectToPath(data.redirectTo);
-  } catch (err) {
+    setTokensFromCookies();
+    redirectToPath(data.redirectTo || "/");
+  } catch (error) {
     removeAllCookies();
+    redirectToPath("/");
   }
 }

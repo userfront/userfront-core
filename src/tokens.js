@@ -26,9 +26,7 @@ export function setTokensFromCookies() {
   tokenNames.map((tokenName) => {
     try {
       const token = Cookies.get(store[`${tokenName}TokenName`]);
-      if (!!token) {
-        store[`${tokenName}Token`] = token;
-      }
+      store[`${tokenName}Token`] = token;
     } catch (error) {
       console.warn(`Problem setting ${tokenName} token.`);
     }

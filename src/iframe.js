@@ -1,7 +1,7 @@
 import { setCookiesAndTokens } from "./cookies.js";
 
-const frameUrl = "https://auth.userfront.net";
-const frameId = "uf-auth-frame";
+export const iframeOrigin = "https://auth.userfront.net";
+const iframeId = "uf-auth-frame";
 
 let iframe;
 
@@ -13,8 +13,8 @@ export function setIframe() {
   try {
     if (iframe) return;
     iframe = document.createElement("iframe");
-    iframe.src = frameUrl;
-    iframe.id = frameId;
+    iframe.src = iframeOrigin;
+    iframe.id = iframeId;
     iframe.style.width = "0px";
     iframe.style.height = "0px";
     iframe.style.display = "none";
@@ -31,24 +31,77 @@ export function getIframe() {
 }
 
 /**
+ * Object containing promise resolve functions associated
+ * with each message sent into the iframe.
+ *
+ * Exported for testing purposes.
+ */
+export const resolvers = {};
+
+/**
+ * Resolve the promise associated with an event
+ * @param {Object} e
+ */
+function resolve(e) {
+  try {
+    resolvers[e.data.messageId].resolve(e.data);
+  } catch (error) {}
+}
+
+/**
+ * Reject the promise associated with an event
+ * @param {Object} e
+ */
+function reject(e) {
+  try {
+    resolvers[e.data.messageId].reject();
+  } catch (error) {}
+}
+
+/**
+ * Post a message to the iframe and return a promise that
+ * will be resolved when the iframe responds.
+ * @param {Object} message
+ * @returns {Promise}
+ */
+export async function postMessageAsPromise(message) {
+  // Create a random messageId
+  const messageId = `message${Math.random().toString().slice(2, 10)}`;
+
+  // Create a promise to resolve after the iframe responds
+  const promise = new Promise((resolve, reject) => {
+    resolvers[messageId] = { resolve, reject };
+  });
+
+  // Post the message with the messageId
+  message.messageId = messageId;
+  iframe.contentWindow.postMessage(message, iframeOrigin);
+
+  // Return the promise
+  return promise;
+}
+
+/**
  * Separated this call out from addIframeMessageListener
  * in order to make it testable.
  *
- * @param {*} e - iframe event
+ * @param {Object} e - iframe event
  */
 export function triageEvent(e) {
-  if (!e || e.origin !== frameUrl || !e.data || !e.data.type) return;
+  if (!e || e.origin !== iframeOrigin || !e.data || !e.data.type) return;
   if (e.data.status !== 200 && e.data.type !== "logout") {
-    return console.warn(`Problem with ${e.data.type} request.`);
+    console.warn(`Problem with ${e.data.type} request.`);
+    return reject(e);
   }
 
   switch (e.data.type) {
     case "exchange":
-      console.log("exchange");
-      break;
+      resolve(e); // No further action needed for exchange
+      return;
     case "refresh":
       setCookiesAndTokens(e.data.body.tokens);
-      break;
+      resolve(e);
+      return;
     case "logout":
       console.log("logout");
       break;

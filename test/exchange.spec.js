@@ -30,7 +30,7 @@ describe("exchange method", () => {
 
     // Call exchange()
     const payload = {
-      session: "aaa96052-4136-4897-9863-046a4bb918ca",
+      sessionId: "aaa96052-4136-4897-9863-046a4bb918ca",
       nonce: "bbb96052-4136-4897-9863-046a4bb918ca",
     };
 

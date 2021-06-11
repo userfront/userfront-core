@@ -15,20 +15,19 @@ export async function refresh() {
 }
 
 /**
- * Use a session and nonce to set the iframe refresh token
- * @param {String} session
+ * Use a sessionId and nonce to set the iframe refresh token
+ * @param {String} sessionId
  * @param {String} nonce
  * @returns {Promise}
  */
-export async function exchange({ session, nonce }) {
+export async function exchange({ sessionId, nonce }) {
   const iframe = getIframe();
-  console.log("exchange", iframe);
   if (!iframe) return;
   return postMessageAsPromise({
     type: "exchange",
     tenantId: store.tenantId,
     payload: {
-      session,
+      sessionId,
       nonce,
     },
   });

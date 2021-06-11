@@ -1,18 +1,18 @@
 import axios from "axios";
 import jwt from "jsonwebtoken";
-import { JwksClient } from "jwks-rsa";
+// import { JwksClient } from "jwks-rsa";
 
 import utils from "./config/utils.js";
 import Userfront from "../src/index.js";
 import { apiUrl } from "../src/constants.js";
 
 jest.mock("axios");
-jest.mock("jwks-rsa", () => {
-  return {
-    __esModule: true,
-    JwksClient: jest.fn(),
-  };
-});
+// jest.mock("jwks-rsa", () => {
+//   return {
+//     __esModule: true,
+//     JwksClient: jest.fn(),
+//   };
+// });
 
 // prettier-ignore
 const mockPublicKey = "mock-public-key"

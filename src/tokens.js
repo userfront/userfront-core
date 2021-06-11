@@ -33,41 +33,44 @@ export function setTokensFromCookies() {
   });
 }
 
+// NOTE Commenting this out 6/11/21 because the packages it relies on (jsonwebtoken & jwks-rsa)
+// both cause a lot of bloat. If we want to verify tokens, this is a nice way to do it, but
+// we need to find libraries designed for the browser instead of node.
 /**
  * Verify the provided token
  * @param {String} token
  * @returns {Promise<void>} The provided token has been verified if `verifyToken` resolves without error
  */
-export async function verifyToken(token) {
-  if (!token) throw new Error("Missing token");
+// export async function verifyToken(token) {
+//   if (!token) throw new Error("Missing token");
 
-  let publicKey;
-  try {
-    const decodedToken = jwt.decode(token, { complete: true });
-    if (!decodedToken.header || !decodedToken.header.kid) {
-      throw new Error("Token kid not defined");
-    }
+//   let publicKey;
+//   try {
+//     const decodedToken = jwt.decode(token, { complete: true });
+//     if (!decodedToken.header || !decodedToken.header.kid) {
+//       throw new Error("Token kid not defined");
+//     }
 
-    const client = new JwksClient({
-      jwksUri: `${apiUrl}tenants/${store.tenantId}/jwks/${store.mode}`,
-      requestHeaders: { origin: window.location.origin },
-    });
+//     const client = new JwksClient({
+//       jwksUri: `${apiUrl}tenants/${store.tenantId}/jwks/${store.mode}`,
+//       requestHeaders: { origin: window.location.origin },
+//     });
 
-    const key = await client.getSigningKey(decodedToken.header.kid);
-    publicKey = key.getPublicKey();
-  } catch (error) {
-    throw error;
-  }
+//     const key = await client.getSigningKey(decodedToken.header.kid);
+//     publicKey = key.getPublicKey();
+//   } catch (error) {
+//     throw error;
+//   }
 
-  if (!publicKey) {
-    throw new Error("Public key not found");
-  }
+//   if (!publicKey) {
+//     throw new Error("Public key not found");
+//   }
 
-  try {
-    jwt.verify(token, publicKey);
-  } catch (error) {
-    throw new Error("Token verification failed");
-  }
+//   try {
+//     jwt.verify(token, publicKey);
+//   } catch (error) {
+//     throw new Error("Token verification failed");
+//   }
 
-  return Promise.resolve();
-}
+//   return Promise.resolve();
+// }

@@ -1,9 +1,8 @@
 import axios from "axios";
-import jwt from "jsonwebtoken";
-
 import { apiUrl } from "./constants.js";
 import { refresh } from "./refresh.js";
 import { store } from "./store.js";
+import { getJWTPayload } from "./utils.js";
 
 /**
  * Define the store.user object based on the ID token
@@ -14,7 +13,7 @@ export function setUser() {
   }
 
   store.user = store.user || {};
-  const decodedIdToken = jwt.decode(store.idToken);
+  const idTokenPayload = getJWTPayload(store.idToken);
 
   // Set basic user information properties from ID token
   const propsToDefine = [
@@ -34,7 +33,7 @@ export function setUser() {
   ];
   for (const prop of propsToDefine) {
     if (prop === "update") return;
-    store.user[prop] = decodedIdToken[prop];
+    store.user[prop] = idTokenPayload[prop];
   }
 }
 

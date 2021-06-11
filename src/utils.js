@@ -18,3 +18,18 @@ export function isTestHostname(hn) {
     return true;
   }
 }
+
+/**
+ * Get the unverified base64 decoded payload of a JWT
+ *
+ * @param {String} token - JSON Web Token
+ * @returns {Object}
+ */
+export function getJWTPayload(token) {
+  try {
+    const encodedPayload = token.split(".")[1];
+    return JSON.parse(atob(encodedPayload));
+  } catch (error) {
+    console.error("Problem decoding JWT payload", error);
+  }
+}

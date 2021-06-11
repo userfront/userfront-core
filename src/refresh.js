@@ -22,6 +22,7 @@ export async function refresh() {
  */
 export async function exchange({ session, nonce }) {
   const iframe = getIframe();
+  console.log("exchange", iframe);
   if (!iframe) return;
   return postMessageAsPromise({
     type: "exchange",

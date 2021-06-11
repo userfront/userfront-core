@@ -86,6 +86,7 @@ export async function login({
   if (!method) {
     return Promise.reject('Userfront.login called without "method" property');
   }
+  console.log("Logging in with " + method);
   switch (method) {
     case "azure":
     case "facebook":

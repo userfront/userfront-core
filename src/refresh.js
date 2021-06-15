@@ -6,12 +6,16 @@ import { getIframe, postMessageAsPromise } from "./iframe.js";
  * @returns {Promise}
  */
 export async function refresh() {
-  const iframe = getIframe();
-  if (!iframe) return;
-  return postMessageAsPromise({
-    type: "refresh",
-    tenantId: store.tenantId,
-  });
+  return;
+
+  // TODO re-enable refresh method once new endpoints are stable [06/15/21]
+  // --------------------------
+  // const iframe = getIframe();
+  // if (!iframe) return;
+  // return postMessageAsPromise({
+  //   type: "refresh",
+  //   tenantId: store.tenantId,
+  // });
 }
 
 /**
@@ -21,14 +25,18 @@ export async function refresh() {
  * @returns {Promise}
  */
 export async function exchange({ sessionId, nonce }) {
-  const iframe = getIframe();
-  if (!iframe) return;
-  return postMessageAsPromise({
-    type: "exchange",
-    tenantId: store.tenantId,
-    payload: {
-      sessionId,
-      nonce,
-    },
-  });
+  return;
+
+  // TODO re-enable exchange method once new endpoints are stable [06/15/21]
+  // --------------------------
+  // const iframe = getIframe();
+  // if (!iframe) return;
+  // return postMessageAsPromise({
+  //   type: "exchange",
+  //   tenantId: store.tenantId,
+  //   payload: {
+  //     sessionId,
+  //     nonce,
+  //   },
+  // });
 }

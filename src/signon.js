@@ -61,7 +61,6 @@ async function signupWithPassword({ username, name, email, password }) {
 
   if (data.tokens) {
     setCookiesAndTokens(data.tokens);
-    // TODO add test for nonce exchange as part of signup/login
     await exchange(data);
     redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/");
   } else {

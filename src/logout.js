@@ -1,3 +1,6 @@
+import axios from "axios";
+import { apiUrl } from "./constants.js";
+
 import { getIframe, postMessageAsPromise } from "./iframe.js";
 import { store } from "./store.js";
 import { removeAllCookies } from "./cookies.js";
@@ -8,18 +11,33 @@ import { redirectToPath } from "./url";
  * Log a user out and redirect to the logout path.
  */
 export async function logout() {
-  const iframe = getIframe();
-  if (!iframe) return;
+  if (!store.accessToken) return removeAllCookies();
   try {
-    const { data } = await postMessageAsPromise({
-      type: "logout",
-      tenantId: store.tenantId,
+    const { data } = await axios.get(`${apiUrl}auth/logout`, {
+      headers: {
+        authorization: `Bearer ${store.accessToken}`,
+      },
     });
     removeAllCookies();
-    setTokensFromCookies();
-    redirectToPath(data.redirectTo || "/");
-  } catch (error) {
+    redirectToPath(data.redirectTo);
+  } catch (err) {
     removeAllCookies();
-    redirectToPath("/");
   }
+
+  // TODO re-enable exchange method once new endpoints are stable [06/15/21]
+  // --------------------------
+  // const iframe = getIframe();
+  // if (!iframe) return;
+  // try {
+  //   const { data } = await postMessageAsPromise({
+  //     type: "logout",
+  //     tenantId: store.tenantId,
+  //   });
+  //   removeAllCookies();
+  //   setTokensFromCookies();
+  //   redirectToPath(data.redirectTo || "/");
+  // } catch (error) {
+  //   removeAllCookies();
+  //   redirectToPath("/");
+  // }
 }

@@ -1,5 +1,6 @@
 import utils from "./config/utils.js";
 import Userfront from "../src/index.js";
+import Iframe from "../src/iframe.js";
 
 const tenantId = "abcdefg";
 
@@ -16,7 +17,10 @@ describe("iframe tests", () => {
     expect(frame.style.display).toEqual("none");
   });
 
-  it("init should not add duplicate iframe", () => {
+  it("init should not add duplicate iframe when one exists", () => {
+    // Clear the local iframe variable, but keep the iframe on the page
+    Iframe.__set__("iframe", undefined);
+
     const beforeCount = document.getElementsByTagName("iframe").length;
     expect(beforeCount).toEqual(1);
 

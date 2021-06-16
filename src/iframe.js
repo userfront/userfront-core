@@ -12,6 +12,12 @@ let iframe;
 export function setIframe() {
   try {
     if (iframe) return;
+    const existingIframe = document.getElementById(iframeId);
+    if (existingIframe) {
+      iframe = existingIframe;
+      addIframeMessageListener();
+      return;
+    }
     iframe = document.createElement("iframe");
     iframe.src = iframeOrigin;
     iframe.id = iframeId;
@@ -115,12 +121,15 @@ export function triageEvent(e) {
   }
 }
 
+let iframeMessageListenerWasAdded = false;
 /**
  * Add an event listener to the window that will accept messages
- * from the iframe.
+ * from the iframe. Repeat calls will not add more listeners.
  */
 function addIframeMessageListener() {
+  if (iframeMessageListenerWasAdded) return;
   try {
     window.addEventListener("message", triageEvent);
+    iframeMessageListenerWasAdded = true;
   } catch (error) {}
 }

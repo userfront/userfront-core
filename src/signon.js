@@ -13,9 +13,21 @@ import { throwFormattedError } from "./utils.js";
 /**
  * Register a user via the provided method. This method serves to call other
  * methods, depending on the "method" parameter passed in.
- * @param {Object} options
+ * @param {String} method
+ * @param {String} username
+ * @param {String} name
+ * @param {String} email
+ * @param {String} password
+ * @param {Object} data - Object for custom user fields
  */
-export async function signup({ method, username, name, email, password } = {}) {
+export async function signup({
+  method,
+  username,
+  name,
+  email,
+  password,
+  data,
+} = {}) {
   if (!method) {
     throw new Error('Userfront.signup called without "method" property.');
   }
@@ -27,7 +39,13 @@ export async function signup({ method, username, name, email, password } = {}) {
     case "linkedin":
       return signupWithSSO(method);
     case "password":
-      return signupWithPassword({ username, name, email, password });
+      return signupWithPassword({
+        username,
+        name,
+        email,
+        password,
+        userData: data,
+      });
     default:
       throw new Error(
         'Userfront.signup called with invalid "method" property.'
@@ -49,9 +67,19 @@ function signupWithSSO(provider) {
 /**
  * Register a new user with username, name, email, and password.
  * Redirect the browser after successful signup based on the redirectTo value returned.
- * @param {Object} options
+ * @param {String} username
+ * @param {String} name
+ * @param {String} email
+ * @param {String} password
+ * @param {Object} userData - alias for the user.data object, since "data" is used in the response
  */
-async function signupWithPassword({ username, name, email, password }) {
+async function signupWithPassword({
+  username,
+  name,
+  email,
+  password,
+  userData,
+}) {
   try {
     const { data } = await axios.post(`${apiUrl}auth/create`, {
       tenantId: store.tenantId,
@@ -59,6 +87,7 @@ async function signupWithPassword({ username, name, email, password }) {
       name,
       email,
       password,
+      data: userData,
     });
     if (data.tokens) {
       setCookiesAndTokens(data.tokens);

@@ -1,6 +1,12 @@
 import axios from "axios";
 import Userfront from "../src/index.js";
-import { signup, login } from "../src/signon.js";
+import {
+  signup,
+  login,
+  sendLoginLink,
+  sendResetLink,
+  resetPassword,
+} from "../src/signon.js";
 import { exchange } from "../src/refresh.js";
 
 jest.mock("../src/refresh.js", () => {
@@ -74,6 +80,27 @@ describe("signup", () => {
         mockResponse.data.redirectTo
       );
     });
+
+    it("should respond with whatever error the server sends", async () => {
+      // Mock the API response
+      const mockResponse = {
+        response: {
+          data: {
+            error: "Bad Request",
+            message: `That's a dumb email address.`,
+            statusCode: 400,
+          },
+        },
+      };
+      axios.post.mockImplementationOnce(() => Promise.reject(mockResponse));
+      expect(
+        signup({
+          method: "password",
+          email: "valid@example.com",
+          password: "somevalidpassword",
+        })
+      ).rejects.toEqual(new Error(mockResponse.response.data.message));
+    });
   });
 
   describe("with an SSO provider", () => {
@@ -82,7 +109,7 @@ describe("signup", () => {
 
     it("should throw if provider is missing", () => {
       expect(signup()).rejects.toEqual(
-        `Userfront.signup called without "method" property`
+        new Error(`Userfront.signup called without "method" property.`)
       );
       expect(window.location.assign).not.toHaveBeenCalled();
     });
@@ -145,6 +172,48 @@ describe("login", () => {
         mockResponse.data.redirectTo
       );
     });
+
+    it("password method error should respond with whatever error the server sends", async () => {
+      // Mock the API response
+      const mockResponse = {
+        response: {
+          data: {
+            error: "Bad Request",
+            message: `That's a dumb email address.`,
+            statusCode: 400,
+          },
+        },
+      };
+      axios.post.mockImplementationOnce(() => Promise.reject(mockResponse));
+      expect(
+        login({
+          method: "password",
+          email: "valid@example.com",
+          password: "somevalidpassword",
+        })
+      ).rejects.toEqual(new Error(mockResponse.response.data.message));
+    });
+
+    it("link method error should respond with whatever error the server sends", async () => {
+      // Mock the API response
+      const mockResponse = {
+        response: {
+          data: {
+            error: "Bad Request",
+            message: `That's a silly uuid.`,
+            statusCode: 400,
+          },
+        },
+      };
+      axios.put.mockImplementationOnce(() => Promise.reject(mockResponse));
+      expect(
+        login({
+          method: "link",
+          uuid: "uuid",
+          token: "token",
+        })
+      ).rejects.toEqual(new Error(mockResponse.response.data.message));
+    });
   });
 
   describe("with an SSO provider", () => {
@@ -153,7 +222,7 @@ describe("login", () => {
 
     it("should throw if provider is missing", () => {
       expect(login()).rejects.toEqual(
-        `Userfront.login called without "method" property`
+        new Error(`Userfront.login called without "method" property.`)
       );
       expect(window.location.assign).not.toHaveBeenCalled();
     });
@@ -165,5 +234,62 @@ describe("login", () => {
       expect(window.location.assign).toHaveBeenCalledTimes(1);
       expect(window.location.assign).toHaveBeenCalledWith(loginUrl);
     });
+  });
+});
+
+describe("sendLoginLink", () => {
+  it(`error should respond "Problem sending link"`, async () => {
+    // Mock the API response
+    const mockResponse = {
+      response: {
+        data: {
+          error: "Bad Request",
+          message: `That's a silly link request.`,
+          statusCode: 400,
+        },
+      },
+    };
+    axios.post.mockImplementationOnce(() => Promise.reject(mockResponse));
+    expect(sendLoginLink({ email: "email@example.com" })).rejects.toEqual(
+      new Error("Problem sending link.")
+    );
+  });
+});
+
+describe("sendResetLink", () => {
+  it(`error should respond "Problem sending link"`, async () => {
+    // Mock the API response
+    const mockResponse = {
+      response: {
+        data: {
+          error: "Bad Request",
+          message: `That's a silly link request.`,
+          statusCode: 400,
+        },
+      },
+    };
+    axios.post.mockImplementationOnce(() => Promise.reject(mockResponse));
+    expect(sendResetLink({ email: "email@example.com" })).rejects.toEqual(
+      new Error("Problem sending link.")
+    );
+  });
+});
+
+describe("resetPassword", () => {
+  it(`error should respond with whatever error the server sends`, async () => {
+    // Mock the API response
+    const mockResponse = {
+      response: {
+        data: {
+          error: "Bad Request",
+          message: `That's a silly reset request.`,
+          statusCode: 400,
+        },
+      },
+    };
+    axios.put.mockImplementationOnce(() => Promise.reject(mockResponse));
+    expect(resetPassword({ token: "token", uuid: "uuid" })).rejects.toEqual(
+      new Error(mockResponse.response.data.message)
+    );
   });
 });

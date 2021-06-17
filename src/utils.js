@@ -33,3 +33,12 @@ export function getJWTPayload(token) {
     console.error("Problem decoding JWT payload", error);
   }
 }
+
+export function throwFormattedError(error) {
+  if (!error) return;
+  if (typeof error === "string") throw new Error(error);
+  if (error?.response?.data?.message) {
+    throw new Error(error.response.data.message);
+  }
+  throw error;
+}

@@ -4,6 +4,7 @@ import { setCookiesAndTokens } from "./cookies.js";
 import { store } from "./store.js";
 import { getQueryAttr, redirectToPath } from "./url.js";
 import { exchange } from "./refresh.js";
+import { throwFormattedError } from "./utils.js";
 
 /**
  * This file has methods for signing up and logging in
@@ -16,7 +17,7 @@ import { exchange } from "./refresh.js";
  */
 export async function signup({ method, username, name, email, password } = {}) {
   if (!method) {
-    return Promise.reject('Userfront.signup called without "method" property');
+    throw new Error('Userfront.signup called without "method" property.');
   }
   switch (method) {
     case "azure":
@@ -28,8 +29,8 @@ export async function signup({ method, username, name, email, password } = {}) {
     case "password":
       return signupWithPassword({ username, name, email, password });
     default:
-      return Promise.reject(
-        'Userfront.signup called with invalid "method" property'
+      throw new Error(
+        'Userfront.signup called with invalid "method" property.'
       );
   }
 }
@@ -51,20 +52,26 @@ function signupWithSSO(provider) {
  * @param {Object} options
  */
 async function signupWithPassword({ username, name, email, password }) {
-  const { data } = await axios.post(`${apiUrl}auth/create`, {
-    tenantId: store.tenantId,
-    username,
-    name,
-    email,
-    password,
-  });
-
-  if (data.tokens) {
-    setCookiesAndTokens(data.tokens);
-    await exchange(data);
-    redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/");
-  } else {
-    throw new Error("Please try again.");
+  try {
+    const { data } = await axios.post(`${apiUrl}auth/create`, {
+      tenantId: store.tenantId,
+      username,
+      name,
+      email,
+      password,
+    });
+    if (data.tokens) {
+      setCookiesAndTokens(data.tokens);
+      await exchange(data);
+      redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/");
+    } else {
+      throw new Error("Please try again.");
+    }
+  } catch (error) {
+    if (error?.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    }
+    throw error;
   }
 }
 
@@ -83,7 +90,7 @@ export async function login({
   uuid,
 } = {}) {
   if (!method) {
-    return Promise.reject('Userfront.login called without "method" property');
+    throw new Error('Userfront.login called without "method" property.');
   }
   switch (method) {
     case "azure":
@@ -97,9 +104,7 @@ export async function login({
     case "link":
       return loginWithLink(token, uuid);
     default:
-      return Promise.reject(
-        'Userfront.login called with invalid "method" property'
-      );
+      throw new Error('Userfront.login called with invalid "method" property.');
   }
 }
 
@@ -139,17 +144,21 @@ async function loginWithPassword({
   emailOrUsername,
   password,
 }) {
-  const { data } = await axios.post(`${apiUrl}auth/basic`, {
-    tenantId: store.tenantId,
-    emailOrUsername: email || username || emailOrUsername,
-    password,
-  });
-  if (data.tokens) {
-    setCookiesAndTokens(data.tokens);
-    await exchange(data);
-    redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/");
-  } else {
-    throw new Error("Please try again.");
+  try {
+    const { data } = await axios.post(`${apiUrl}auth/basic`, {
+      tenantId: store.tenantId,
+      emailOrUsername: email || username || emailOrUsername,
+      password,
+    });
+    if (data.tokens) {
+      setCookiesAndTokens(data.tokens);
+      await exchange(data);
+      redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/");
+    } else {
+      throw new Error("Please try again.");
+    }
+  } catch (error) {
+    throwFormattedError(error);
   }
 }
 
@@ -160,21 +169,25 @@ async function loginWithPassword({
  * @param {UUID} uuid
  */
 async function loginWithLink(token, uuid) {
-  if (!token) token = getQueryAttr("token");
-  if (!uuid) uuid = getQueryAttr("uuid");
-  if (!token || !uuid) return;
+  try {
+    token = token || getQueryAttr("token");
+    uuid = uuid || getQueryAttr("uuid");
+    if (!token || !uuid) return;
 
-  const { data } = await axios.put(`${apiUrl}auth/link`, {
-    token,
-    uuid,
-    tenantId: store.tenantId,
-  });
+    const { data } = await axios.put(`${apiUrl}auth/link`, {
+      token,
+      uuid,
+      tenantId: store.tenantId,
+    });
 
-  if (data.tokens) {
-    setCookiesAndTokens(data.tokens);
-    redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/");
-  } else {
-    throw new Error("Problem logging in.");
+    if (data.tokens) {
+      setCookiesAndTokens(data.tokens);
+      redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/");
+    } else {
+      throw new Error("Problem logging in.");
+    }
+  } catch (error) {
+    throwFormattedError(error);
   }
 }
 
@@ -190,7 +203,7 @@ export async function sendLoginLink(email) {
     });
     return data;
   } catch (err) {
-    throw new Error("Problem sending link");
+    throw new Error("Problem sending link.");
   }
 }
 
@@ -206,26 +219,30 @@ export async function sendResetLink(email) {
     });
     return data;
   } catch (err) {
-    throw new Error("Problem sending link");
+    throw new Error("Problem sending link.");
   }
 }
 
 export async function resetPassword({ uuid, token, password }) {
-  if (!token) token = getQueryAttr("token");
-  if (!uuid) uuid = getQueryAttr("uuid");
-  if (!token || !uuid) throw new Error("Missing token or uuid");
-  const { data } = await axios.put(`${apiUrl}auth/reset`, {
-    tenantId: store.tenantId,
-    uuid,
-    token,
-    password,
-  });
-  if (data.tokens) {
-    setCookiesAndTokens(data.tokens);
-    redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/");
-  } else {
-    throw new Error(
-      "There was a problem resetting your password. Please try again."
-    );
+  try {
+    token = token || getQueryAttr("token");
+    uuid = uuid || getQueryAttr("uuid");
+    if (!token || !uuid) throw new Error("Missing token or uuid");
+    const { data } = await axios.put(`${apiUrl}auth/reset`, {
+      tenantId: store.tenantId,
+      uuid,
+      token,
+      password,
+    });
+    if (data.tokens) {
+      setCookiesAndTokens(data.tokens);
+      redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/");
+    } else {
+      throw new Error(
+        "There was a problem resetting your password. Please try again."
+      );
+    }
+  } catch (error) {
+    throwFormattedError(error);
   }
 }

@@ -16,7 +16,7 @@ import { exchange } from "./refresh.js";
  */
 export async function signup({ method, username, name, email, password } = {}) {
   if (!method) {
-    return Promise.reject('Userfront.signup called without "method" property');
+    throw new Error('Userfront.signup called without "method" property');
   }
   switch (method) {
     case "azure":
@@ -28,9 +28,7 @@ export async function signup({ method, username, name, email, password } = {}) {
     case "password":
       return signupWithPassword({ username, name, email, password });
     default:
-      return Promise.reject(
-        'Userfront.signup called with invalid "method" property'
-      );
+      throw new Error('Userfront.signup called with invalid "method" property');
   }
 }
 
@@ -51,20 +49,26 @@ function signupWithSSO(provider) {
  * @param {Object} options
  */
 async function signupWithPassword({ username, name, email, password }) {
-  const { data } = await axios.post(`${apiUrl}auth/create`, {
-    tenantId: store.tenantId,
-    username,
-    name,
-    email,
-    password,
-  });
-
-  if (data.tokens) {
-    setCookiesAndTokens(data.tokens);
-    await exchange(data);
-    redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/");
-  } else {
-    throw new Error("Please try again.");
+  try {
+    const { data } = await axios.post(`${apiUrl}auth/create`, {
+      tenantId: store.tenantId,
+      username,
+      name,
+      email,
+      password,
+    });
+    if (data.tokens) {
+      setCookiesAndTokens(data.tokens);
+      await exchange(data);
+      redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/");
+    } else {
+      throw new Error("Please try again.");
+    }
+  } catch (error) {
+    if (error?.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    }
+    throw error;
   }
 }
 
@@ -83,7 +87,7 @@ export async function login({
   uuid,
 } = {}) {
   if (!method) {
-    return Promise.reject('Userfront.login called without "method" property');
+    throw new Error('Userfront.login called without "method" property');
   }
   switch (method) {
     case "azure":
@@ -97,9 +101,7 @@ export async function login({
     case "link":
       return loginWithLink(token, uuid);
     default:
-      return Promise.reject(
-        'Userfront.login called with invalid "method" property'
-      );
+      throw new Error('Userfront.login called with invalid "method" property');
   }
 }
 

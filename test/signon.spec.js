@@ -74,6 +74,27 @@ describe("signup", () => {
         mockResponse.data.redirectTo
       );
     });
+
+    it("should respond with whatever error the server sends", async () => {
+      // Mock the API response
+      const mockResponse = {
+        response: {
+          data: {
+            error: "Bad Request",
+            message: `That's a dumb email address.`,
+            statusCode: 400,
+          },
+        },
+      };
+      axios.post.mockImplementationOnce(() => Promise.reject(mockResponse));
+      expect(
+        signup({
+          method: "password",
+          email: "valid@example.com",
+          password: "somevalidpassword",
+        })
+      ).rejects.toEqual(new Error(mockResponse.response.data.message));
+    });
   });
 
   describe("with an SSO provider", () => {
@@ -82,7 +103,7 @@ describe("signup", () => {
 
     it("should throw if provider is missing", () => {
       expect(signup()).rejects.toEqual(
-        `Userfront.signup called without "method" property`
+        new Error(`Userfront.signup called without "method" property`)
       );
       expect(window.location.assign).not.toHaveBeenCalled();
     });
@@ -145,6 +166,27 @@ describe("login", () => {
         mockResponse.data.redirectTo
       );
     });
+
+    it("should respond with whatever error the server sends", async () => {
+      // Mock the API response
+      const mockResponse = {
+        response: {
+          data: {
+            error: "Bad Request",
+            message: `That's a dumb email address.`,
+            statusCode: 400,
+          },
+        },
+      };
+      axios.post.mockImplementationOnce(() => Promise.reject(mockResponse));
+      expect(
+        login({
+          method: "password",
+          email: "valid@example.com",
+          password: "somevalidpassword",
+        })
+      ).rejects.toEqual(new Error(mockResponse.response.data.message));
+    });
   });
 
   describe("with an SSO provider", () => {
@@ -153,7 +195,7 @@ describe("login", () => {
 
     it("should throw if provider is missing", () => {
       expect(login()).rejects.toEqual(
-        `Userfront.login called without "method" property`
+        new Error(`Userfront.login called without "method" property`)
       );
       expect(window.location.assign).not.toHaveBeenCalled();
     });

@@ -56,6 +56,13 @@ describe("signup", () => {
         email: "someone@example.com",
         name: "Someone",
         password: "something",
+        data: {
+          some: "custom",
+          camelCase: Math.random(),
+          Underscore_Case: {
+            capitalized: true,
+          },
+        },
       };
       await signup({
         method: "password",

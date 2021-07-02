@@ -20,7 +20,9 @@ describe("refresh method", () => {
     setCookiesAndTokens.mockClear();
   });
 
-  it("should send correct options into iframe", async () => {
+  // TODO re-enable tests below once iframe is re-established
+
+  xit("should send correct options into iframe", async () => {
     // Initialize the library
     Userfront.init(tenantId);
 
@@ -48,7 +50,7 @@ describe("refresh method", () => {
     });
   });
 
-  it("should set tokens correctly based on iframe response", async () => {
+  xit("should set tokens correctly based on iframe response", async () => {
     // Initialize the library
     Userfront.init(tenantId);
 

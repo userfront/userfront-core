@@ -1,7 +1,7 @@
 import Cookies from "js-cookie";
 
 import Userfront from "../src/index.js";
-import { getIframe, resolvers, postMessageAsPromise } from "../src/iframe.js";
+import { getIframe, resolvers } from "../src/iframe.js";
 import { logout } from "../src/logout.js";
 import { setCookie } from "../src/cookies.js";
 import utils from "./config/utils.js";
@@ -32,7 +32,9 @@ describe("logout", () => {
     window.location.assign.mockClear();
   });
 
-  it("should send a request to the iframe (which clears its own refresh cookie), then clear the access and ID token cookies, then redirect", async () => {
+  // TODO re-enable tests below once iframe is re-established
+
+  xit("should send a request to the iframe (which clears its own refresh cookie), then clear the access and ID token cookies, then redirect", async () => {
     const redirectPath = "/login";
     const redirectTo = `https://example.com${redirectPath}`;
 
@@ -81,7 +83,7 @@ describe("logout", () => {
     iframe.contentWindow.removeEventListener("message", mockEventListener);
   });
 
-  it("should remove cookies and redirect to root if iframe fails", async () => {
+  xit("should remove cookies and redirect to root if iframe fails", async () => {
     // Mock the iframe response to input
     const iframe = getIframe();
     let messageId;

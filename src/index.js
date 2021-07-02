@@ -10,7 +10,7 @@ import {
 } from "./signon.js";
 import { logout } from "./logout.js";
 import { setMode } from "./mode.js";
-import { setIframe } from "./iframe.js";
+// import { setIframe } from "./iframe.js";
 import { user, setUser } from "./user.js";
 import { isTestHostname } from "./utils.js";
 
@@ -26,7 +26,7 @@ function init(tenantId) {
   store.accessTokenName = `access.${tenantId}`;
   store.idTokenName = `id.${tenantId}`;
   store.refreshTokenName = `refresh.${tenantId}`;
-  setIframe();
+  // setIframe(); // TODO re-enable when iframe is needed
   setTokensFromCookies();
 
   if (store.idToken) {

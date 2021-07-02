@@ -9,7 +9,15 @@ describe("iframe tests", () => {
     utils.resetStore(Userfront);
   });
 
-  it("init should add an iframe with src of auth.userfront.net", () => {
+  it("init should not add an iframe", () => {
+    Userfront.init(tenantId);
+    const frame = document.getElementsByTagName("iframe")[0];
+    expect(frame).toBeFalsy();
+  });
+
+  // TODO re-enable the tests below once the iframe is re-established
+
+  xit("init should add an iframe with src of auth.userfront.net", () => {
     Userfront.init(tenantId);
     const frame = document.getElementsByTagName("iframe")[0];
     expect(frame).toBeTruthy();
@@ -17,7 +25,7 @@ describe("iframe tests", () => {
     expect(frame.style.display).toEqual("none");
   });
 
-  it("init should not add duplicate iframe when one exists", () => {
+  xit("init should not add duplicate iframe when one exists", () => {
     // Clear the local iframe variable, but keep the iframe on the page
     Iframe.__set__("iframe", undefined);
 
@@ -30,7 +38,7 @@ describe("iframe tests", () => {
     expect(afterCount).toEqual(1);
   });
 
-  it("should not throw an error if document is not present", () => {
+  xit("should not throw an error if document is not present", () => {
     delete global.document;
     try {
       Userfront.init(tenantId);

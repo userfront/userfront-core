@@ -27,7 +27,10 @@ export function isTestHostname(hn) {
  */
 export function getJWTPayload(token) {
   try {
-    const encodedPayload = token.split(".")[1];
+    const encodedPayload = token
+      .split(".")[1]
+      .replace("-", "+")
+      .replace("_", "/");
     return JSON.parse(atob(encodedPayload));
   } catch (error) {
     console.error("Problem decoding JWT payload", error);

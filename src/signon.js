@@ -19,12 +19,17 @@ import { throwFormattedError } from "./utils.js";
  * @param {String} email
  * @param {String} password
  * @param {Object} data - Object for custom user fields
- * @param {Object} opts - options to pass as a second input
+ * @param {String} redirect - path to redirect to, or if false, do not redirect
  */
-export async function signup(
-  { method, username, name, email, password, data } = {},
-  opts = {}
-) {
+export async function signup({
+  method,
+  username,
+  name,
+  email,
+  password,
+  data,
+  redirect,
+} = {}) {
   if (!method) {
     throw new Error('Userfront.signup called without "method" property.');
   }
@@ -34,18 +39,16 @@ export async function signup(
     case "github":
     case "google":
     case "linkedin":
-      return signupWithSSO(method, opts);
+      return signupWithSSO({ provider: method, redirect });
     case "password":
-      return signupWithPassword(
-        {
-          username,
-          name,
-          email,
-          password,
-          userData: data,
-        },
-        opts
-      );
+      return signupWithPassword({
+        username,
+        name,
+        email,
+        password,
+        userData: data,
+        redirect,
+      });
     default:
       throw new Error(
         'Userfront.signup called with invalid "method" property.'
@@ -58,9 +61,9 @@ export async function signup(
  * Redirect the browser after successful authentication and 302 redirect from server.
  * @param {String} provider Name of SSO provider
  */
-function signupWithSSO(provider) {
+function signupWithSSO({ provider, redirect }) {
   if (!provider) throw new Error("Missing provider");
-  const url = getProviderLink(provider);
+  const url = getProviderLink({ provider, redirect });
   window.location.assign(url);
 }
 
@@ -72,12 +75,16 @@ function signupWithSSO(provider) {
  * @param {String} email
  * @param {String} password
  * @param {Object} userData - alias for the user.data object, since "data" is used in the response
- * @param {Object} redirect - do not redirect if false, or redirect to a specific path
+ * @param {String} redirect - do not redirect if false, or redirect to a specific path
  */
-async function signupWithPassword(
-  { username, name, email, password, userData } = {},
-  { redirect } = {}
-) {
+async function signupWithPassword({
+  username,
+  name,
+  email,
+  password,
+  userData,
+  redirect,
+} = {}) {
   try {
     const { data } = await axios.post(`${apiUrl}auth/create`, {
       tenantId: store.tenantId,
@@ -114,12 +121,18 @@ async function signupWithPassword(
  * @param {String} password
  * @param {String} token
  * @param {String} uuid
- * @param {Object} opts - options to pass as a second input
+ * @param {Object} redirect - do not redirect if false, or redirect to given path
  */
-export async function login(
-  { method, email, username, emailOrUsername, password, token, uuid } = {},
-  opts = {}
-) {
+export async function login({
+  method,
+  email,
+  username,
+  emailOrUsername,
+  password,
+  token,
+  uuid,
+  redirect,
+} = {}) {
   if (!method) {
     throw new Error('Userfront.login called without "method" property.');
   }
@@ -129,14 +142,17 @@ export async function login(
     case "github":
     case "google":
     case "linkedin":
-      return loginWithSSO(method, opts);
+      return loginWithSSO({ provider: method, redirect });
     case "password":
-      return loginWithPassword(
-        { email, username, emailOrUsername, password },
-        opts
-      );
+      return loginWithPassword({
+        email,
+        username,
+        emailOrUsername,
+        password,
+        redirect,
+      });
     case "link":
-      return loginWithLink({ token, uuid }, opts);
+      return loginWithLink({ token, uuid, redirect });
     default:
       throw new Error('Userfront.login called with invalid "method" property.');
   }
@@ -147,21 +163,24 @@ export async function login(
  * Redirect the browser after successful authentication and 302 redirect from server.
  * @param {String} provider Name of SSO provider
  */
-function loginWithSSO(provider) {
+function loginWithSSO({ provider, redirect }) {
   if (!provider) throw new Error("Missing provider");
-  const url = getProviderLink(provider);
+  const url = getProviderLink({ provider, redirect });
   window.location.assign(url);
 }
 
-export function getProviderLink(provider) {
+export function getProviderLink({ provider, redirect }) {
   if (!provider) throw new Error("Missing provider");
   if (!store.tenantId) throw new Error("Missing tenant ID");
 
   let url = `https://api.userfront.com/v0/auth/${provider}/login?tenant_id=${store.tenantId}&origin=${window.location.origin}`;
 
-  const redirect = getQueryAttr("redirect");
-  if (redirect) {
-    url += `&redirect=${encodeURIComponent(redirect)}`;
+  let redirectTo;
+  if (redirect !== false) {
+    redirectTo = redirect || getQueryAttr("redirect");
+  }
+  if (redirectTo) {
+    url += `&redirect=${encodeURIComponent(redirectTo)}`;
   }
 
   return url;
@@ -172,10 +191,13 @@ export function getProviderLink(provider) {
  * Redirect the browser after successful login based on the redirectTo value returned.
  * @param {Object} options
  */
-async function loginWithPassword(
-  { email, username, emailOrUsername, password },
-  { redirect } = {}
-) {
+async function loginWithPassword({
+  email,
+  username,
+  emailOrUsername,
+  password,
+  redirect,
+}) {
   try {
     const { data } = await axios.post(`${apiUrl}auth/basic`, {
       tenantId: store.tenantId,
@@ -202,7 +224,7 @@ async function loginWithPassword(
  * @param {String} token
  * @param {UUID} uuid
  */
-async function loginWithLink({ token, uuid }, { redirect } = {}) {
+async function loginWithLink({ token, uuid, redirect } = {}) {
   try {
     token = token || getQueryAttr("token");
     uuid = uuid || getQueryAttr("uuid");
@@ -259,10 +281,7 @@ export async function sendResetLink(email) {
   }
 }
 
-export async function resetPassword(
-  { uuid, token, password },
-  { redirect } = {}
-) {
+export async function resetPassword({ uuid, token, password, redirect }) {
   try {
     token = token || getQueryAttr("token");
     uuid = uuid || getQueryAttr("uuid");

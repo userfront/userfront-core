@@ -46,7 +46,7 @@ describe("SSO", () => {
 
     it.each(providers)("calls signupWithSSO with each provider", (provider) => {
       Userfront.signup({ method: provider });
-      expect(signupWithSSOSpy).toHaveBeenCalledWith(provider, {});
+      expect(signupWithSSOSpy).toHaveBeenCalledWith({ provider });
       expect(assignMock).toHaveBeenCalledWith(
         `https://api.userfront.com/v0/auth/${provider}/login?` +
           `tenant_id=${tenantId}&` +
@@ -68,7 +68,7 @@ describe("SSO", () => {
         await Userfront.signup({ method: "google" });
       } catch (error) {}
 
-      expect(signupWithSSOSpy).toHaveBeenCalledWith("google", {});
+      expect(signupWithSSOSpy).toHaveBeenCalledWith({ provider: "google" });
       expect(assignMock).not.toHaveBeenCalled();
     });
   });
@@ -96,7 +96,7 @@ describe("SSO", () => {
 
     it.each(providers)("calls loginWithSSO with each provider", (provider) => {
       Userfront.login({ method: provider });
-      expect(loginWithSSOSpy).toHaveBeenCalledWith(provider, {});
+      expect(loginWithSSOSpy).toHaveBeenCalledWith({ provider });
       expect(assignMock).toHaveBeenCalledWith(
         `https://api.userfront.com/v0/auth/${provider}/login?` +
           `tenant_id=${tenantId}&` +
@@ -117,7 +117,7 @@ describe("SSO", () => {
         await Userfront.login({ method: "google" });
       } catch (error) {}
 
-      expect(loginWithSSOSpy).toHaveBeenCalledWith("google", {});
+      expect(loginWithSSOSpy).toHaveBeenCalledWith({ provider: "google" });
       expect(assignMock).not.toHaveBeenCalled();
     });
   });

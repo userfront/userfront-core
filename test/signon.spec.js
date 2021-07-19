@@ -99,15 +99,11 @@ describe("signup", () => {
         email: "someone@example.com",
         password: "something",
       };
-      await signup(
-        {
-          method: "password",
-          ...payload,
-        },
-        {
-          redirect: false,
-        }
-      );
+      await signup({
+        method: "password",
+        redirect: false,
+        ...payload,
+      });
 
       // Should have sent the proper API request
       expect(axios.post).toHaveBeenCalledWith(
@@ -135,15 +131,11 @@ describe("signup", () => {
         email: "someone@example.com",
         password: "something",
       };
-      await signup(
-        {
-          method: "password",
-          ...payload,
-        },
-        {
-          redirect: "/custom",
-        }
-      );
+      await signup({
+        method: "password",
+        redirect: "/custom",
+        ...payload,
+      });
 
       // Should have sent the proper API request
       expect(axios.post).toHaveBeenCalledWith(
@@ -251,15 +243,11 @@ describe("login", () => {
         emailOrUsername: "someone@example.com",
         password: "something",
       };
-      await login(
-        {
-          method: "password",
-          ...payload,
-        },
-        {
-          redirect: false,
-        }
-      );
+      await login({
+        method: "password",
+        redirect: false,
+        ...payload,
+      });
 
       // Should have sent the proper API request
       expect(axios.post).toHaveBeenCalledWith(
@@ -285,15 +273,11 @@ describe("login", () => {
         emailOrUsername: "someone@example.com",
         password: "something",
       };
-      await login(
-        {
-          method: "password",
-          ...payload,
-        },
-        {
-          redirect: false,
-        }
-      );
+      await login({
+        method: "password",
+        redirect: false,
+        ...payload,
+      });
 
       // Should have sent the proper API request
       expect(axios.post).toHaveBeenCalledWith(

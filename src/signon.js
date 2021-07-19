@@ -19,15 +19,12 @@ import { throwFormattedError } from "./utils.js";
  * @param {String} email
  * @param {String} password
  * @param {Object} data - Object for custom user fields
+ * @param {Object} opts - options to pass as a second input
  */
-export async function signup({
-  method,
-  username,
-  name,
-  email,
-  password,
-  data,
-} = {}) {
+export async function signup(
+  { method, username, name, email, password, data } = {},
+  opts = {}
+) {
   if (!method) {
     throw new Error('Userfront.signup called without "method" property.');
   }
@@ -37,15 +34,18 @@ export async function signup({
     case "github":
     case "google":
     case "linkedin":
-      return signupWithSSO(method);
+      return signupWithSSO(method, opts);
     case "password":
-      return signupWithPassword({
-        username,
-        name,
-        email,
-        password,
-        userData: data,
-      });
+      return signupWithPassword(
+        {
+          username,
+          name,
+          email,
+          password,
+          userData: data,
+        },
+        opts
+      );
     default:
       throw new Error(
         'Userfront.signup called with invalid "method" property.'
@@ -72,14 +72,12 @@ function signupWithSSO(provider) {
  * @param {String} email
  * @param {String} password
  * @param {Object} userData - alias for the user.data object, since "data" is used in the response
+ * @param {Object} redirect - do not redirect if false, or redirect to a specific path
  */
-async function signupWithPassword({
-  username,
-  name,
-  email,
-  password,
-  userData,
-}) {
+async function signupWithPassword(
+  { username, name, email, password, userData } = {},
+  { redirect } = {}
+) {
   try {
     const { data } = await axios.post(`${apiUrl}auth/create`, {
       tenantId: store.tenantId,
@@ -92,7 +90,9 @@ async function signupWithPassword({
     if (data.tokens) {
       setCookiesAndTokens(data.tokens);
       await exchange(data);
-      redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/");
+      redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/", {
+        redirect,
+      });
     } else {
       throw new Error("Please try again.");
     }
@@ -107,17 +107,19 @@ async function signupWithPassword({
 /**
  * Log a user in via the provided method. This method serves to call other
  * methods, depending on the "method" parameter passed in.
- * @param {Object} options
+ * @param {String} method
+ * @param {String} email
+ * @param {String} username
+ * @param {String} emailOrUsername
+ * @param {String} password
+ * @param {String} token
+ * @param {String} uuid
+ * @param {Object} opts - options to pass as a second input
  */
-export async function login({
-  method,
-  email,
-  username,
-  emailOrUsername,
-  password,
-  token,
-  uuid,
-} = {}) {
+export async function login(
+  { method, email, username, emailOrUsername, password, token, uuid } = {},
+  opts = {}
+) {
   if (!method) {
     throw new Error('Userfront.login called without "method" property.');
   }
@@ -127,11 +129,14 @@ export async function login({
     case "github":
     case "google":
     case "linkedin":
-      return loginWithSSO(method);
+      return loginWithSSO(method, opts);
     case "password":
-      return loginWithPassword({ email, username, emailOrUsername, password });
+      return loginWithPassword(
+        { email, username, emailOrUsername, password },
+        opts
+      );
     case "link":
-      return loginWithLink(token, uuid);
+      return loginWithLink({ token, uuid }, opts);
     default:
       throw new Error('Userfront.login called with invalid "method" property.');
   }
@@ -167,12 +172,10 @@ export function getProviderLink(provider) {
  * Redirect the browser after successful login based on the redirectTo value returned.
  * @param {Object} options
  */
-async function loginWithPassword({
-  email,
-  username,
-  emailOrUsername,
-  password,
-}) {
+async function loginWithPassword(
+  { email, username, emailOrUsername, password },
+  { redirect } = {}
+) {
   try {
     const { data } = await axios.post(`${apiUrl}auth/basic`, {
       tenantId: store.tenantId,
@@ -182,7 +185,9 @@ async function loginWithPassword({
     if (data.tokens) {
       setCookiesAndTokens(data.tokens);
       await exchange(data);
-      redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/");
+      redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/", {
+        redirect,
+      });
     } else {
       throw new Error("Please try again.");
     }
@@ -197,7 +202,7 @@ async function loginWithPassword({
  * @param {String} token
  * @param {UUID} uuid
  */
-async function loginWithLink(token, uuid) {
+async function loginWithLink({ token, uuid }, { redirect } = {}) {
   try {
     token = token || getQueryAttr("token");
     uuid = uuid || getQueryAttr("uuid");
@@ -211,7 +216,9 @@ async function loginWithLink(token, uuid) {
 
     if (data.tokens) {
       setCookiesAndTokens(data.tokens);
-      redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/");
+      redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/", {
+        redirect,
+      });
     } else {
       throw new Error("Problem logging in.");
     }
@@ -252,7 +259,10 @@ export async function sendResetLink(email) {
   }
 }
 
-export async function resetPassword({ uuid, token, password }) {
+export async function resetPassword(
+  { uuid, token, password },
+  { redirect } = {}
+) {
   try {
     token = token || getQueryAttr("token");
     uuid = uuid || getQueryAttr("uuid");
@@ -265,7 +275,9 @@ export async function resetPassword({ uuid, token, password }) {
     });
     if (data.tokens) {
       setCookiesAndTokens(data.tokens);
-      redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/");
+      redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/", {
+        redirect,
+      });
     } else {
       throw new Error(
         "There was a problem resetting your password. Please try again."

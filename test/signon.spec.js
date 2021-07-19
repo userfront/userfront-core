@@ -31,6 +31,19 @@ window.location = {
   href: "https://example.com/login",
 };
 
+// Mock API response
+const mockResponse = {
+  data: {
+    tokens: {
+      id: { value: "id-token-value" },
+      access: { value: "access-token-value" },
+      refresh: { value: "refresh-token-value" },
+    },
+    nonce: "nonce-value",
+    redirectTo: "/dashboard",
+  },
+};
+
 describe("signup", () => {
   afterEach(() => {
     window.location.assign.mockClear();
@@ -38,17 +51,6 @@ describe("signup", () => {
   describe("with username & password", () => {
     it("should send a request, set access and ID cookies, and initiate nonce exchange", async () => {
       // Mock the API response
-      const mockResponse = {
-        data: {
-          tokens: {
-            id: { value: "id-token-value" },
-            access: { value: "access-token-value" },
-            refresh: { value: "refresh-token-value" },
-          },
-          nonce: "nonce-value",
-          redirectTo: "/path",
-        },
-      };
       axios.post.mockImplementationOnce(() => mockResponse);
 
       // Call signup()
@@ -86,6 +88,78 @@ describe("signup", () => {
       expect(window.location.assign).toHaveBeenCalledWith(
         mockResponse.data.redirectTo
       );
+    });
+
+    it("should sign up and not redirect if redirect = false", async () => {
+      // Mock the API response
+      axios.post.mockImplementationOnce(() => mockResponse);
+
+      // Call signup() with redirect = false
+      const payload = {
+        email: "someone@example.com",
+        password: "something",
+      };
+      await signup(
+        {
+          method: "password",
+          ...payload,
+        },
+        {
+          redirect: false,
+        }
+      );
+
+      // Should have sent the proper API request
+      expect(axios.post).toHaveBeenCalledWith(
+        `https://api.userfront.com/v0/auth/create`,
+        {
+          tenantId,
+          username: undefined,
+          ...payload,
+        }
+      );
+
+      // Should have called exchange() with the API's response
+      expect(exchange).toHaveBeenCalledWith(mockResponse.data);
+
+      // Should not have redirected
+      expect(window.location.assign).not.toHaveBeenCalled();
+    });
+
+    it("should sign up and redirect to provided path", async () => {
+      // Mock the API response
+      axios.post.mockImplementationOnce(() => mockResponse);
+
+      // Call signup() with redirect = false
+      const payload = {
+        email: "someone@example.com",
+        password: "something",
+      };
+      await signup(
+        {
+          method: "password",
+          ...payload,
+        },
+        {
+          redirect: "/custom",
+        }
+      );
+
+      // Should have sent the proper API request
+      expect(axios.post).toHaveBeenCalledWith(
+        `https://api.userfront.com/v0/auth/create`,
+        {
+          tenantId,
+          username: undefined,
+          ...payload,
+        }
+      );
+
+      // Should have called exchange() with the API's response
+      expect(exchange).toHaveBeenCalledWith(mockResponse.data);
+
+      // Should have redirected
+      expect(window.location.assign).toHaveBeenCalledWith(`/custom`);
     });
 
     it("should respond with whatever error the server sends", async () => {
@@ -139,17 +213,6 @@ describe("login", () => {
   describe("with username & password", () => {
     it("should send a request, set access and ID cookies, and initiate nonce exchange", async () => {
       // Mock the API response
-      const mockResponse = {
-        data: {
-          tokens: {
-            id: { value: "id-token-value" },
-            access: { value: "access-token-value" },
-            refresh: { value: "refresh-token-value" },
-          },
-          nonce: "nonce-value",
-          redirectTo: "/dashboard",
-        },
-      };
       axios.post.mockImplementationOnce(() => mockResponse);
 
       // Call login()
@@ -178,6 +241,74 @@ describe("login", () => {
       expect(window.location.assign).toHaveBeenCalledWith(
         mockResponse.data.redirectTo
       );
+    });
+
+    it("should login and not redirect if redirect = false", async () => {
+      axios.post.mockImplementationOnce(() => mockResponse);
+
+      // Call login() with redirect = false
+      const payload = {
+        emailOrUsername: "someone@example.com",
+        password: "something",
+      };
+      await login(
+        {
+          method: "password",
+          ...payload,
+        },
+        {
+          redirect: false,
+        }
+      );
+
+      // Should have sent the proper API request
+      expect(axios.post).toHaveBeenCalledWith(
+        `https://api.userfront.com/v0/auth/basic`,
+        {
+          tenantId,
+          ...payload,
+        }
+      );
+
+      // Should have called exchange() with the API's response
+      expect(exchange).toHaveBeenCalledWith(mockResponse.data);
+
+      // Should have redirected correctly
+      expect(window.location.assign).not.toHaveBeenCalled();
+    });
+
+    it("should login and redirect to a provided path", async () => {
+      axios.post.mockImplementationOnce(() => mockResponse);
+
+      // Call login() with redirect = false
+      const payload = {
+        emailOrUsername: "someone@example.com",
+        password: "something",
+      };
+      await login(
+        {
+          method: "password",
+          ...payload,
+        },
+        {
+          redirect: false,
+        }
+      );
+
+      // Should have sent the proper API request
+      expect(axios.post).toHaveBeenCalledWith(
+        `https://api.userfront.com/v0/auth/basic`,
+        {
+          tenantId,
+          ...payload,
+        }
+      );
+
+      // Should have called exchange() with the API's response
+      expect(exchange).toHaveBeenCalledWith(mockResponse.data);
+
+      // Should have redirected correctly
+      expect(window.location.assign).not.toHaveBeenCalled();
     });
 
     it("password method error should respond with whatever error the server sends", async () => {

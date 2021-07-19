@@ -55,6 +55,23 @@ describe("SSO", () => {
       );
     });
 
+    it("should return to current path if redirect = false", async () => {
+      // Navigate to /signup
+      window.history.pushState({}, "", "/signup");
+
+      Userfront.signup({ method: "google", redirect: false });
+      expect(signupWithSSOSpy).toHaveBeenCalledWith({
+        provider: "google",
+        redirect: false,
+      });
+      expect(assignMock).toHaveBeenCalledWith(
+        `https://api.userfront.com/v0/auth/google/login?` +
+          `tenant_id=${tenantId}&` +
+          `origin=${window.location.origin}&` +
+          `redirect=${encodeURIComponent("/signup")}`
+      );
+    });
+
     it("should throw if problem getting link", async () => {
       const mock = jest.fn();
       mock.mockImplementation(() => {
@@ -102,6 +119,23 @@ describe("SSO", () => {
           `tenant_id=${tenantId}&` +
           `origin=${window.location.origin}&` +
           `redirect=${encodeURIComponent(getQueryAttr("redirect"))}`
+      );
+    });
+
+    it("should return to current path if redirect = false", async () => {
+      // Navigate to /login/special
+      window.history.pushState({}, "", "/login/special");
+
+      Userfront.login({ method: "azure", redirect: false });
+      expect(loginWithSSOSpy).toHaveBeenCalledWith({
+        provider: "azure",
+        redirect: false,
+      });
+      expect(assignMock).toHaveBeenCalledWith(
+        `https://api.userfront.com/v0/auth/azure/login?` +
+          `tenant_id=${tenantId}&` +
+          `origin=${window.location.origin}&` +
+          `redirect=${encodeURIComponent("/login/special")}`
       );
     });
 

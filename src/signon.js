@@ -175,9 +175,9 @@ export function getProviderLink({ provider, redirect }) {
 
   let url = `https://api.userfront.com/v0/auth/${provider}/login?tenant_id=${store.tenantId}&origin=${window.location.origin}`;
 
-  let redirectTo;
-  if (redirect !== false) {
-    redirectTo = redirect || getQueryAttr("redirect");
+  let redirectTo = redirect || getQueryAttr("redirect");
+  if (redirect === false) {
+    redirectTo = typeof document === "object" && document.location.pathname;
   }
   if (redirectTo) {
     url += `&redirect=${encodeURIComponent(redirectTo)}`;

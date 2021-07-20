@@ -10,6 +10,7 @@ import { removeAllCookies } from "./cookies.js";
  */
 export function getQueryAttr(attrName) {
   if (
+    typeof window !== "object" ||
     !window.location.href ||
     window.location.href.indexOf(`${attrName}=`) < 0
   ) {
@@ -51,14 +52,27 @@ export async function redirectIfLoggedIn() {
  * Redirect to path portion of a URL.
  */
 export function redirectToPath(pathOrUrl, { redirect } = {}) {
-  if (redirect === false) return;
-  if (!!redirect) pathOrUrl = redirect;
+  // Return if redirect=false, or if SSR or mobile
+  if (
+    redirect === false ||
+    typeof document !== "object" ||
+    typeof window !== "object"
+  ) {
+    return;
+  }
   try {
     document && window;
   } catch (error) {
     return;
   }
+
+  // If redirect is explicitly set, use that
+  if (!!redirect) pathOrUrl = redirect;
+
+  // If no pathOrUrl, do not redirect
   if (!pathOrUrl) return;
+
+  // Perform hard redirect
   const el = document.createElement("a");
   el.href = pathOrUrl;
   let path = `${el.pathname}${el.hash}${el.search}`;

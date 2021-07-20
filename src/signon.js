@@ -100,6 +100,7 @@ async function signupWithPassword({
       redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/", {
         redirect,
       });
+      return data;
     } else {
       throw new Error("Please try again.");
     }
@@ -121,7 +122,7 @@ async function signupWithPassword({
  * @param {String} password
  * @param {String} token
  * @param {String} uuid
- * @param {Object} redirect - do not redirect if false, or redirect to given path
+ * @param {String} redirect - do not redirect if false, or redirect to given path
  */
 export async function login({
   method,
@@ -162,6 +163,7 @@ export async function login({
  * Log a user in via SSO provider.
  * Redirect the browser after successful authentication and 302 redirect from server.
  * @param {String} provider Name of SSO provider
+ * @param {String} redirect - do not redirect if false, or redirect to given path
  */
 function loginWithSSO({ provider, redirect }) {
   if (!provider) throw new Error("Missing provider");
@@ -210,6 +212,7 @@ async function loginWithPassword({
       redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/", {
         redirect,
       });
+      return data;
     } else {
       throw new Error("Please try again.");
     }
@@ -223,8 +226,9 @@ async function loginWithPassword({
  * in the URL querystring. ?token=...&uuid=...
  * @param {String} token
  * @param {UUID} uuid
+ * @param {String} redirect - do not redirect if false, or redirect to given path
  */
-async function loginWithLink({ token, uuid, redirect } = {}) {
+export async function loginWithLink({ token, uuid, redirect } = {}) {
   try {
     token = token || getQueryAttr("token");
     uuid = uuid || getQueryAttr("uuid");
@@ -238,9 +242,11 @@ async function loginWithLink({ token, uuid, redirect } = {}) {
 
     if (data.tokens) {
       setCookiesAndTokens(data.tokens);
+      await exchange(data);
       redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/", {
         redirect,
       });
+      return data;
     } else {
       throw new Error("Problem logging in.");
     }
@@ -297,6 +303,7 @@ export async function resetPassword({ uuid, token, password, redirect }) {
       redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/", {
         redirect,
       });
+      return data;
     } else {
       throw new Error(
         "There was a problem resetting your password. Please try again."

@@ -6,6 +6,7 @@ import {
   sendLoginLink,
   sendResetLink,
   resetPassword,
+  loginWithLink,
 } from "../src/signon.js";
 import { exchange } from "../src/refresh.js";
 
@@ -66,7 +67,7 @@ describe("signup", () => {
           },
         },
       };
-      await signup({
+      const res = await signup({
         method: "password",
         ...payload,
       });
@@ -83,6 +84,9 @@ describe("signup", () => {
 
       // Should have called exchange() with the API's response
       expect(exchange).toHaveBeenCalledWith(mockResponse.data);
+
+      // Should have returned the proper value
+      expect(res).toEqual(mockResponse.data);
 
       // Should have redirected correctly
       expect(window.location.assign).toHaveBeenCalledWith(
@@ -212,7 +216,7 @@ describe("login", () => {
         emailOrUsername: "someone@example.com",
         password: "something",
       };
-      await login({
+      const res = await login({
         method: "password",
         ...payload,
       });
@@ -225,6 +229,9 @@ describe("login", () => {
           ...payload,
         }
       );
+
+      // Should have returned the proper value
+      expect(res).toEqual(mockResponse.data);
 
       // Should have called exchange() with the API's response
       expect(exchange).toHaveBeenCalledWith(mockResponse.data);
@@ -243,7 +250,7 @@ describe("login", () => {
         emailOrUsername: "someone@example.com",
         password: "something",
       };
-      await login({
+      const res = await login({
         method: "password",
         redirect: false,
         ...payload,
@@ -260,6 +267,9 @@ describe("login", () => {
 
       // Should have called exchange() with the API's response
       expect(exchange).toHaveBeenCalledWith(mockResponse.data);
+
+      // Should have returned the proper value
+      expect(res).toEqual(mockResponse.data);
 
       // Should have redirected correctly
       expect(window.location.assign).not.toHaveBeenCalled();
@@ -375,6 +385,77 @@ describe("sendLoginLink", () => {
     expect(sendLoginLink({ email: "email@example.com" })).rejects.toEqual(
       new Error("Problem sending link.")
     );
+  });
+});
+
+describe("loginWithLink", () => {
+  afterEach(() => {
+    window.location.assign.mockClear();
+  });
+
+  it("should login and redirect", async () => {
+    axios.put.mockImplementationOnce(() => mockResponse);
+
+    // Call login()
+    const payload = {
+      token: "some-token",
+      uuid: "some-uuid",
+    };
+    const res = await login({
+      method: "link",
+      ...payload,
+    });
+
+    // Should have sent the proper API request
+    expect(axios.put).toHaveBeenCalledWith(
+      `https://api.userfront.com/v0/auth/link`,
+      {
+        tenantId,
+        ...payload,
+      }
+    );
+
+    // Should return the correct value
+    expect(res).toEqual(mockResponse.data);
+
+    // Should have called exchange() with the API's response
+    expect(exchange).toHaveBeenCalledWith(mockResponse.data);
+
+    // Should have redirected correctly
+    expect(window.location.assign).toHaveBeenCalledWith("/dashboard");
+  });
+
+  it("should not redirect if redirect = false", async () => {
+    axios.put.mockImplementationOnce(() => mockResponse);
+
+    // Call login()
+    const payload = {
+      token: "some-token",
+      uuid: "some-uuid",
+    };
+    const res = await login({
+      method: "link",
+      redirect: false,
+      ...payload,
+    });
+
+    // Should have sent the proper API request
+    expect(axios.put).toHaveBeenCalledWith(
+      `https://api.userfront.com/v0/auth/link`,
+      {
+        tenantId,
+        ...payload,
+      }
+    );
+
+    // Should return the correct value
+    expect(res).toEqual(mockResponse.data);
+
+    // Should have called exchange() with the API's response
+    expect(exchange).toHaveBeenCalledWith(mockResponse.data);
+
+    // Should not have redirected
+    expect(window.location.assign).not.toHaveBeenCalled();
   });
 });
 

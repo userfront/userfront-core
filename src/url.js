@@ -11,6 +11,7 @@ import { removeAllCookies } from "./cookies.js";
 export function getQueryAttr(attrName) {
   if (
     typeof window !== "object" ||
+    typeof window.location !== "object" ||
     !window.location.href ||
     window.location.href.indexOf(`${attrName}=`) < 0
   ) {

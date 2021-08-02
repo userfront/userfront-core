@@ -2,7 +2,7 @@
 
 The Userfront Core JavaScript library is intended for use in frontend applications.
 
-The library must always be initialized with a project or tenant ID, after which it can be used for the following:
+The library must always be initialized with an account or tenant ID, after which it can be used for the following:
 
 - **Authentication**: signup, login, logout, and password reset tasks. These are useful for building your own custom forms and auth flows.
 - **Tokens**: read the user's access and ID tokens.
@@ -11,7 +11,7 @@ The library must always be initialized with a project or tenant ID, after which 
 
 ## init (tenantId)
 
-Initializes the Userfront library with your project or tenant ID.
+Initializes the Userfront library with your account or tenant ID.
 
 ```js
 import Userfront from "@userfront/core";

@@ -28,7 +28,7 @@ export function getQueryAttr(attrName) {
  * tenant's login redirection path (path after login).
  */
 export async function redirectIfLoggedIn() {
-  if (!store.accessToken) {
+  if (!store.tokens.accessToken) {
     return removeAllCookies();
   }
   if (getQueryAttr("redirect")) {
@@ -38,7 +38,7 @@ export async function redirectIfLoggedIn() {
   try {
     const { data } = await axios.get(`${apiUrl}self`, {
       headers: {
-        authorization: `Bearer ${store.accessToken}`,
+        authorization: `Bearer ${store.tokens.accessToken}`,
       },
     });
     if (data.tenant && data.tenant.loginRedirectPath) {

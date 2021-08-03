@@ -43,7 +43,7 @@ describe("redirectIfLoggedIn", () => {
     removeAllCookies.mockReset();
   });
 
-  it("should call removeAllCookies if store.accessToken isn't defined", async () => {
+  it("should call removeAllCookies if store.tokens.accessToken isn't defined", async () => {
     await Userfront.redirectIfLoggedIn();
     expect(removeAllCookies).toHaveBeenCalledTimes(1);
 
@@ -55,7 +55,7 @@ describe("redirectIfLoggedIn", () => {
   it("should call removeAllCookies if request to Userfront API is an error", async () => {
     Cookies.set(`access.${tenantId}`, mockAccessToken, {});
 
-    store.accessToken = mockAccessToken;
+    store.tokens.accessToken = mockAccessToken;
 
     axios.get.mockImplementationOnce(() => {
       throw new Error("Bad Request");
@@ -66,7 +66,7 @@ describe("redirectIfLoggedIn", () => {
     expect(axios.get).toHaveBeenCalledTimes(1);
     expect(axios.get).toHaveBeenCalledWith(`${apiUrl}self`, {
       headers: {
-        authorization: `Bearer ${store.accessToken}`,
+        authorization: `Bearer ${store.tokens.accessToken}`,
       },
     });
 
@@ -79,7 +79,7 @@ describe("redirectIfLoggedIn", () => {
 
   it("should not make request to Userfront API and immediately redirect user to path defined in `redirect` param", async () => {
     Cookies.set(`access.${tenantId}`, mockAccessToken, {});
-    store.accessToken = mockAccessToken;
+    store.tokens.accessToken = mockAccessToken;
     const originalHref = window.location.href;
 
     // Append ?redirect= override path
@@ -101,7 +101,7 @@ describe("redirectIfLoggedIn", () => {
 
   it("should make request to Userfront API and redirect user to tenant's loginRedirectPath when `redirect` param is not specified", async () => {
     Cookies.set(`access.${tenantId}`, mockAccessToken, {});
-    store.accessToken = mockAccessToken;
+    store.tokens.accessToken = mockAccessToken;
     const originalHref = window.location.href;
 
     const loginRedirectPath = "/after/login/path";
@@ -125,7 +125,7 @@ describe("redirectIfLoggedIn", () => {
     expect(axios.get).toHaveBeenCalledTimes(1);
     expect(axios.get).toHaveBeenCalledWith(`${apiUrl}self`, {
       headers: {
-        authorization: `Bearer ${store.accessToken}`,
+        authorization: `Bearer ${store.tokens.accessToken}`,
       },
     });
     expect(removeAllCookies).not.toHaveBeenCalled();

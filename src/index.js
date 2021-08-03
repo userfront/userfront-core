@@ -1,5 +1,11 @@
 import { store } from "./store.js";
-import { accessToken, idToken, setTokensFromCookies } from "./tokens";
+import {
+  tokens,
+  accessToken,
+  idToken,
+  setTokensFromCookies,
+  setTokenNames,
+} from "./tokens";
 import { redirectIfLoggedIn } from "./url.js";
 import {
   login,
@@ -23,13 +29,11 @@ let initCallbacks = [];
 function init(tenantId) {
   if (!tenantId) return console.warn("Userfront initialized without tenant ID");
   store.tenantId = tenantId;
-  store.accessTokenName = `access.${tenantId}`;
-  store.idTokenName = `id.${tenantId}`;
-  store.refreshTokenName = `refresh.${tenantId}`;
+  setTokenNames();
   // setIframe(); // TODO re-enable when iframe is needed
   setTokensFromCookies();
 
-  if (store.idToken) {
+  if (store.tokens.idToken) {
     setUser();
   }
 
@@ -112,6 +116,7 @@ export default {
   store,
 
   // tokens
+  tokens,
   accessToken,
   idToken,
 

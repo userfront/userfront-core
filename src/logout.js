@@ -11,11 +11,11 @@ import { redirectToPath } from "./url";
  * Log a user out and redirect to the logout path.
  */
 export async function logout() {
-  if (!store.accessToken) return removeAllCookies();
+  if (!store.tokens.accessToken) return removeAllCookies();
   try {
     const { data } = await axios.get(`${apiUrl}auth/logout`, {
       headers: {
-        authorization: `Bearer ${store.accessToken}`,
+        authorization: `Bearer ${store.tokens.accessToken}`,
       },
     });
     removeAllCookies();

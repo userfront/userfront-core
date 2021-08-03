@@ -99,7 +99,7 @@ describe("User", () => {
       // Should have made API request
       expect(axios.put).toBeCalledWith(`${apiUrl}self`, payload, {
         headers: {
-          authorization: `Bearer ${Userfront.store.accessToken}`,
+          authorization: `Bearer ${Userfront.tokens.accessToken}`,
         },
       });
 
@@ -112,8 +112,8 @@ describe("User", () => {
     it("should throw if `updates` object not provided", async () => {
       const originalUser = { ...Userfront.user };
       const originalTokens = {
-        idToken: Userfront.store.idToken,
-        accessToken: Userfront.store.accessToken,
+        idToken: Userfront.tokens.idToken,
+        accessToken: Userfront.tokens.accessToken,
       };
 
       // Attempt update without object, should log a warning
@@ -141,15 +141,15 @@ describe("User", () => {
       expect(refresh).not.toHaveBeenCalled();
 
       // Assert tokens were not modified
-      expect(originalTokens.idToken).toEqual(Userfront.store.idToken);
-      expect(originalTokens.accessToken).toEqual(Userfront.store.accessToken);
+      expect(originalTokens.idToken).toEqual(Userfront.tokens.idToken);
+      expect(originalTokens.accessToken).toEqual(Userfront.tokens.accessToken);
     });
 
     it("should throw if Userfront API throws error", async () => {
       const originalUser = { ...Userfront.user };
       const originalTokens = {
-        idToken: Userfront.store.idToken,
-        accessToken: Userfront.store.accessToken,
+        idToken: Userfront.tokens.idToken,
+        accessToken: Userfront.tokens.accessToken,
       };
 
       const payload = { name: "Jane Doe" };
@@ -177,8 +177,8 @@ describe("User", () => {
       expect(refresh).not.toHaveBeenCalled();
 
       // Assert tokens were not modified
-      expect(originalTokens.idToken).toEqual(Userfront.store.idToken);
-      expect(originalTokens.accessToken).toEqual(Userfront.store.accessToken);
+      expect(originalTokens.idToken).toEqual(Userfront.tokens.idToken);
+      expect(originalTokens.accessToken).toEqual(Userfront.tokens.accessToken);
     });
   });
 });

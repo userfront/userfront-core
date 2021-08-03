@@ -1,0 +1,33 @@
+import Cookies from "js-cookie";
+import Userfront from "../src/index.js";
+import utils from "./config/utils.js";
+
+const tenantId = "abcd4321";
+const mockAccessToken = utils.createAccessToken();
+const mockIdToken = utils.createIdToken();
+
+describe("Userfront.tokens helpers", () => {
+  beforeAll(() => {
+    // Set mock cookies
+    Cookies.set(`id.${tenantId}`, mockIdToken, {});
+    Cookies.set(`access.${tenantId}`, mockAccessToken, {});
+    // Initialize Userfront
+    Userfront.init(tenantId);
+  });
+
+  it("tokens.accessToken should give JWT access token", () => {
+    expect(Userfront.tokens.accessToken).toEqual(mockAccessToken);
+  });
+
+  it("tokens.idToken should give JWT ID token", () => {
+    expect(Userfront.tokens.idToken).toEqual(mockIdToken);
+  });
+
+  it("tokens.accessTokenName should give name of access token", () => {
+    expect(Userfront.tokens.accessTokenName).toEqual(`access.${tenantId}`);
+  });
+
+  it("tokens.idTokenName should give name of ID token", () => {
+    expect(Userfront.tokens.idTokenName).toEqual(`id.${tenantId}`);
+  });
+});

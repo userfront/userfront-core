@@ -2,20 +2,27 @@ import Cookies from "js-cookie";
 
 import { store } from "./store.js";
 
+export function setTokenNames() {
+  store.tokens = store.tokens || {};
+  store.tokens.accessTokenName = `access.${store.tenantId}`;
+  store.tokens.idTokenName = `id.${store.tenantId}`;
+  store.tokens.refreshTokenName = `refresh.${store.tenantId}`;
+}
+
 /**
  * Set and then return the access token
  */
 export function accessToken() {
-  store.accessToken = Cookies.get(store.accessTokenName);
-  return store.accessToken;
+  store.tokens.accessToken = Cookies.get(store.tokens.accessTokenName);
+  return store.tokens.accessToken;
 }
 
 /**
  * Set and then return the ID token
  */
 export function idToken() {
-  store.idToken = Cookies.get(store.idTokenName);
-  return store.idToken;
+  store.tokens.idToken = Cookies.get(store.tokens.idTokenName);
+  return store.tokens.idToken;
 }
 
 /**
@@ -25,13 +32,18 @@ export function setTokensFromCookies() {
   const tokenNames = ["access", "id", "refresh"];
   tokenNames.map((tokenName) => {
     try {
-      const token = Cookies.get(store[`${tokenName}TokenName`]);
-      store[`${tokenName}Token`] = token;
+      const token = Cookies.get(store.tokens[`${tokenName}TokenName`]);
+      store.tokens[`${tokenName}Token`] = token;
     } catch (error) {
       console.warn(`Problem setting ${tokenName} token.`);
     }
   });
 }
+
+/**
+ * Export the store.tokens object
+ */
+export const tokens = store.tokens;
 
 // NOTE Commenting this out 6/11/21 because the packages it relies on (jsonwebtoken & jwks-rsa)
 // both cause a lot of bloat. If we want to verify tokens, this is a nice way to do it, but

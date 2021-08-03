@@ -84,11 +84,11 @@ xdescribe("verifyToken", () => {
       return { getSigningKey };
     });
 
-    await Userfront.verifyToken(Userfront.store.accessToken);
+    await Userfront.verifyToken(Userfront.tokens.accessToken);
 
     // Assert decoding and fetching of JWKS
     expect(jwt.decode).toHaveBeenCalledTimes(1);
-    expect(jwt.decode).toHaveBeenCalledWith(Userfront.store.accessToken, {
+    expect(jwt.decode).toHaveBeenCalledWith(Userfront.tokens.accessToken, {
       complete: true,
     });
     expect(JwksClient).toHaveBeenCalledTimes(1);
@@ -104,7 +104,7 @@ xdescribe("verifyToken", () => {
     // Assert verification
     expect(jwt.verify).toHaveBeenCalledTimes(1);
     expect(jwt.verify).toHaveBeenCalledWith(
-      Userfront.store.accessToken,
+      Userfront.tokens.accessToken,
       mockPublicKey
     );
   });
@@ -126,7 +126,7 @@ xdescribe("verifyToken", () => {
       };
     });
 
-    expect(Userfront.verifyToken(Userfront.store.accessToken)).rejects.toThrow(
+    expect(Userfront.verifyToken(Userfront.tokens.accessToken)).rejects.toThrow(
       "Token kid not defined"
     );
   });
@@ -140,7 +140,7 @@ xdescribe("verifyToken", () => {
       return { getSigningKey };
     });
 
-    expect(Userfront.verifyToken(Userfront.store.accessToken)).rejects.toThrow(
+    expect(Userfront.verifyToken(Userfront.tokens.accessToken)).rejects.toThrow(
       "Public key not found"
     );
   });
@@ -158,7 +158,7 @@ xdescribe("verifyToken", () => {
       throw new Error("JWT malformed");
     });
 
-    expect(Userfront.verifyToken(Userfront.store.accessToken)).rejects.toThrow(
+    expect(Userfront.verifyToken(Userfront.tokens.accessToken)).rejects.toThrow(
       "Token verification failed"
     );
   });

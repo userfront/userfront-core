@@ -8,12 +8,12 @@ import { getJWTPayload } from "./utils.js";
  * Define the store.user object based on the ID token
  */
 export function setUser() {
-  if (!store.idToken) {
+  if (!store.tokens.idToken) {
     return console.warn("Cannot define user: missing ID token");
   }
 
   store.user = store.user || {};
-  const idTokenPayload = getJWTPayload(store.idToken);
+  const idTokenPayload = getJWTPayload(store.tokens.idToken);
 
   // Set basic user information properties from ID token
   const propsToDefine = [
@@ -49,7 +49,7 @@ export async function update(payload) {
   // Make request to update the user
   await axios.put(`${apiUrl}self`, payload, {
     headers: {
-      authorization: `Bearer ${store.accessToken}`,
+      authorization: `Bearer ${store.tokens.accessToken}`,
     },
   });
 

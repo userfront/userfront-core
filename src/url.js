@@ -11,6 +11,7 @@ import { removeAllCookies } from "./cookies.js";
 export function getQueryAttr(attrName) {
   if (
     typeof window !== "object" ||
+    typeof window.location !== "object" ||
     !window.location.href ||
     window.location.href.indexOf(`${attrName}=`) < 0
   ) {
@@ -27,7 +28,7 @@ export function getQueryAttr(attrName) {
  * tenant's login redirection path (path after login).
  */
 export async function redirectIfLoggedIn() {
-  if (!store.accessToken) {
+  if (!store.tokens.accessToken) {
     return removeAllCookies();
   }
   if (getQueryAttr("redirect")) {
@@ -37,7 +38,7 @@ export async function redirectIfLoggedIn() {
   try {
     const { data } = await axios.get(`${apiUrl}self`, {
       headers: {
-        authorization: `Bearer ${store.accessToken}`,
+        authorization: `Bearer ${store.tokens.accessToken}`,
       },
     });
     if (data.tenant && data.tenant.loginRedirectPath) {

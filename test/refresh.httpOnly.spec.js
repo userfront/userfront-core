@@ -14,7 +14,15 @@ jest.mock("../src/cookies.js", () => {
 
 const tenantId = "abcd4321";
 
-describe("refresh method", () => {
+/**
+ * This file tests the httpOnly refresh method, which uses an iframe with
+ * an httpOnly cookie to perform token refreshes.
+ *
+ * The httpOnly refresh method is only available for tenants with configured
+ * SSL certificates while in live mode.
+ */
+
+describe("refresh with httpOnly method", () => {
   afterEach(() => {
     utils.resetStore(Userfront);
     setCookiesAndTokens.mockClear();

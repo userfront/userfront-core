@@ -19,6 +19,7 @@ import { setMode } from "./mode.js";
 // import { setIframe } from "./iframe.js";
 import { user, setUser } from "./user.js";
 import { isTestHostname } from "./utils.js";
+import { refresh } from "./refresh.js";
 
 let initCallbacks = [];
 
@@ -104,6 +105,9 @@ export default {
 
   // mode
   setMode,
+
+  // refresh
+  refresh,
 
   // signon
   login,

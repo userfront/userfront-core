@@ -51,6 +51,8 @@ export function removeAllCookies() {
 export function setCookiesAndTokens(tokens) {
   setCookie(tokens.access.value, tokens.access.cookieOptions, "access");
   setCookie(tokens.id.value, tokens.id.cookieOptions, "id");
-  setCookie(tokens.refresh.value, tokens.refresh.cookieOptions, "refresh");
+  if (tokens.refresh && tokens.refresh.value) {
+    setCookie(tokens.refresh.value, tokens.refresh.cookieOptions, "refresh");
+  }
   setTokensFromCookies();
 }

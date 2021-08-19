@@ -1,6 +1,3 @@
-import axios from "axios";
-import { apiUrl } from "./constants.js";
-import { refresh } from "./refresh.js";
 import { store } from "./store.js";
 import { getJWTPayload } from "./utils.js";
 
@@ -38,32 +35,6 @@ export function setUser() {
 }
 
 /**
- * Update the user record on Userfront
- * @param {Object} payload User properties to update e.g. { name: 'John Doe' }
- */
-export async function update(payload) {
-  if (!payload || Object.keys(payload).length < 1) {
-    return console.warn("Missing user properties to update");
-  }
-
-  // Make request to update the user
-  await axios.put(`${apiUrl}self`, payload, {
-    headers: {
-      authorization: `Bearer ${store.tokens.accessToken}`,
-    },
-  });
-
-  // Refresh the access and ID tokens
-  await refresh();
-
-  // Set the store.user object from the ID token
-  setUser();
-
-  return store.user;
-}
-
-/**
  * Export the store.user object with the update method added
  */
 export const user = store.user;
-user.update = update;

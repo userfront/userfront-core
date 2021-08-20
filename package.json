@@ -1,6 +1,6 @@
 {
   "name": "@userfront/core",
-  "version": "0.2.21",
+  "version": "0.2.22",
   "description": "Userfront core JS library",
   "source": "src/index.js",
   "main": "build/userfront-core.js",
@@ -33,7 +33,7 @@
   },
   "homepage": "https://github.com/userfront/userfront-core#readme",
   "dependencies": {
-    "axios": "^0.21.0",
+    "axios": "^0.21.1",
     "js-cookie": "^2.2.1"
   },
   "devDependencies": {

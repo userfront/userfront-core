@@ -1,3 +1,4 @@
+import axios from "axios";
 import { store } from "./store.js";
 import {
   tokens,
@@ -28,9 +29,16 @@ let initCallbacks = [];
  * Initialize the Userfront library.
  * @param {String} tenantId
  */
-function init(tenantId) {
+function init(tenantId, opts = {}) {
   if (!tenantId) return console.warn("Userfront initialized without tenant ID");
+
   store.tenantId = tenantId;
+
+  if (opts.domain) {
+    store.domain = opts.domain;
+    axios.defaults.headers.common["x-application-id"] = store.domain;
+  }
+
   setTokenNames();
   // setIframe(); // TODO re-enable when iframe is needed
   setTokensFromCookies();

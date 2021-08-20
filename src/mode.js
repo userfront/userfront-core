@@ -1,5 +1,4 @@
 import axios from "axios";
-
 import { apiUrl } from "./constants.js";
 import { store } from "./store.js";
 

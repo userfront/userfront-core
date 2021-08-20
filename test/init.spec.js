@@ -9,7 +9,6 @@ const domain = "com.example.myapp";
 
 jest.mock("axios");
 
-window.location.hostname = "";
 describe("init() method with domain option", () => {
   beforeEach(() => {
     // Mock the axios POST response (used for signup & login)
@@ -67,6 +66,7 @@ describe("init() method with domain option", () => {
     const password = "foobar";
 
     await Userfront.signup({ method: "password", email, password });
+
     expect(axios.defaults.headers.common["x-application-id"]).toEqual(domain);
     expect(axios.post).toHaveBeenCalledWith(
       "https://api.userfront.com/v0/auth/create",
@@ -88,6 +88,7 @@ describe("init() method with domain option", () => {
     const password = "foobar";
 
     await Userfront.login({ method: "password", email, password });
+
     expect(axios.defaults.headers.common["x-application-id"]).toEqual(domain);
     expect(axios.post).toHaveBeenCalledWith(
       "https://api.userfront.com/v0/auth/basic",

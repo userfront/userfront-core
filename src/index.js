@@ -36,7 +36,9 @@ function init(tenantId, opts = {}) {
 
   if (opts.domain) {
     store.domain = opts.domain;
-    axios.defaults.headers.common["x-application-id"] = store.domain;
+    axios.defaults.headers.common[
+      "x-application-id"
+    ] = `https://${store.domain}`;
   }
 
   setTokenNames();

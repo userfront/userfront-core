@@ -52,7 +52,9 @@ describe("init() method with domain option", () => {
     });
     await setMode();
 
-    expect(axios.defaults.headers.common["x-application-id"]).toEqual(domain);
+    expect(axios.defaults.headers.common["x-application-id"]).toEqual(
+      `https://${domain}`
+    );
     expect(axios.get).toHaveBeenCalledWith(
       `https://api.userfront.com/v0/tenants/${tenantId}/mode`
     );
@@ -67,7 +69,9 @@ describe("init() method with domain option", () => {
 
     await Userfront.signup({ method: "password", email, password });
 
-    expect(axios.defaults.headers.common["x-application-id"]).toEqual(domain);
+    expect(axios.defaults.headers.common["x-application-id"]).toEqual(
+      `https://${domain}`
+    );
     expect(axios.post).toHaveBeenCalledWith(
       "https://api.userfront.com/v0/auth/create",
       {
@@ -89,7 +93,9 @@ describe("init() method with domain option", () => {
 
     await Userfront.login({ method: "password", email, password });
 
-    expect(axios.defaults.headers.common["x-application-id"]).toEqual(domain);
+    expect(axios.defaults.headers.common["x-application-id"]).toEqual(
+      `https://${domain}`
+    );
     expect(axios.post).toHaveBeenCalledWith(
       "https://api.userfront.com/v0/auth/basic",
       {
@@ -114,7 +120,9 @@ describe("init() method with domain option", () => {
 
     await Userfront.logout();
 
-    expect(axios.defaults.headers.common["x-application-id"]).toEqual(domain);
+    expect(axios.defaults.headers.common["x-application-id"]).toEqual(
+      `https://${domain}`
+    );
     expect(axios.get).toHaveBeenCalledWith(
       "https://api.userfront.com/v0/auth/logout",
       {

@@ -1,6 +1,6 @@
 {
   // Change this to match your project
-  "include": ["build/**/*"],
+  "include": ["build/*.js"],
   "compilerOptions": {
     "allowJs": true,
     "declaration": true, // Generate d.ts files

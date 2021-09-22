@@ -1,6 +1,6 @@
 {
   "name": "@userfront/core",
-  "version": "0.2.23",
+  "version": "0.2.25",
   "description": "Userfront core JS library",
   "source": "src/index.js",
   "main": "build/userfront-core.js",
@@ -8,11 +8,12 @@
   "unpkg": "build/userfront-core.umd.js",
   "scripts": {
     "test": "jest --watch",
-    "build": "npm version patch && microbundle",
+    "build": "npm version patch && microbundle && ts:copy",
     "pub": "npm publish",
     "build:beta": "npm version prerelease --preid=beta && microbundle",
     "pub:beta": "npm publish --tag beta",
-    "reinstall": "rm -rf node_modules && rm package-lock.json && npm install"
+    "reinstall": "rm -rf node_modules && rm package-lock.json && npm install",
+    "ts:copy": "cp ts/index.d.ts build/userfront-core.d.ts; cp ts/index.d.ts build/userfront-core.modern.d.ts; cp ts/index.d.ts build/userfront-core.module.d.ts; cp ts/index.d.ts build/userfront-core.umd.d.ts"
   },
   "repository": {
     "type": "git",
@@ -45,6 +46,7 @@
     "babel-plugin-rewire": "^1.2.0",
     "jest": "^26.6.3",
     "jsonwebtoken": "^8.5.1",
-    "microbundle": "^0.12.4"
+    "microbundle": "^0.12.4",
+    "typescript": "^3.9.9"
   }
 }

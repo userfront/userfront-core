@@ -1,0 +1,10 @@
+{
+  // Change this to match your project
+  "include": ["build/*.js"],
+  "compilerOptions": {
+    "allowJs": true,
+    "declaration": true, // Generate d.ts files
+    "emitDeclarationOnly": true, // Only output d.ts files
+    // "outDir": "build"
+  }
+}

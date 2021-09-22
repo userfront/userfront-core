@@ -13,7 +13,7 @@
     "build:beta": "npm version prerelease --preid=beta && microbundle",
     "pub:beta": "npm publish --tag beta",
     "reinstall": "rm -rf node_modules && rm package-lock.json && npm install",
-    "ts:copy": "cp ts/index.d.ts build/userfront-core.d.ts"
+    "ts:copy": "cp ts/index.d.ts build/userfront-core.d.ts; cp ts/index.d.ts build/userfront-core.modern.d.ts; cp ts/index.d.ts build/userfront-core.module.d.ts; cp ts/index.d.ts build/userfront-core.umd.d.ts"
   },
   "repository": {
     "type": "git",

@@ -41,6 +41,7 @@ describe("redirectIfLoggedIn", () => {
   afterEach(() => {
     Cookies.remove(`access.${tenantId}`);
     removeAllCookies.mockReset();
+    window.location.assign.mockClear();
   });
 
   it("should call removeAllCookies if store.tokens.accessToken isn't defined", async () => {
@@ -52,7 +53,7 @@ describe("redirectIfLoggedIn", () => {
     expect(window.location.assign).not.toHaveBeenCalled();
   });
 
-  it("should call removeAllCookies if request to Userfront API is an error", async () => {
+  it("should call removeAllCookies if request to Userfront API gives an error", async () => {
     Cookies.set(`access.${tenantId}`, mockAccessToken, {});
 
     store.tokens.accessToken = mockAccessToken;
@@ -77,7 +78,7 @@ describe("redirectIfLoggedIn", () => {
     axios.get.mockReset();
   });
 
-  it("should not make request to Userfront API and immediately redirect user to path defined in `redirect` param", async () => {
+  it("should not make request to Userfront API and should immediately redirect to path defined in `redirect` url param", async () => {
     Cookies.set(`access.${tenantId}`, mockAccessToken, {});
     store.tokens.accessToken = mockAccessToken;
     const originalHref = window.location.href;
@@ -94,12 +95,32 @@ describe("redirectIfLoggedIn", () => {
     expect(window.location.assign).toHaveBeenCalledTimes(1);
     expect(window.location.assign).toHaveBeenCalledWith(targetPath);
 
-    // Revert href and clear mock
+    // Revert href
     window.location.href = originalHref;
-    window.location.assign.mockClear();
   });
 
-  it("should make request to Userfront API and redirect user to tenant's loginRedirectPath when `redirect` param is not specified", async () => {
+  it("should not make request to Userfront API and should immediately redirect to path provided in options", async () => {
+    Cookies.set(`access.${tenantId}`, mockAccessToken, {});
+    store.tokens.accessToken = mockAccessToken;
+    const originalHref = window.location.href;
+
+    // Append ?redirect= override path
+    const targetPath = "/custom/path";
+    window.location.href = `https://example.com/login`;
+
+    await Userfront.redirectIfLoggedIn({ redirect: targetPath });
+
+    // Should redirected immediately without calling Userfront API
+    expect(removeAllCookies).not.toHaveBeenCalled();
+    expect(axios.get).not.toHaveBeenCalled();
+    expect(window.location.assign).toHaveBeenCalledTimes(1);
+    expect(window.location.assign).toHaveBeenCalledWith(targetPath);
+
+    // Revert href and clear mock
+    window.location.href = originalHref;
+  });
+
+  it("should make request to Userfront API and redirect user to tenant's loginRedirectPath when `redirect` url param is not specified", async () => {
     Cookies.set(`access.${tenantId}`, mockAccessToken, {});
     store.tokens.accessToken = mockAccessToken;
     const originalHref = window.location.href;
@@ -134,8 +155,7 @@ describe("redirectIfLoggedIn", () => {
     expect(window.location.assign).toHaveBeenCalledTimes(1);
     expect(window.location.assign).toHaveBeenCalledWith(loginRedirectPath);
 
-    // Revert href and clear mock
+    // Revert href
     window.location.href = originalHref;
-    window.location.assign.mockClear();
   });
 });

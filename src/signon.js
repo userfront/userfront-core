@@ -97,9 +97,10 @@ async function signupWithPassword({
     if (data.tokens) {
       setCookiesAndTokens(data.tokens);
       await exchange(data);
-      redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/", {
-        redirect,
-      });
+      if (redirect === false) return data;
+      redirectToPath(
+        redirect || getQueryAttr("redirect") || data.redirectTo || "/"
+      );
       return data;
     } else {
       throw new Error("Please try again.");
@@ -209,9 +210,10 @@ async function loginWithPassword({
     if (data.tokens) {
       setCookiesAndTokens(data.tokens);
       await exchange(data);
-      redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/", {
-        redirect,
-      });
+      if (redirect === false) return data;
+      redirectToPath(
+        redirect || getQueryAttr("redirect") || data.redirectTo || "/"
+      );
       return data;
     } else {
       throw new Error("Please try again.");
@@ -243,9 +245,10 @@ export async function loginWithLink({ token, uuid, redirect } = {}) {
     if (data.tokens) {
       setCookiesAndTokens(data.tokens);
       await exchange(data);
-      redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/", {
-        redirect,
-      });
+      if (redirect === false) return data;
+      redirectToPath(
+        redirect || getQueryAttr("redirect") || data.redirectTo || "/"
+      );
       return data;
     } else {
       throw new Error("Problem logging in.");
@@ -300,9 +303,14 @@ export async function resetPassword({ uuid, token, password, redirect }) {
     });
     if (data.tokens) {
       setCookiesAndTokens(data.tokens);
-      redirectToPath(getQueryAttr("redirect") || data.redirectTo || "/", {
-        redirect,
-      });
+
+      // Return if redirect is explicitly false
+      if (redirect === false) return data;
+
+      redirectToPath(
+        redirect || getQueryAttr("redirect") || data.redirectTo || "/"
+      );
+
       return data;
     } else {
       throw new Error(

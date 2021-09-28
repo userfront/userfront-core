@@ -479,7 +479,91 @@ describe("sendResetLink", () => {
 });
 
 describe("resetPassword", () => {
-  it(`error should respond with whatever error the server sends`, async () => {
+  afterEach(() => {
+    window.location.assign.mockClear();
+  });
+
+  it("should send a password reset request and then redirect the page", async () => {
+    // Mock the API response
+    axios.put.mockImplementationOnce(() => Promise.resolve(mockResponse));
+
+    const options = { token: "token", uuid: "uuid", password: "password" };
+
+    // Call resetPassword
+    await resetPassword(options);
+
+    // Should have sent the proper API request
+    expect(axios.put).toHaveBeenCalledWith(
+      `https://api.userfront.com/v0/auth/reset`,
+      {
+        tenantId,
+        ...options,
+      }
+    );
+
+    // Should have redirected the page
+    expect(window.location.assign).toHaveBeenCalledWith(
+      mockResponse.data.redirectTo
+    );
+  });
+
+  it("should send a password reset request and redirect to a custom page", async () => {
+    // Mock the API response
+    axios.put.mockImplementationOnce(() => Promise.resolve(mockResponse));
+
+    const targetPath = "/custom/page";
+
+    const options = {
+      token: "token",
+      uuid: "uuid",
+      password: "password",
+    };
+
+    // Call resetPassword
+    await resetPassword({ ...options, redirect: targetPath });
+
+    // Should have sent the proper API request
+    expect(axios.put).toHaveBeenCalledWith(
+      `https://api.userfront.com/v0/auth/reset`,
+      {
+        tenantId,
+        ...options,
+      }
+    );
+
+    // Should have redirected the page
+    expect(window.location.assign).toHaveBeenCalledWith(targetPath);
+  });
+
+  it("should send a password reset request and not redirect if redirect is false", async () => {
+    // Mock the API response
+    axios.put.mockImplementationOnce(() => Promise.resolve(mockResponse));
+
+    const targetPath = "/custom/page";
+
+    const options = {
+      token: "token",
+      uuid: "uuid",
+      password: "password",
+    };
+
+    // Call resetPassword
+    await resetPassword({ ...options, redirect: false });
+
+    // Should have sent the proper API request
+    expect(axios.put).toHaveBeenCalledWith(
+      `https://api.userfront.com/v0/auth/reset`,
+      {
+        tenantId,
+        ...options,
+      }
+    );
+
+    // Should not have redirected the page
+    expect(window.location.assign).not.toHaveBeenCalled();
+  });
+
+  xit(`error should respond with whatever error the server sends`, async () => {
     // Mock the API response
     const mockResponse = {
       response: {

@@ -27,14 +27,19 @@ export function getQueryAttr(attrName) {
  * If the access token is valid, redirect the browser to the
  * tenant's login redirection path (path after login).
  */
-export async function redirectIfLoggedIn() {
+export async function redirectIfLoggedIn({ redirect } = {}) {
   if (!store.tokens.accessToken) {
     return removeAllCookies();
   }
-  if (getQueryAttr("redirect")) {
+
+  // Redirect to a provided path (check options first, then url querystring)
+  if (redirect) {
+    return redirectToPath(redirect);
+  } else if (getQueryAttr("redirect")) {
     return redirectToPath(getQueryAttr("redirect"));
   }
 
+  // If no path was provided, look up the path and then redirect there
   try {
     const { data } = await axios.get(`${apiUrl}self`, {
       headers: {
@@ -52,10 +57,10 @@ export async function redirectIfLoggedIn() {
 /**
  * Redirect to path portion of a URL.
  */
-export function redirectToPath(pathOrUrl, { redirect } = {}) {
-  // Return if redirect=false, or if SSR or mobile
+export function redirectToPath(pathOrUrl) {
+  // Return if no pathOrUrl, or if SSR or mobile
   if (
-    redirect === false ||
+    !pathOrUrl ||
     typeof document !== "object" ||
     typeof window !== "object"
   ) {
@@ -66,12 +71,6 @@ export function redirectToPath(pathOrUrl, { redirect } = {}) {
   } catch (error) {
     return;
   }
-
-  // If redirect is explicitly set, use that
-  if (!!redirect) pathOrUrl = redirect;
-
-  // If no pathOrUrl, do not redirect
-  if (!pathOrUrl) return;
 
   // Perform hard redirect
   const el = document.createElement("a");

@@ -102,3 +102,11 @@ interface Tokens {
   idTokenName: string;
 }
 export declare const tokens: Tokens;
+
+// mode
+interface Mode {
+  value: "live" | "test";
+  reason?: string;
+  setMode?: Function;
+}
+export declare const mode: Mode;

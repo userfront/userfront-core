@@ -16,11 +16,10 @@ import {
   signup,
 } from "./signon.js";
 import { logout } from "./logout.js";
-import { setMode } from "./mode.js";
+import { mode, setMode, setModeSync } from "./mode.js";
 // import { setIframe } from "./iframe.js";
 import { user, setUser } from "./user.js";
 import "./user.update.js";
-import { isTestHostname } from "./utils.js";
 import { refresh } from "./refresh.js";
 
 let initCallbacks = [];
@@ -44,6 +43,7 @@ function init(tenantId, opts = {}) {
   setTokenNames();
   // setIframe(); // TODO re-enable when iframe is needed
   setTokensFromCookies();
+  setModeSync();
 
   if (store.tokens.idToken) {
     setUser();
@@ -115,6 +115,7 @@ export default {
   logout,
 
   // mode
+  mode,
   setMode,
 
   // refresh
@@ -142,5 +143,4 @@ export default {
   user,
 
   // utils
-  isTestHostname,
 };

@@ -1,4 +1,4 @@
-import { isTestHostname } from "../../src/utils.js";
+import { isTestHostname } from "../../src/mode.js";
 
 function resetStore(Userfront) {
   Userfront.store = {

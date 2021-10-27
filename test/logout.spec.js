@@ -4,13 +4,13 @@ import Cookies from "js-cookie";
 import Userfront from "../src/index.js";
 import { getIframe, resolvers } from "../src/iframe.js";
 import { logout } from "../src/logout.js";
-import utils from "./config/utils.js";
+import { createAccessToken, createIdToken } from "./config/utils.js";
 
 jest.mock("axios");
 
 const tenantId = "abcd9876";
-const mockAccessToken = utils.createAccessToken();
-const mockIdToken = utils.createIdToken();
+const mockAccessToken = createAccessToken();
+const mockIdToken = createIdToken();
 
 // Mock API response
 const mockResponse = {
@@ -62,6 +62,11 @@ describe("logout", () => {
       expect(Userfront.tokens.accessToken).toBeFalsy();
       expect(Userfront.tokens.idToken).toBeFalsy();
 
+      // Should have cleared the user object
+      expect(Userfront.user.email).toBeFalsy();
+      expect(Userfront.user.userId).toBeFalsy();
+      expect(Userfront.user.update).toBeTruthy();
+
       // Should have redirected correctly
       expect(window.location.assign).toHaveBeenCalledWith(
         mockResponse.data.redirectTo
@@ -87,6 +92,11 @@ describe("logout", () => {
       expect(Userfront.tokens.accessToken).toBeFalsy();
       expect(Userfront.tokens.idToken).toBeFalsy();
 
+      // Should have cleared the user object
+      expect(Userfront.user.email).toBeFalsy();
+      expect(Userfront.user.userId).toBeFalsy();
+      expect(Userfront.user.update).toBeTruthy();
+
       // Should have redirected correctly
       expect(window.location.assign).toHaveBeenCalledWith("/custom");
     });
@@ -109,6 +119,11 @@ describe("logout", () => {
       expect(Cookies.get(`id.${tenantId}`)).toBeFalsy();
       expect(Userfront.tokens.accessToken).toBeFalsy();
       expect(Userfront.tokens.idToken).toBeFalsy();
+
+      // Should have cleared the user object
+      expect(Userfront.user.email).toBeFalsy();
+      expect(Userfront.user.userId).toBeFalsy();
+      expect(Userfront.user.update).toBeTruthy();
 
       // Should have redirected correctly
       expect(window.location.assign).not.toHaveBeenCalled();

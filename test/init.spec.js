@@ -1,5 +1,9 @@
 import axios from "axios";
-import utils from "./config/utils.js";
+import {
+  createAccessToken,
+  createIdToken,
+  resetStore,
+} from "./config/utils.js";
 import Userfront from "../src/index.js";
 import { setMode } from "../src/mode.js";
 import { store } from "../src/store.js";
@@ -12,8 +16,8 @@ jest.mock("axios");
 describe("init() method with domain option", () => {
   beforeEach(() => {
     // Mock the axios POST response (used for signup & login)
-    const mockAccessToken = utils.createAccessToken();
-    const mockIdToken = utils.createIdToken();
+    const mockAccessToken = createAccessToken();
+    const mockIdToken = createIdToken();
     axios.post.mockResolvedValue({
       status: 200,
       data: {
@@ -36,7 +40,7 @@ describe("init() method with domain option", () => {
   });
 
   afterEach(() => {
-    utils.resetStore(Userfront);
+    resetStore(Userfront);
     jest.resetAllMocks();
   });
 

@@ -91,6 +91,7 @@ interface User {
   userId?: number;
   userUuid?: string;
   update?: Function;
+  hasRole?: Function;
 }
 export declare const user: User;
 

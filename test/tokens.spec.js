@@ -1,10 +1,10 @@
 import Cookies from "js-cookie";
 import Userfront from "../src/index.js";
-import utils from "./config/utils.js";
+import { createAccessToken, createIdToken } from "./config/utils.js";
 
 const tenantId = "abcd4321";
-const mockAccessToken = utils.createAccessToken();
-const mockIdToken = utils.createIdToken();
+const mockAccessToken = createAccessToken();
+const mockIdToken = createIdToken();
 
 describe("Userfront.tokens helpers", () => {
   beforeAll(() => {

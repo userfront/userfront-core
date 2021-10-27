@@ -49,6 +49,8 @@ export async function signup({
         userData: data,
         redirect,
       });
+    case "passwordless":
+      return sendPasswordlessLink({ email, name, username, userData: data });
     default:
       throw new Error(
         'Userfront.signup called with invalid "method" property.'
@@ -106,10 +108,7 @@ async function signupWithPassword({
       throw new Error("Please try again.");
     }
   } catch (error) {
-    if (error?.response?.data?.message) {
-      throw new Error(error.response.data.message);
-    }
-    throw error;
+    throwFormattedError(error);
   }
 }
 
@@ -153,6 +152,8 @@ export async function login({
         password,
         redirect,
       });
+    case "passwordless":
+      return sendPasswordlessLink({ email });
     case "link":
       return loginWithLink({ token, uuid, redirect });
     default:
@@ -269,8 +270,34 @@ export async function sendLoginLink(email) {
       tenantId: store.tenantId,
     });
     return data;
-  } catch (err) {
-    throw new Error("Problem sending link.");
+  } catch (error) {
+    throwFormattedError(error);
+  }
+}
+
+/**
+ * Create or update a user and send them a link to log in.
+ * @param {Object} inputs
+ */
+export async function sendPasswordlessLink({
+  email,
+  name,
+  username,
+  userData,
+  options,
+}) {
+  try {
+    const { data } = await axios.post(`${apiUrl}auth/link`, {
+      email,
+      name,
+      username,
+      data: userData,
+      options,
+      tenantId: store.tenantId,
+    });
+    return data;
+  } catch (error) {
+    throwFormattedError(error);
   }
 }
 
@@ -285,8 +312,8 @@ export async function sendResetLink(email) {
       tenantId: store.tenantId,
     });
     return data;
-  } catch (err) {
-    throw new Error("Problem sending link.");
+  } catch (error) {
+    throwFormattedError(error);
   }
 }
 

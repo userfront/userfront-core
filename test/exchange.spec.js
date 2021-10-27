@@ -1,4 +1,4 @@
-import utils from "./config/utils.js";
+import { resetStore } from "./config/utils.js";
 import Userfront from "../src/index.js";
 
 import { getIframe, resolvers } from "../src/iframe.js";
@@ -8,7 +8,7 @@ const tenantId = "abcd4321";
 
 describe("exchange method", () => {
   afterEach(() => {
-    utils.resetStore(Userfront);
+    resetStore(Userfront);
   });
 
   // TODO re-enable tests below once iframe is re-established

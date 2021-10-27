@@ -1,12 +1,17 @@
 import axios from "axios";
 import Userfront from "../src/index.js";
 import {
+  createAccessToken,
+  createIdToken,
+  createRefreshToken,
+  idTokenUserDefaults,
+} from "./config/utils.js";
+import {
   signup,
   login,
   sendLoginLink,
   sendResetLink,
   resetPassword,
-  loginWithLink,
 } from "../src/signon.js";
 import { exchange } from "../src/refresh.js";
 
@@ -36,9 +41,9 @@ window.location = {
 const mockResponse = {
   data: {
     tokens: {
-      id: { value: "id-token-value" },
-      access: { value: "access-token-value" },
-      refresh: { value: "refresh-token-value" },
+      access: { value: createAccessToken() },
+      id: { value: createIdToken() },
+      refresh: { value: createRefreshToken() },
     },
     nonce: "nonce-value",
     redirectTo: "/dashboard",
@@ -56,16 +61,10 @@ describe("signup", () => {
 
       // Call signup()
       const payload = {
-        email: "someone@example.com",
-        name: "Someone",
+        email: idTokenUserDefaults.email,
+        name: idTokenUserDefaults.name,
+        data: idTokenUserDefaults.data,
         password: "something",
-        data: {
-          some: "custom",
-          camelCase: Math.random(),
-          Underscore_Case: {
-            capitalized: true,
-          },
-        },
       };
       const res = await signup({
         method: "password",
@@ -88,6 +87,10 @@ describe("signup", () => {
       // Should have returned the proper value
       expect(res).toEqual(mockResponse.data);
 
+      // Should have set the user object
+      expect(Userfront.user.email).toEqual(payload.email);
+      expect(Userfront.user.userId).toEqual(idTokenUserDefaults.userId);
+
       // Should have redirected correctly
       expect(window.location.assign).toHaveBeenCalledWith(
         mockResponse.data.redirectTo
@@ -95,12 +98,20 @@ describe("signup", () => {
     });
 
     it("should sign up and not redirect if redirect = false", async () => {
+      // Update the userId to ensure it is overwritten
+      const newUserAttrs = {
+        userId: 891,
+        email: "another@example.com",
+      };
+      const mockResponseCopy = JSON.parse(JSON.stringify(mockResponse));
+      mockResponseCopy.data.tokens.id.value = createIdToken(newUserAttrs);
+
       // Mock the API response
-      axios.post.mockImplementationOnce(() => mockResponse);
+      axios.post.mockImplementationOnce(() => mockResponseCopy);
 
       // Call signup() with redirect = false
       const payload = {
-        email: "someone@example.com",
+        email: newUserAttrs.email,
         password: "something",
       };
       await signup({
@@ -122,6 +133,10 @@ describe("signup", () => {
       // Should have called exchange() with the API's response
       expect(exchange).toHaveBeenCalledWith(mockResponse.data);
 
+      // Should have set the user object
+      expect(Userfront.user.email).toEqual(payload.email);
+      expect(Userfront.user.userId).toEqual(newUserAttrs.userId);
+
       // Should not have redirected
       expect(window.location.assign).not.toHaveBeenCalled();
     });
@@ -132,7 +147,7 @@ describe("signup", () => {
 
       // Call signup() with redirect = false
       const payload = {
-        email: "someone@example.com",
+        email: idTokenUserDefaults.email,
         password: "something",
       };
       await signup({
@@ -153,6 +168,10 @@ describe("signup", () => {
 
       // Should have called exchange() with the API's response
       expect(exchange).toHaveBeenCalledWith(mockResponse.data);
+
+      // Should have set the user object
+      expect(Userfront.user.email).toEqual(payload.email);
+      expect(Userfront.user.userId).toEqual(idTokenUserDefaults.userId);
 
       // Should have redirected
       expect(window.location.assign).toHaveBeenCalledWith(`/custom`);
@@ -199,6 +218,67 @@ describe("signup", () => {
       expect(window.location.assign).toHaveBeenCalledWith(loginUrl);
     });
   });
+
+  describe("with passwordless", () => {
+    it("should send a request and respond with OK", async () => {
+      // Mock the API response
+      const mockResponse = {
+        data: {
+          message: "OK",
+          result: {
+            to: "link-registered@example.com",
+            whatever: "else",
+          },
+        },
+      };
+      axios.post.mockImplementationOnce(() => mockResponse);
+
+      // Call signup()
+      const payload = {
+        email: mockResponse.data.result.to,
+        name: idTokenUserDefaults.name,
+        username: idTokenUserDefaults.username,
+        data: idTokenUserDefaults.data,
+      };
+      const res = await signup({
+        method: "passwordless",
+        ...payload,
+      });
+
+      // Should have sent the proper API request
+      expect(axios.post).toHaveBeenCalledWith(
+        `https://api.userfront.com/v0/auth/link`,
+        {
+          tenantId,
+          options: undefined,
+          ...payload,
+        }
+      );
+
+      // Should have returned the response exactly
+      expect(res).toEqual(mockResponse.data);
+    });
+
+    it("should respond with whatever error the server sends", async () => {
+      // Mock the API response
+      const mockResponseErr = {
+        response: {
+          data: {
+            error: "Bad Request",
+            message: `That's a dumb email address.`,
+            statusCode: 400,
+          },
+        },
+      };
+      axios.post.mockImplementationOnce(() => Promise.reject(mockResponseErr));
+      expect(
+        signup({
+          method: "passwordless",
+          email: "valid@example.com",
+        })
+      ).rejects.toEqual(new Error(mockResponseErr.response.data.message));
+    });
+  });
 });
 
 describe("login", () => {
@@ -213,7 +293,7 @@ describe("login", () => {
 
       // Call login()
       const payload = {
-        emailOrUsername: "someone@example.com",
+        emailOrUsername: idTokenUserDefaults.email,
         password: "something",
       };
       const res = await login({
@@ -236,6 +316,10 @@ describe("login", () => {
       // Should have called exchange() with the API's response
       expect(exchange).toHaveBeenCalledWith(mockResponse.data);
 
+      // Should have set the user object
+      expect(Userfront.user.email).toEqual(payload.emailOrUsername);
+      expect(Userfront.user.userId).toEqual(idTokenUserDefaults.userId);
+
       // Should have redirected correctly
       expect(window.location.assign).toHaveBeenCalledWith(
         mockResponse.data.redirectTo
@@ -243,11 +327,20 @@ describe("login", () => {
     });
 
     it("should login and not redirect if redirect = false", async () => {
-      axios.post.mockImplementationOnce(() => mockResponse);
+      // Update the userId to ensure it is overwritten
+      const newUserAttrs = {
+        userId: 1009,
+        email: "someone-else@example.com",
+      };
+      const mockResponseCopy = JSON.parse(JSON.stringify(mockResponse));
+      mockResponseCopy.data.tokens.id.value = createIdToken(newUserAttrs);
+
+      // Mock the API response
+      axios.post.mockImplementationOnce(() => mockResponseCopy);
 
       // Call login() with redirect = false
       const payload = {
-        emailOrUsername: "someone@example.com",
+        email: newUserAttrs.email,
         password: "something",
       };
       const res = await login({
@@ -261,15 +354,20 @@ describe("login", () => {
         `https://api.userfront.com/v0/auth/basic`,
         {
           tenantId,
-          ...payload,
+          emailOrUsername: payload.email,
+          password: payload.password,
         }
       );
 
       // Should have called exchange() with the API's response
-      expect(exchange).toHaveBeenCalledWith(mockResponse.data);
+      expect(exchange).toHaveBeenCalledWith(mockResponseCopy.data);
 
       // Should have returned the proper value
-      expect(res).toEqual(mockResponse.data);
+      expect(res).toEqual(mockResponseCopy.data);
+
+      // Should have set the user object
+      expect(Userfront.user.email).toEqual(payload.email);
+      expect(Userfront.user.userId).toEqual(newUserAttrs.userId);
 
       // Should have redirected correctly
       expect(window.location.assign).not.toHaveBeenCalled();
@@ -280,7 +378,7 @@ describe("login", () => {
 
       // Call login() with redirect = false
       const payload = {
-        emailOrUsername: "someone@example.com",
+        emailOrUsername: idTokenUserDefaults.email,
         password: "something",
       };
       await login({
@@ -300,6 +398,10 @@ describe("login", () => {
 
       // Should have called exchange() with the API's response
       expect(exchange).toHaveBeenCalledWith(mockResponse.data);
+
+      // Should have set the user object
+      expect(Userfront.user.email).toEqual(payload.emailOrUsername);
+      expect(Userfront.user.userId).toEqual(idTokenUserDefaults.userId);
 
       // Should have redirected correctly
       expect(window.location.assign).not.toHaveBeenCalled();
@@ -367,10 +469,96 @@ describe("login", () => {
       expect(window.location.assign).toHaveBeenCalledWith(loginUrl);
     });
   });
+
+  describe("with passwordless", () => {
+    it("should send a request and respond with OK", async () => {
+      // Mock the API response
+      const mockResponse = {
+        data: {
+          message: "OK",
+          result: {
+            to: "link-registered@example.com",
+            whatever: "else",
+          },
+        },
+      };
+      axios.post.mockImplementationOnce(() => mockResponse);
+
+      // Call login()
+      const payload = {
+        email: mockResponse.data.result.to,
+      };
+      const res = await login({
+        method: "passwordless",
+        ...payload,
+      });
+
+      // Should have sent the proper API request
+      expect(axios.post).toHaveBeenCalledWith(
+        `https://api.userfront.com/v0/auth/link`,
+        {
+          tenantId,
+          ...payload,
+        }
+      );
+
+      // Should have returned the response exactly
+      expect(res).toEqual(mockResponse.data);
+    });
+
+    it("should respond with whatever error the server sends", async () => {
+      // Mock the API response
+      const mockResponseErr = {
+        response: {
+          data: {
+            error: "Bad Request",
+            message: `That's a dumb email address.`,
+            statusCode: 400,
+          },
+        },
+      };
+      axios.post.mockImplementationOnce(() => Promise.reject(mockResponseErr));
+      expect(
+        login({
+          method: "passwordless",
+          email: "valid@example.com",
+        })
+      ).rejects.toEqual(new Error(mockResponseErr.response.data.message));
+    });
+  });
 });
 
 describe("sendLoginLink", () => {
-  it(`error should respond "Problem sending link"`, async () => {
+  it("should respond with link information", async () => {
+    const mockResponse = {
+      data: {
+        message: "OK",
+        result: {
+          to: "link-requester@example.com",
+          whatever: "else",
+        },
+      },
+    };
+    // Mock the API response
+    axios.post.mockImplementationOnce(() => mockResponse);
+
+    // Call sendLoginLink()
+    const res = await sendLoginLink(mockResponse.data.result.to);
+
+    // Should have sent the proper API request
+    expect(axios.post).toHaveBeenCalledWith(
+      `https://api.userfront.com/v0/auth/link`,
+      {
+        tenantId,
+        email: mockResponse.data.result.to,
+      }
+    );
+
+    // Should have returned the proper value
+    expect(res).toEqual(mockResponse.data);
+  });
+
+  it(`error should respond with whatever the server sends`, async () => {
     // Mock the API response
     const mockResponse = {
       response: {
@@ -383,7 +571,7 @@ describe("sendLoginLink", () => {
     };
     axios.post.mockImplementationOnce(() => Promise.reject(mockResponse));
     expect(sendLoginLink({ email: "email@example.com" })).rejects.toEqual(
-      new Error("Problem sending link.")
+      new Error(mockResponse.response.data.message)
     );
   });
 });
@@ -394,7 +582,16 @@ describe("loginWithLink", () => {
   });
 
   it("should login and redirect", async () => {
-    axios.put.mockImplementationOnce(() => mockResponse);
+    // Update the userId to ensure it is overwritten
+    const newUserAttrs = {
+      userId: 2091,
+      email: "linker@example.com",
+    };
+    const mockResponseCopy = JSON.parse(JSON.stringify(mockResponse));
+    mockResponseCopy.data.tokens.id.value = createIdToken(newUserAttrs);
+
+    // Mock the API response
+    axios.put.mockImplementationOnce(() => mockResponseCopy);
 
     // Call login()
     const payload = {
@@ -416,10 +613,14 @@ describe("loginWithLink", () => {
     );
 
     // Should return the correct value
-    expect(res).toEqual(mockResponse.data);
+    expect(res).toEqual(mockResponseCopy.data);
 
     // Should have called exchange() with the API's response
-    expect(exchange).toHaveBeenCalledWith(mockResponse.data);
+    expect(exchange).toHaveBeenCalledWith(mockResponseCopy.data);
+
+    // Should have set the user object
+    expect(Userfront.user.email).toEqual(newUserAttrs.email);
+    expect(Userfront.user.userId).toEqual(newUserAttrs.userId);
 
     // Should have redirected correctly
     expect(window.location.assign).toHaveBeenCalledWith("/dashboard");
@@ -454,13 +655,17 @@ describe("loginWithLink", () => {
     // Should have called exchange() with the API's response
     expect(exchange).toHaveBeenCalledWith(mockResponse.data);
 
+    // Should have set the user object
+    expect(Userfront.user.email).toEqual(idTokenUserDefaults.email);
+    expect(Userfront.user.userId).toEqual(idTokenUserDefaults.userId);
+
     // Should not have redirected
     expect(window.location.assign).not.toHaveBeenCalled();
   });
 });
 
 describe("sendResetLink", () => {
-  it(`error should respond "Problem sending link"`, async () => {
+  it(`error should respond with whatever the server sends`, async () => {
     // Mock the API response
     const mockResponse = {
       response: {
@@ -473,7 +678,7 @@ describe("sendResetLink", () => {
     };
     axios.post.mockImplementationOnce(() => Promise.reject(mockResponse));
     expect(sendResetLink({ email: "email@example.com" })).rejects.toEqual(
-      new Error("Problem sending link.")
+      new Error(mockResponse.response.data.message)
     );
   });
 });
@@ -508,8 +713,16 @@ describe("resetPassword", () => {
   });
 
   it("should send a password reset request and redirect to a custom page", async () => {
+    // Update the userId to ensure it is overwritten
+    const newUserAttrs = {
+      userId: 3312,
+      email: "resetter@example.com",
+    };
+    const mockResponseCopy = JSON.parse(JSON.stringify(mockResponse));
+    mockResponseCopy.data.tokens.id.value = createIdToken(newUserAttrs);
+
     // Mock the API response
-    axios.put.mockImplementationOnce(() => Promise.resolve(mockResponse));
+    axios.put.mockImplementationOnce(() => mockResponseCopy);
 
     const targetPath = "/custom/page";
 
@@ -531,6 +744,10 @@ describe("resetPassword", () => {
       }
     );
 
+    // Should have set the user object
+    expect(Userfront.user.email).toEqual(newUserAttrs.email);
+    expect(Userfront.user.userId).toEqual(newUserAttrs.userId);
+
     // Should have redirected the page
     expect(window.location.assign).toHaveBeenCalledWith(targetPath);
   });
@@ -538,8 +755,6 @@ describe("resetPassword", () => {
   it("should send a password reset request and not redirect if redirect is false", async () => {
     // Mock the API response
     axios.put.mockImplementationOnce(() => Promise.resolve(mockResponse));
-
-    const targetPath = "/custom/page";
 
     const options = {
       token: "token",
@@ -559,11 +774,15 @@ describe("resetPassword", () => {
       }
     );
 
+    // Should have set the user object
+    expect(Userfront.user.email).toEqual(idTokenUserDefaults.email);
+    expect(Userfront.user.userId).toEqual(idTokenUserDefaults.userId);
+
     // Should not have redirected the page
     expect(window.location.assign).not.toHaveBeenCalled();
   });
 
-  xit(`error should respond with whatever error the server sends`, async () => {
+  it(`error should respond with whatever error the server sends`, async () => {
     // Mock the API response
     const mockResponse = {
       response: {

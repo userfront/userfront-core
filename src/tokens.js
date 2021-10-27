@@ -1,6 +1,6 @@
 import Cookies from "js-cookie";
-
 import { store } from "./store.js";
+import { setUser, unsetUser } from "./user.js";
 
 export function setTokenNames() {
   store.tokens = store.tokens || {};
@@ -34,10 +34,25 @@ export function setTokensFromCookies() {
     try {
       const token = Cookies.get(store.tokens[`${tokenName}TokenName`]);
       store.tokens[`${tokenName}Token`] = token;
+
+      // Set the user object whenever the ID token is set
+      if (tokenName === "id" && token) {
+        setUser();
+      }
     } catch (error) {
       console.warn(`Problem setting ${tokenName} token.`);
     }
   });
+}
+
+/**
+ * Set the store token values to undefined
+ */
+export function unsetTokens() {
+  store.tokens.accessToken = undefined;
+  store.tokens.idToken = undefined;
+  store.tokens.refreshToken = undefined;
+  unsetUser();
 }
 
 /**

@@ -1,5 +1,5 @@
 /**
- * user.update is refactored into its own file to avoid a circular dependency
+ * user methods are refactored into a separate file to avoid a circular dependency
  * between Userfront.refresh() [which requires setUser()]
  * and Userfront.user.update() [which requires refresh()].
  */
@@ -8,6 +8,7 @@ import axios from "axios";
 import { apiUrl } from "./constants.js";
 import { refresh } from "./refresh.js";
 import { store } from "./store.js";
+import { getJWTPayload } from "./utils.js";
 
 /**
  * Update the user record on Userfront
@@ -32,6 +33,32 @@ export async function update(payload) {
 }
 
 /**
- * Add the update method to the store.user object
+ * Determine whether the access token has a given role
+ * @param {String} roleName
+ * @param {Object} options
+ * @returns {Boolean}
+ */
+export function hasRole(roleName, { tenantId } = {}) {
+  try {
+    if (!store.tokens.accessToken || !store.tenantId) {
+      return false;
+    }
+    const { authorization } = getJWTPayload(store.tokens.accessToken);
+    if (!authorization) {
+      return false;
+    }
+    tenantId = tenantId || store.tenantId;
+    if (!authorization[tenantId] || !authorization[tenantId].roles) {
+      return false;
+    }
+    return authorization[tenantId].roles.indexOf(roleName) > -1;
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
+ * Add the methods to the store.user object
  */
 store.user.update = update;
+store.user.hasRole = hasRole;

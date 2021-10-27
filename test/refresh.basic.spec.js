@@ -1,6 +1,11 @@
 import axios from "axios";
 import Cookies from "js-cookie";
-import utils from "./config/utils.js";
+import {
+  createAccessToken,
+  createIdToken,
+  createRefreshToken,
+  resetStore,
+} from "./config/utils.js";
 import Userfront from "../src/index.js";
 
 import { refresh } from "../src/refresh.js";
@@ -9,9 +14,9 @@ import { setCookiesAndTokens } from "../src/cookies.js";
 jest.mock("axios");
 
 const tenantId = "abcd4321";
-const mockAccessToken = utils.createAccessToken();
-const mockIdToken = utils.createIdToken();
-const mockRefreshToken = utils.createRefreshToken();
+const mockAccessToken = createAccessToken();
+const mockIdToken = createIdToken();
+const mockRefreshToken = createRefreshToken();
 
 /**
  * This file tests the basic refresh method, which uses a normal cookie to
@@ -33,7 +38,7 @@ describe("refresh with basic method", () => {
   });
 
   afterEach(() => {
-    utils.resetStore(Userfront);
+    resetStore(Userfront);
   });
 
   it("should send a refresh request and set cookies with response", async () => {
@@ -42,11 +47,11 @@ describe("refresh with basic method", () => {
     // Mock with updated name and with authorization level removed
     const newIat = new Date().getTime();
     const newName = "John Doe Updated";
-    const newAccessToken = utils.createAccessToken({
+    const newAccessToken = createAccessToken({
       authorization: {},
       iat: newIat,
     });
-    const newIdToken = utils.createIdToken({
+    const newIdToken = createIdToken({
       name: newName,
       iat: newIat,
     });

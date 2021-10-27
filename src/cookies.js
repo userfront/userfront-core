@@ -1,6 +1,6 @@
 import Cookies from "js-cookie";
 import { store } from "./store.js";
-import { setTokensFromCookies } from "./tokens.js";
+import { setTokensFromCookies, unsetTokens } from "./tokens.js";
 
 /**
  * Set a cookie value based on the given options.
@@ -39,9 +39,7 @@ export function removeAllCookies() {
   removeCookie(store.tokens.accessTokenName);
   removeCookie(store.tokens.idTokenName);
   removeCookie(store.tokens.refreshTokenName);
-  store.tokens.accessToken = undefined;
-  store.tokens.idToken = undefined;
-  store.tokens.refreshToken = undefined;
+  unsetTokens();
 }
 
 /**

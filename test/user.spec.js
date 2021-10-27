@@ -5,7 +5,12 @@ import { setCookie } from "../src/cookies.js";
 import { setUser } from "../src/user.js";
 import { refresh } from "../src/refresh.js";
 import { setTokensFromCookies } from "../src/tokens.js";
-import utils from "./config/utils.js";
+import {
+  createAccessToken,
+  createIdToken,
+  idTokenUserDefaults,
+  defaultIdTokenProperties,
+} from "./config/utils.js";
 import Userfront from "../src/index.js";
 
 jest.mock("axios");
@@ -17,18 +22,18 @@ jest.mock("../src/refresh.js", () => {
 });
 console.warn = jest.fn();
 
-const tenantId = "abcdefgh";
+const tenantId = "hijk9876";
 
 describe("User", () => {
   beforeAll(async () => {
     // Set the factory access and ID tokens as cookies
     Userfront.store.tenantId = tenantId;
     setCookie(
-      utils.createAccessToken(),
+      createAccessToken(),
       { secure: "true", sameSite: "Lax" },
       "access"
     );
-    setCookie(utils.createIdToken(), { secure: "true", sameSite: "Lax" }, "id");
+    setCookie(createIdToken(), { secure: "true", sameSite: "Lax" }, "id");
 
     // Initialize the library
     Userfront.init(tenantId);
@@ -39,7 +44,7 @@ describe("User", () => {
 
   describe("user object", () => {
     it("should get user's information", () => {
-      const defaultUserValues = utils.idTokenUserDefaults;
+      const defaultUserValues = idTokenUserDefaults;
 
       // Assert primary values were set correctly
       for (const prop in defaultUserValues) {
@@ -55,15 +60,13 @@ describe("User", () => {
 
   describe("setUser", () => {
     it("should set store.user object based on ID token", () => {
-      const newUserValues = JSON.parse(
-        JSON.stringify(utils.idTokenUserDefaults)
-      );
+      const newUserValues = JSON.parse(JSON.stringify(idTokenUserDefaults));
 
       // Change the ID token value
       newUserValues.name = "Johnny B. Good";
       newUserValues.data.color = "greenish";
       setCookie(
-        utils.createIdToken(newUserValues),
+        createIdToken(newUserValues),
         { secure: "true", sameSite: "Lax" },
         "id"
       );
@@ -133,7 +136,7 @@ describe("User", () => {
       );
 
       // Assert user was not modified
-      for (const prop of utils.defaultIdTokenProperties) {
+      for (const prop of defaultIdTokenProperties) {
         expect(Userfront.user[prop]).toEqual(originalUser[prop]);
       }
 
@@ -169,7 +172,7 @@ describe("User", () => {
       });
 
       // Assert user was not modified
-      for (const prop of utils.defaultIdTokenProperties) {
+      for (const prop of defaultIdTokenProperties) {
         expect(Userfront.user[prop]).toEqual(originalUser[prop]);
       }
 
@@ -179,6 +182,56 @@ describe("User", () => {
       // Assert tokens were not modified
       expect(originalTokens.idToken).toEqual(Userfront.tokens.idToken);
       expect(originalTokens.accessToken).toEqual(Userfront.tokens.accessToken);
+    });
+  });
+
+  describe("user.hasRole()", () => {
+    beforeAll(() => {
+      const authorization = {
+        [tenantId]: {
+          roles: ["custom role", "admin"],
+        },
+        jklm9876: {
+          roles: ["custom role", "member"],
+        },
+        qrst3456: {
+          roles: [],
+        },
+      };
+      setCookie(
+        createAccessToken({
+          authorization,
+        }),
+        { secure: "true", sameSite: "Lax" },
+        "access"
+      );
+      Userfront.init(tenantId);
+    });
+
+    it("should determine whether the user has a given role in the primary tenant", async () => {
+      expect(Userfront.user.hasRole("custom role")).toEqual(true);
+      expect(Userfront.user.hasRole("admin")).toEqual(true);
+      expect(Userfront.user.hasRole("member")).toEqual(false);
+      expect(Userfront.user.hasRole("foobar")).toEqual(false);
+      expect(Userfront.user.hasRole()).toEqual(false);
+    });
+
+    it("should accept the tenantId as an optional parameter", async () => {
+      expect(
+        Userfront.user.hasRole("custom role", { tenantId: "jklm9876" })
+      ).toEqual(true);
+      expect(
+        Userfront.user.hasRole("member", { tenantId: "jklm9876" })
+      ).toEqual(true);
+      expect(Userfront.user.hasRole("admin", { tenantId: "jklm9876" })).toEqual(
+        false
+      );
+      expect(Userfront.user.hasRole("admin", { tenantId: "qrst3456" })).toEqual(
+        false
+      );
+      expect(Userfront.user.hasRole("admin", { tenantId: "foobar" })).toEqual(
+        false
+      );
     });
   });
 });

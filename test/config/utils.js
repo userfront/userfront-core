@@ -41,7 +41,7 @@ const sharedTokenProperties = {
 
 export const accessTokenUserDefaults = {
   authorization: {
-    abcdefgh: {
+    abcd1234: {
       roles: ["member"],
     },
   },

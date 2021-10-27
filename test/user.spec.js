@@ -22,7 +22,7 @@ jest.mock("../src/refresh.js", () => {
 });
 console.warn = jest.fn();
 
-const tenantId = "abcdefgh";
+const tenantId = "hijk9876";
 
 describe("User", () => {
   beforeAll(async () => {
@@ -182,6 +182,56 @@ describe("User", () => {
       // Assert tokens were not modified
       expect(originalTokens.idToken).toEqual(Userfront.tokens.idToken);
       expect(originalTokens.accessToken).toEqual(Userfront.tokens.accessToken);
+    });
+  });
+
+  describe("user.hasRole()", () => {
+    beforeAll(() => {
+      const authorization = {
+        [tenantId]: {
+          roles: ["custom role", "admin"],
+        },
+        jklm9876: {
+          roles: ["custom role", "member"],
+        },
+        qrst3456: {
+          roles: [],
+        },
+      };
+      setCookie(
+        createAccessToken({
+          authorization,
+        }),
+        { secure: "true", sameSite: "Lax" },
+        "access"
+      );
+      Userfront.init(tenantId);
+    });
+
+    it("should determine whether the user has a given role in the primary tenant", async () => {
+      expect(Userfront.user.hasRole("custom role")).toEqual(true);
+      expect(Userfront.user.hasRole("admin")).toEqual(true);
+      expect(Userfront.user.hasRole("member")).toEqual(false);
+      expect(Userfront.user.hasRole("foobar")).toEqual(false);
+      expect(Userfront.user.hasRole()).toEqual(false);
+    });
+
+    it("should accept the tenantId as an optional parameter", async () => {
+      expect(
+        Userfront.user.hasRole("custom role", { tenantId: "jklm9876" })
+      ).toEqual(true);
+      expect(
+        Userfront.user.hasRole("member", { tenantId: "jklm9876" })
+      ).toEqual(true);
+      expect(Userfront.user.hasRole("admin", { tenantId: "jklm9876" })).toEqual(
+        false
+      );
+      expect(Userfront.user.hasRole("admin", { tenantId: "qrst3456" })).toEqual(
+        false
+      );
+      expect(Userfront.user.hasRole("admin", { tenantId: "foobar" })).toEqual(
+        false
+      );
     });
   });
 });

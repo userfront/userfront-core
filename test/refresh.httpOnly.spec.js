@@ -1,4 +1,4 @@
-import utils from "./config/utils.js";
+import { resetStore } from "./config/utils.js";
 import Userfront from "../src/index.js";
 
 import { getIframe, triageEvent, resolvers } from "../src/iframe.js";
@@ -24,7 +24,7 @@ const tenantId = "abcd4321";
 
 describe("refresh with httpOnly method", () => {
   afterEach(() => {
-    utils.resetStore(Userfront);
+    resetStore(Userfront);
     setCookiesAndTokens.mockClear();
   });
 

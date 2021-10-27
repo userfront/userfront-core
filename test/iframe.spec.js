@@ -1,4 +1,4 @@
-import utils from "./config/utils.js";
+import { resetStore } from "./config/utils.js";
 import Userfront from "../src/index.js";
 import Iframe from "../src/iframe.js";
 
@@ -6,7 +6,7 @@ const tenantId = "abcdefg";
 
 describe("iframe tests", () => {
   afterEach(() => {
-    utils.resetStore(Userfront);
+    resetStore(Userfront);
   });
 
   it("init should not add an iframe", () => {

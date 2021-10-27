@@ -5,7 +5,12 @@ import { setCookie } from "../src/cookies.js";
 import { setUser } from "../src/user.js";
 import { refresh } from "../src/refresh.js";
 import { setTokensFromCookies } from "../src/tokens.js";
-import utils from "./config/utils.js";
+import {
+  createAccessToken,
+  createIdToken,
+  idTokenUserDefaults,
+  defaultIdTokenProperties,
+} from "./config/utils.js";
 import Userfront from "../src/index.js";
 
 jest.mock("axios");
@@ -19,16 +24,16 @@ console.warn = jest.fn();
 
 const tenantId = "abcdefgh";
 
-describe("User", () => {
+describe.only("User", () => {
   beforeAll(async () => {
     // Set the factory access and ID tokens as cookies
     Userfront.store.tenantId = tenantId;
     setCookie(
-      utils.createAccessToken(),
+      createAccessToken(),
       { secure: "true", sameSite: "Lax" },
       "access"
     );
-    setCookie(utils.createIdToken(), { secure: "true", sameSite: "Lax" }, "id");
+    setCookie(createIdToken(), { secure: "true", sameSite: "Lax" }, "id");
 
     // Initialize the library
     Userfront.init(tenantId);
@@ -39,7 +44,7 @@ describe("User", () => {
 
   describe("user object", () => {
     it("should get user's information", () => {
-      const defaultUserValues = utils.idTokenUserDefaults;
+      const defaultUserValues = idTokenUserDefaults;
 
       // Assert primary values were set correctly
       for (const prop in defaultUserValues) {
@@ -55,15 +60,13 @@ describe("User", () => {
 
   describe("setUser", () => {
     it("should set store.user object based on ID token", () => {
-      const newUserValues = JSON.parse(
-        JSON.stringify(utils.idTokenUserDefaults)
-      );
+      const newUserValues = JSON.parse(JSON.stringify(idTokenUserDefaults));
 
       // Change the ID token value
       newUserValues.name = "Johnny B. Good";
       newUserValues.data.color = "greenish";
       setCookie(
-        utils.createIdToken(newUserValues),
+        createIdToken(newUserValues),
         { secure: "true", sameSite: "Lax" },
         "id"
       );
@@ -133,7 +136,7 @@ describe("User", () => {
       );
 
       // Assert user was not modified
-      for (const prop of utils.defaultIdTokenProperties) {
+      for (const prop of defaultIdTokenProperties) {
         expect(Userfront.user[prop]).toEqual(originalUser[prop]);
       }
 
@@ -169,7 +172,7 @@ describe("User", () => {
       });
 
       // Assert user was not modified
-      for (const prop of utils.defaultIdTokenProperties) {
+      for (const prop of defaultIdTokenProperties) {
         expect(Userfront.user[prop]).toEqual(originalUser[prop]);
       }
 

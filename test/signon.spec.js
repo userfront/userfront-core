@@ -6,7 +6,6 @@ import {
   sendLoginLink,
   sendResetLink,
   resetPassword,
-  loginWithLink,
 } from "../src/signon.js";
 import { exchange } from "../src/refresh.js";
 
@@ -370,7 +369,7 @@ describe("login", () => {
 });
 
 describe("sendLoginLink", () => {
-  it(`error should respond "Problem sending link"`, async () => {
+  it(`error should respond with whatever the server sends`, async () => {
     // Mock the API response
     const mockResponse = {
       response: {
@@ -460,7 +459,7 @@ describe("loginWithLink", () => {
 });
 
 describe("sendResetLink", () => {
-  it(`error should respond "Problem sending link"`, async () => {
+  it(`error should respond with whatever the server sends`, async () => {
     // Mock the API response
     const mockResponse = {
       response: {

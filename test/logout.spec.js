@@ -4,13 +4,13 @@ import Cookies from "js-cookie";
 import Userfront from "../src/index.js";
 import { getIframe, resolvers } from "../src/iframe.js";
 import { logout } from "../src/logout.js";
-import utils from "./config/utils.js";
+import { createAccessToken, createIdToken } from "./config/utils.js";
 
 jest.mock("axios");
 
 const tenantId = "abcd9876";
-const mockAccessToken = utils.createAccessToken();
-const mockIdToken = utils.createIdToken();
+const mockAccessToken = createAccessToken();
+const mockIdToken = createIdToken();
 
 // Mock API response
 const mockResponse = {

@@ -2,7 +2,7 @@ import axios from "axios";
 import jwt from "jsonwebtoken";
 // import { JwksClient } from "jwks-rsa";
 
-import utils from "./config/utils.js";
+import { createAccessToken, createIdToken } from "./config/utils.js";
 import Userfront from "../src/index.js";
 import { apiUrl } from "../src/constants.js";
 
@@ -29,10 +29,10 @@ xdescribe("verifyToken", () => {
     // Create and set access & ID tokens
     Userfront.setCookiesAndTokens({
       access: {
-        value: utils.createAccessToken(),
+        value: createAccessToken(),
       },
       id: {
-        value: utils.createIdToken(),
+        value: createIdToken(),
       },
       refresh: {
         value: "",

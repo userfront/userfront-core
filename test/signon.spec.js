@@ -218,6 +218,67 @@ describe("signup", () => {
       expect(window.location.assign).toHaveBeenCalledWith(loginUrl);
     });
   });
+
+  describe("with passwordless", () => {
+    it("should send a request and respond with OK", async () => {
+      // Mock the API response
+      const mockResponse = {
+        data: {
+          message: "OK",
+          result: {
+            to: "link-registered@example.com",
+            whatever: "else",
+          },
+        },
+      };
+      axios.post.mockImplementationOnce(() => mockResponse);
+
+      // Call signup()
+      const payload = {
+        email: mockResponse.data.result.to,
+        name: idTokenUserDefaults.name,
+        username: idTokenUserDefaults.username,
+        data: idTokenUserDefaults.data,
+      };
+      const res = await signup({
+        method: "passwordless",
+        ...payload,
+      });
+
+      // Should have sent the proper API request
+      expect(axios.post).toHaveBeenCalledWith(
+        `https://api.userfront.com/v0/auth/link`,
+        {
+          tenantId,
+          options: undefined,
+          ...payload,
+        }
+      );
+
+      // Should have returned the response exactly
+      expect(res).toEqual(mockResponse.data);
+    });
+
+    it("should respond with whatever error the server sends", async () => {
+      // Mock the API response
+      const mockResponseErr = {
+        response: {
+          data: {
+            error: "Bad Request",
+            message: `That's a dumb email address.`,
+            statusCode: 400,
+          },
+        },
+      };
+      axios.post.mockImplementationOnce(() => Promise.reject(mockResponseErr));
+      expect(
+        signup({
+          method: "passwordless",
+          email: "valid@example.com",
+        })
+      ).rejects.toEqual(new Error(mockResponseErr.response.data.message));
+    });
+  });
 });
 
 describe("login", () => {
@@ -408,9 +469,95 @@ describe("login", () => {
       expect(window.location.assign).toHaveBeenCalledWith(loginUrl);
     });
   });
+
+  describe("with passwordless", () => {
+    it("should send a request and respond with OK", async () => {
+      // Mock the API response
+      const mockResponse = {
+        data: {
+          message: "OK",
+          result: {
+            to: "link-registered@example.com",
+            whatever: "else",
+          },
+        },
+      };
+      axios.post.mockImplementationOnce(() => mockResponse);
+
+      // Call login()
+      const payload = {
+        email: mockResponse.data.result.to,
+      };
+      const res = await login({
+        method: "passwordless",
+        ...payload,
+      });
+
+      // Should have sent the proper API request
+      expect(axios.post).toHaveBeenCalledWith(
+        `https://api.userfront.com/v0/auth/link`,
+        {
+          tenantId,
+          ...payload,
+        }
+      );
+
+      // Should have returned the response exactly
+      expect(res).toEqual(mockResponse.data);
+    });
+
+    it("should respond with whatever error the server sends", async () => {
+      // Mock the API response
+      const mockResponseErr = {
+        response: {
+          data: {
+            error: "Bad Request",
+            message: `That's a dumb email address.`,
+            statusCode: 400,
+          },
+        },
+      };
+      axios.post.mockImplementationOnce(() => Promise.reject(mockResponseErr));
+      expect(
+        login({
+          method: "passwordless",
+          email: "valid@example.com",
+        })
+      ).rejects.toEqual(new Error(mockResponseErr.response.data.message));
+    });
+  });
 });
 
 describe("sendLoginLink", () => {
+  it("should respond with link information", async () => {
+    const mockResponse = {
+      data: {
+        message: "OK",
+        result: {
+          to: "link-requester@example.com",
+          whatever: "else",
+        },
+      },
+    };
+    // Mock the API response
+    axios.post.mockImplementationOnce(() => mockResponse);
+
+    // Call sendLoginLink()
+    const res = await sendLoginLink(mockResponse.data.result.to);
+
+    // Should have sent the proper API request
+    expect(axios.post).toHaveBeenCalledWith(
+      `https://api.userfront.com/v0/auth/link`,
+      {
+        tenantId,
+        email: mockResponse.data.result.to,
+      }
+    );
+
+    // Should have returned the proper value
+    expect(res).toEqual(mockResponse.data);
+  });
+
   it(`error should respond with whatever the server sends`, async () => {
     // Mock the API response
     const mockResponse = {

@@ -5,6 +5,7 @@ import { setCookiesAndTokens } from "./cookies.js";
 import { store } from "./store.js";
 // import { getIframe, postMessageAsPromise } from "./iframe.js";
 import { setUser } from "./user.js";
+import { throwFormattedError } from "./utils.js";
 
 /**
  * Refresh the access and ID tokens
@@ -46,10 +47,7 @@ async function basicRefresh() {
       throw new Error("Problem setting cookies");
     }
   } catch (error) {
-    if (error?.response?.data?.message) {
-      throw new Error(error.response.data.message);
-    }
-    throw error;
+    throwFormattedError(error);
   }
 }
 

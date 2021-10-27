@@ -106,10 +106,7 @@ async function signupWithPassword({
       throw new Error("Please try again.");
     }
   } catch (error) {
-    if (error?.response?.data?.message) {
-      throw new Error(error.response.data.message);
-    }
-    throw error;
+    throwFormattedError(error);
   }
 }
 
@@ -269,8 +266,8 @@ export async function sendLoginLink(email) {
       tenantId: store.tenantId,
     });
     return data;
-  } catch (err) {
-    throw new Error("Problem sending link.");
+  } catch (error) {
+    throwFormattedError(error);
   }
 }
 
@@ -285,8 +282,8 @@ export async function sendResetLink(email) {
       tenantId: store.tenantId,
     });
     return data;
-  } catch (err) {
-    throw new Error("Problem sending link.");
+  } catch (error) {
+    throwFormattedError(error);
   }
 }
 

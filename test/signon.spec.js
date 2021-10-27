@@ -383,7 +383,7 @@ describe("sendLoginLink", () => {
     };
     axios.post.mockImplementationOnce(() => Promise.reject(mockResponse));
     expect(sendLoginLink({ email: "email@example.com" })).rejects.toEqual(
-      new Error("Problem sending link.")
+      new Error(mockResponse.response.data.message)
     );
   });
 });
@@ -473,7 +473,7 @@ describe("sendResetLink", () => {
     };
     axios.post.mockImplementationOnce(() => Promise.reject(mockResponse));
     expect(sendResetLink({ email: "email@example.com" })).rejects.toEqual(
-      new Error("Problem sending link.")
+      new Error(mockResponse.response.data.message)
     );
   });
 });
@@ -539,8 +539,6 @@ describe("resetPassword", () => {
     // Mock the API response
     axios.put.mockImplementationOnce(() => Promise.resolve(mockResponse));
 
-    const targetPath = "/custom/page";
-
     const options = {
       token: "token",
       uuid: "uuid",
@@ -563,7 +561,7 @@ describe("resetPassword", () => {
     expect(window.location.assign).not.toHaveBeenCalled();
   });
 
-  xit(`error should respond with whatever error the server sends`, async () => {
+  it(`error should respond with whatever error the server sends`, async () => {
     // Mock the API response
     const mockResponse = {
       response: {

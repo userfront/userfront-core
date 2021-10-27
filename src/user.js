@@ -35,6 +35,17 @@ export function setUser() {
 }
 
 /**
+ * Remove all user information
+ */
+export function unsetUser() {
+  const updateFn = store.user.update;
+  for (const attr in store.user) {
+    delete store.user[attr];
+  }
+  store.user.update = updateFn;
+}
+
+/**
  * Export the store.user object with the update method added
  */
 export const user = store.user;

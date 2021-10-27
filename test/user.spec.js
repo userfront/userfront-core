@@ -24,7 +24,7 @@ console.warn = jest.fn();
 
 const tenantId = "abcdefgh";
 
-describe.only("User", () => {
+describe("User", () => {
   beforeAll(async () => {
     // Set the factory access and ID tokens as cookies
     Userfront.store.tenantId = tenantId;

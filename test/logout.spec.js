@@ -62,6 +62,11 @@ describe("logout", () => {
       expect(Userfront.tokens.accessToken).toBeFalsy();
       expect(Userfront.tokens.idToken).toBeFalsy();
 
+      // Should have cleared the user object
+      expect(Userfront.user.email).toBeFalsy();
+      expect(Userfront.user.userId).toBeFalsy();
+      expect(Userfront.user.update).toBeTruthy();
+
       // Should have redirected correctly
       expect(window.location.assign).toHaveBeenCalledWith(
         mockResponse.data.redirectTo
@@ -87,6 +92,11 @@ describe("logout", () => {
       expect(Userfront.tokens.accessToken).toBeFalsy();
       expect(Userfront.tokens.idToken).toBeFalsy();
 
+      // Should have cleared the user object
+      expect(Userfront.user.email).toBeFalsy();
+      expect(Userfront.user.userId).toBeFalsy();
+      expect(Userfront.user.update).toBeTruthy();
+
       // Should have redirected correctly
       expect(window.location.assign).toHaveBeenCalledWith("/custom");
     });
@@ -109,6 +119,11 @@ describe("logout", () => {
       expect(Cookies.get(`id.${tenantId}`)).toBeFalsy();
       expect(Userfront.tokens.accessToken).toBeFalsy();
       expect(Userfront.tokens.idToken).toBeFalsy();
+
+      // Should have cleared the user object
+      expect(Userfront.user.email).toBeFalsy();
+      expect(Userfront.user.userId).toBeFalsy();
+      expect(Userfront.user.update).toBeTruthy();
 
       // Should have redirected correctly
       expect(window.location.assign).not.toHaveBeenCalled();

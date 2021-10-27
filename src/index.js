@@ -18,7 +18,7 @@ import {
 import { logout } from "./logout.js";
 import { mode, setMode, setModeSync } from "./mode.js";
 // import { setIframe } from "./iframe.js";
-import { user, setUser } from "./user.js";
+import { user } from "./user.js";
 import "./user.update.js";
 import { refresh } from "./refresh.js";
 
@@ -44,10 +44,6 @@ function init(tenantId, opts = {}) {
   // setIframe(); // TODO re-enable when iframe is needed
   setTokensFromCookies();
   setModeSync();
-
-  if (store.tokens.idToken) {
-    setUser();
-  }
 
   try {
     if (initCallbacks.length > 0) {

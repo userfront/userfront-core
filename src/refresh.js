@@ -4,7 +4,6 @@ import { apiUrl } from "./constants.js";
 import { setCookiesAndTokens } from "./cookies.js";
 import { store } from "./store.js";
 // import { getIframe, postMessageAsPromise } from "./iframe.js";
-import { setUser } from "./user.js";
 import { throwFormattedError } from "./utils.js";
 
 /**
@@ -17,7 +16,6 @@ import { throwFormattedError } from "./utils.js";
 export async function refresh() {
   try {
     await basicRefresh();
-    setUser();
   } catch (error) {
     console.warn(`Refresh failed: ${error.message}`);
   }

@@ -19,7 +19,7 @@ import { logout } from "./logout.js";
 import { mode, setMode, setModeSync } from "./mode.js";
 // import { setIframe } from "./iframe.js";
 import { user } from "./user.js";
-import "./user.update.js";
+import "./user.methods.js";
 import { refresh } from "./refresh.js";
 
 let initCallbacks = [];

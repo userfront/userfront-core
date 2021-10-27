@@ -1,5 +1,5 @@
 /**
- * user.update is refactored into its own file to avoid a circular dependency
+ * user methods are refactored into a separate file to avoid a circular dependency
  * between Userfront.refresh() [which requires setUser()]
  * and Userfront.user.update() [which requires refresh()].
  */
@@ -58,7 +58,7 @@ export function hasRole(roleName, { tenantId } = {}) {
 }
 
 /**
- * Add the update method to the store.user object
+ * Add the methods to the store.user object
  */
 store.user.update = update;
 store.user.hasRole = hasRole;

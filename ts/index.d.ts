@@ -84,6 +84,11 @@ interface LoginResponse {
   nonce?: string;
 }
 
+interface LogoutResponse {
+  message: string;
+  redirectTo?: string;
+}
+
 interface LinkResult {
   to?: string;
   submittedAt?: string;
@@ -139,7 +144,7 @@ export declare function logout({
   redirect,
 }: {
   redirect?: string | boolean;
-}): Promise<void>;
+}): Promise<LogoutResponse>;
 
 // redirectIfLoggedIn()
 export declare function redirectIfLoggedIn({

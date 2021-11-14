@@ -281,7 +281,7 @@ describe("signup", () => {
   });
 });
 
-describe("login", () => {
+describe.only("login", () => {
   afterEach(() => {
     window.location.assign.mockClear();
   });
@@ -376,14 +376,15 @@ describe("login", () => {
     it("should login and redirect to a provided path", async () => {
       axios.post.mockImplementationOnce(() => mockResponse);
 
-      // Call login() with redirect = false
+      // Call login() with redirect URL
+      const redirectUrl = `https://api.userfront.com/v0/tenants/${tenantId}/auth/saml/idp/login`;
       const payload = {
         emailOrUsername: idTokenUserDefaults.email,
         password: "something",
       };
       await login({
         method: "password",
-        redirect: false,
+        redirect: redirectUrl,
         ...payload,
       });
 
@@ -404,7 +405,7 @@ describe("login", () => {
       expect(Userfront.user.userId).toEqual(idTokenUserDefaults.userId);
 
       // Should have redirected correctly
-      expect(window.location.assign).not.toHaveBeenCalled();
+      expect(window.location.assign).toHaveBeenCalledWith(redirectUrl);
     });
 
     it("password method error should respond with whatever error the server sends", async () => {

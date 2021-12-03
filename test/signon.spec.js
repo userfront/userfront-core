@@ -626,6 +626,57 @@ describe("loginWithLink", () => {
     expect(window.location.assign).toHaveBeenCalledWith("/dashboard");
   });
 
+  it("should read token, uuid, and redirect from the URL if not present", async () => {
+    // Update the userId to ensure it is overwritten
+    const newUserAttrs = {
+      userId: 98100,
+      email: "linker-2@example.com",
+    };
+    const mockResponseCopy = JSON.parse(JSON.stringify(mockResponse));
+    mockResponseCopy.data.tokens.id.value = createIdToken(newUserAttrs);
+
+    const query = {
+      token: "some-token",
+      uuid: "some-uuid",
+    };
+
+    const redirect = "/post-login";
+
+    // Visit a URL with ?token=&uuid=&redirect=
+    window.location.href = `https://example.com/login?token=${query.token}&uuid=${query.uuid}&redirect=${redirect}`;
+
+    // Mock the API response
+    axios.put.mockImplementationOnce(() => mockResponseCopy);
+
+    // Call login()
+    const res = await login({ method: "link" });
+
+    // Should have sent the proper API request
+    expect(axios.put).toHaveBeenCalledWith(
+      `https://api.userfront.com/v0/auth/link`,
+      {
+        tenantId,
+        ...query,
+      }
+    );
+
+    // Should return the correct value
+    expect(res).toEqual(mockResponseCopy.data);
+
+    // Should have called exchange() with the API's response
+    expect(exchange).toHaveBeenCalledWith(mockResponseCopy.data);
+
+    // Should have set the user object
+    expect(Userfront.user.email).toEqual(newUserAttrs.email);
+    expect(Userfront.user.userId).toEqual(newUserAttrs.userId);
+
+    // Should have redirected correctly
+    expect(window.location.assign).toHaveBeenCalledWith(redirect);
+
+    // Reset the URL
+    window.location.href = `https://example.com/login`;
+  });
+
   it("should not redirect if redirect = false", async () => {
     axios.put.mockImplementationOnce(() => mockResponse);
 

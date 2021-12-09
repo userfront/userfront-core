@@ -18,12 +18,12 @@ window.location = {
 };
 
 const tenantId = "abcdefg";
+const customBaseUrl = "https://custom.example.com/api/v1/";
 let revertGetProviderLink;
 
 describe("SSO", () => {
   beforeAll(() => {
     Userfront.__set__("setUser", jest.fn());
-    Userfront.init(tenantId);
   });
 
   describe("Signup", () => {
@@ -37,6 +37,10 @@ describe("SSO", () => {
       signupWithSSOSpy = jest.spyOn(Signon, "signupWithSSO");
       // and inject the spy into the module
       Signon.__set__("signupWithSSO", signupWithSSOSpy);
+    });
+
+    beforeEach(() => {
+      Userfront.init(tenantId);
     });
 
     afterEach(() => {
@@ -54,6 +58,25 @@ describe("SSO", () => {
           `redirect=${encodeURIComponent(getQueryAttr("redirect"))}`
       );
     });
+
+    it.each(providers)(
+      "calls signupWithSSO with each provider to custom baseUrl",
+      (provider) => {
+        Userfront.init(tenantId, {
+          baseUrl: customBaseUrl,
+        });
+
+        Userfront.signup({ method: provider });
+
+        expect(signupWithSSOSpy).toHaveBeenCalledWith({ provider });
+        expect(assignMock).toHaveBeenCalledWith(
+          `${customBaseUrl}auth/${provider}/login?` +
+            `tenant_id=${tenantId}&` +
+            `origin=${window.location.origin}&` +
+            `redirect=${encodeURIComponent(getQueryAttr("redirect"))}`
+        );
+      }
+    );
 
     it("should return to current path if redirect = false", async () => {
       // Navigate to /signup
@@ -106,6 +129,10 @@ describe("SSO", () => {
       Signon.__set__("loginWithSSO", loginWithSSOSpy);
     });
 
+    beforeEach(() => {
+      Userfront.init(tenantId);
+    });
+
     afterEach(() => {
       loginWithSSOSpy.mockClear();
       assignMock.mockClear();
@@ -121,6 +148,25 @@ describe("SSO", () => {
           `redirect=${encodeURIComponent(getQueryAttr("redirect"))}`
       );
     });
+
+    it.each(providers)(
+      "calls loginWithSSO with each provider to custom baseUrl",
+      (provider) => {
+        Userfront.init(tenantId, {
+          baseUrl: customBaseUrl,
+        });
+
+        Userfront.login({ method: provider });
+
+        expect(loginWithSSOSpy).toHaveBeenCalledWith({ provider });
+        expect(assignMock).toHaveBeenCalledWith(
+          `${customBaseUrl}auth/${provider}/login?` +
+            `tenant_id=${tenantId}&` +
+            `origin=${window.location.origin}&` +
+            `redirect=${encodeURIComponent(getQueryAttr("redirect"))}`
+        );
+      }
+    );
 
     it("should return to current path if redirect = false", async () => {
       // Navigate to /login/special

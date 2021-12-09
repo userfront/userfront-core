@@ -11,6 +11,7 @@ jest.mock("axios");
 const tenantId = "abcd9876";
 const mockAccessToken = createAccessToken();
 const mockIdToken = createIdToken();
+const customBaseUrl = "https://custom.example.com/api/v1/";
 
 // Mock API response
 const mockResponse = {
@@ -127,6 +128,23 @@ describe("logout", () => {
 
       // Should have redirected correctly
       expect(window.location.assign).not.toHaveBeenCalled();
+    });
+
+    it("should use custom baseUrl when logout is called", async () => {
+      Userfront.init(tenantId, {
+        baseUrl: customBaseUrl,
+      });
+
+      // Mock the API response
+      axios.get.mockImplementationOnce(() => mockResponse);
+
+      await logout();
+
+      expect(axios.get).toHaveBeenCalledWith(`${customBaseUrl}auth/logout`, {
+        headers: {
+          authorization: `Bearer ${mockAccessToken}`,
+        },
+      });
     });
   });
 

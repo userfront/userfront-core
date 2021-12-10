@@ -1,9 +1,11 @@
 import axios from "axios";
 import Userfront from "../src/index.js";
 import { isTestHostname, setMode, setModeSync } from "../src/mode.js";
+import { apiUrl } from "../src/constants.js";
 
 jest.mock("axios");
 const tenantId = "abcd4321";
+const customBaseUrl = "https://custom.example.com/api/v1/";
 
 // Delete the default window.location so that it can be reassigned
 delete window.location;
@@ -59,6 +61,10 @@ describe("Mode tests", () => {
       });
 
       await setMode();
+      expect(axios.get).toHaveBeenCalledWith(
+        `${apiUrl}tenants/${tenantId}/mode`
+      );
+
       expect(Userfront.store.mode).toEqual("live");
       expect(Userfront.mode.value).toEqual("live");
       expect(Userfront.mode.reason).toEqual("domain");
@@ -77,6 +83,10 @@ describe("Mode tests", () => {
       });
 
       await setMode();
+      expect(axios.get).toHaveBeenCalledWith(
+        `${apiUrl}tenants/${tenantId}/mode`
+      );
+
       expect(Userfront.store.mode).toEqual("test");
       expect(Userfront.mode.value).toEqual("test");
       expect(Userfront.mode.reason).toEqual("http");
@@ -95,6 +105,10 @@ describe("Mode tests", () => {
       });
 
       await setMode();
+      expect(axios.get).toHaveBeenCalledWith(
+        `${apiUrl}tenants/${tenantId}/mode`
+      );
+
       expect(Userfront.store.mode).toEqual("test");
       expect(Userfront.mode.value).toEqual("test");
       expect(Userfront.mode.reason).toEqual("domain");
@@ -113,9 +127,37 @@ describe("Mode tests", () => {
       });
 
       await setMode();
+      expect(axios.get).toHaveBeenCalledWith(
+        `${apiUrl}tenants/${tenantId}/mode`
+      );
+
       expect(Userfront.store.mode).toEqual("test");
       expect(Userfront.mode.value).toEqual("test");
       expect(Userfront.mode.reason).toEqual("protocol");
+    });
+
+    it("should send request to custom baseUrl if defined", async () => {
+      window.location = new URL("https://example.com/login");
+
+      Userfront.init(tenantId, {
+        baseUrl: customBaseUrl,
+      });
+
+      axios.get.mockResolvedValue({
+        status: 200,
+        data: {
+          mode: "live",
+        },
+      });
+
+      await setMode();
+      expect(axios.get).toHaveBeenCalledWith(
+        `${customBaseUrl}tenants/${tenantId}/mode`
+      );
+
+      expect(Userfront.store.mode).toEqual("live");
+      expect(Userfront.mode.value).toEqual("live");
+      expect(Userfront.mode.reason).toEqual("domain");
     });
   });
 });

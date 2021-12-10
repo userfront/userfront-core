@@ -14,6 +14,7 @@ import { setCookiesAndTokens } from "../src/cookies.js";
 jest.mock("axios");
 
 const tenantId = "abcd4321";
+const customBaseUrl = "https://custom.example.com/api/v1/";
 const mockAccessToken = createAccessToken();
 const mockIdToken = createIdToken();
 const mockRefreshToken = createRefreshToken();
@@ -135,5 +136,63 @@ describe("refresh with basic method", () => {
     // Assert that the console warning was logged
     expect(console.warn).toHaveBeenCalled();
     expect(console.warn).toHaveBeenCalledWith(`Refresh failed: Invalid token`);
+  });
+
+  it("should send a refresh request using custom baseUrl", async () => {
+    Userfront.init(tenantId, {
+      baseUrl: customBaseUrl,
+    });
+
+    const initialUser = JSON.parse(JSON.stringify(Userfront.user));
+
+    // Mock with updated name and with authorization level removed
+    const newIat = new Date().getTime();
+    const newName = "John Doe Updated";
+    const newAccessToken = createAccessToken({
+      authorization: {},
+      iat: newIat,
+    });
+    const newIdToken = createIdToken({
+      name: newName,
+      iat: newIat,
+    });
+    axios.get.mockResolvedValue({
+      status: 200,
+      data: {
+        tokens: {
+          access: {
+            value: newAccessToken,
+            secure: true,
+            sameSite: "Lax",
+            expires: 30,
+          },
+          id: {
+            value: newIdToken,
+            secure: true,
+            sameSite: "Lax",
+            expires: 30,
+          },
+        },
+      },
+    });
+
+    // Call refresh()
+    await refresh();
+    expect(axios.get).toHaveBeenCalledWith(`${customBaseUrl}auth/refresh`, {
+      headers: {
+        authorization: `Bearer ${mockRefreshToken}`,
+      },
+    });
+
+    // Expect the new access and ID token values to have been set
+    expect(Cookies.get(`access.${tenantId}`)).toEqual(newAccessToken);
+    expect(Cookies.get(`id.${tenantId}`)).toEqual(newIdToken);
+
+    // Expect the user object to be updated
+    expect(Userfront.user.name).toEqual(newName);
+
+    // Expect existing properties to be unchanged
+    expect(Userfront.user.image).toEqual(initialUser.image);
+    expect(Userfront.user.data).toEqual(initialUser.data);
   });
 });

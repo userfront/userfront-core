@@ -142,7 +142,7 @@ describe("init() method with domain option", () => {
 
 describe("init() method with baseUrl option", () => {
   it("should add baseUrl to store when provided", async () => {
-    const baseUrl = "https://custom.example.com/api/v1";
+    const baseUrl = "https://custom.example.com/api/v1/";
 
     Userfront.init(tenantId, { baseUrl });
 
@@ -158,6 +158,44 @@ describe("init() method with baseUrl option", () => {
     store.baseUrl = "https://example.com";
     Userfront.init(tenantId);
     expect(store.baseUrl).toEqual(apiUrl);
+  });
+
+  it("should support a baseUrl with trailing slash", async () => {
+    const customBaseUrl = "https://custom.example.com/";
+
+    Userfront.init(tenantId, {
+      baseUrl: customBaseUrl,
+    });
+    expect(store.baseUrl).toEqual(customBaseUrl);
+
+    store.tokens.accessToken = "foobar";
+    await Userfront.logout();
+
+    expect(axios.get).toHaveBeenCalledWith(`${customBaseUrl}auth/logout`, {
+      headers: {
+        authorization: `Bearer foobar`,
+      },
+    });
+  });
+
+  it("should support a baseUrl without trailing slash", async () => {
+    const customBaseUrl = "https://custom.example.com";
+
+    Userfront.init(tenantId, {
+      baseUrl: customBaseUrl,
+    });
+    // Check trailing slash was appended
+    expect(store.baseUrl).toEqual(customBaseUrl + "/");
+
+    store.tokens.accessToken = "foobar";
+    await Userfront.logout();
+
+    // Check trailing slash is included when used in request
+    expect(axios.get).toHaveBeenCalledWith(`${customBaseUrl}/auth/logout`, {
+      headers: {
+        authorization: `Bearer foobar`,
+      },
+    });
   });
 });
 

@@ -33,7 +33,11 @@ function init(tenantId, opts = {}) {
   if (!tenantId) return console.warn("Userfront initialized without tenant ID");
 
   store.tenantId = tenantId;
+
   store.baseUrl = opts.baseUrl || apiUrl;
+  if (!store.baseUrl.endsWith("/")) {
+    store.baseUrl += "/";
+  }
 
   if (opts.domain) {
     store.domain = opts.domain;

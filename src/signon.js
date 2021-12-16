@@ -223,6 +223,26 @@ async function loginWithPassword({
   }
 }
 
+export async function completeSamlLogin() {
+  try {
+    if (!store.tokens.accessToken) {
+      return console.warn("Cannot complete SAML login without access token");
+    }
+
+    const { data } = await axios.post(`${store.baseUrl}auth/saml/idp/token`, {
+      headers: {
+        authorization: `Bearer ${store.tokens.accessToken}`,
+      },
+    });
+
+    window.location.assign(
+      `${store.baseUrl}auth/saml/idp/login?token=${data.token}&uuid=${store.user.userUuid}`
+    );
+  } catch (error) {
+    throwFormattedError(error);
+  }
+}
+
 /**
  * Log a user in with a token/uuid combo passed into the function or
  * in the URL querystring. ?token=...&uuid=...

@@ -7,6 +7,7 @@ import {
 import Userfront from "../src/index.js";
 import { setMode } from "../src/mode.js";
 import { store } from "../src/store.js";
+import { apiUrl } from "../src/constants.js";
 
 const tenantId = "abcd5432";
 const domain = "com.example.myapp";
@@ -136,6 +137,65 @@ describe("init() method with domain option", () => {
       }
     );
     expect(Userfront.tokens.accessToken).toEqual(undefined);
+  });
+});
+
+describe("init() method with baseUrl option", () => {
+  it("should add baseUrl to store when provided", async () => {
+    const baseUrl = "https://custom.example.com/api/v1/";
+
+    Userfront.init(tenantId, { baseUrl });
+
+    expect(store.baseUrl).toEqual(baseUrl);
+  });
+
+  it("should default baseUrl to 'https://api.userfront.com/v0' if empty or not provided", async () => {
+    // Modify baseUrl to be sure it's changed again in `init`
+    store.baseUrl = "https://example.com";
+    Userfront.init(tenantId, { baseUrl: "" });
+    expect(store.baseUrl).toEqual(apiUrl);
+
+    store.baseUrl = "https://example.com";
+    Userfront.init(tenantId);
+    expect(store.baseUrl).toEqual(apiUrl);
+  });
+
+  it("should support a baseUrl with trailing slash", async () => {
+    const customBaseUrl = "https://custom.example.com/";
+
+    Userfront.init(tenantId, {
+      baseUrl: customBaseUrl,
+    });
+    expect(store.baseUrl).toEqual(customBaseUrl);
+
+    store.tokens.accessToken = "foobar";
+    await Userfront.logout();
+
+    expect(axios.get).toHaveBeenCalledWith(`${customBaseUrl}auth/logout`, {
+      headers: {
+        authorization: `Bearer foobar`,
+      },
+    });
+  });
+
+  it("should support a baseUrl without trailing slash", async () => {
+    const customBaseUrl = "https://custom.example.com";
+
+    Userfront.init(tenantId, {
+      baseUrl: customBaseUrl,
+    });
+    // Check trailing slash was appended
+    expect(store.baseUrl).toEqual(customBaseUrl + "/");
+
+    store.tokens.accessToken = "foobar";
+    await Userfront.logout();
+
+    // Check trailing slash is included when used in request
+    expect(axios.get).toHaveBeenCalledWith(`${customBaseUrl}/auth/logout`, {
+      headers: {
+        authorization: `Bearer foobar`,
+      },
+    });
   });
 });
 

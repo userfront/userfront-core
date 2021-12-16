@@ -5,7 +5,6 @@
  */
 
 import axios from "axios";
-import { apiUrl } from "./constants.js";
 import { refresh } from "./refresh.js";
 import { store } from "./store.js";
 import { getJWTPayload } from "./utils.js";
@@ -20,7 +19,7 @@ export async function update(payload) {
   }
 
   // Make request to update the user
-  await axios.put(`${apiUrl}self`, payload, {
+  await axios.put(`${store.baseUrl}self`, payload, {
     headers: {
       authorization: `Bearer ${store.tokens.accessToken}`,
     },

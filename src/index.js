@@ -21,6 +21,7 @@ import { mode, setMode, setModeSync } from "./mode.js";
 import { user } from "./user.js";
 import "./user.methods.js";
 import { refresh } from "./refresh.js";
+import { apiUrl } from "./constants.js";
 
 let initCallbacks = [];
 
@@ -32,6 +33,11 @@ function init(tenantId, opts = {}) {
   if (!tenantId) return console.warn("Userfront initialized without tenant ID");
 
   store.tenantId = tenantId;
+
+  store.baseUrl = opts.baseUrl || apiUrl;
+  if (!store.baseUrl.endsWith("/")) {
+    store.baseUrl += "/";
+  }
 
   if (opts.domain) {
     store.domain = opts.domain;

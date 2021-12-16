@@ -17,6 +17,7 @@ jest.mock("../src/cookies.js", () => {
 jest.mock("axios");
 
 const tenantId = "abcdefg";
+const customBaseUrl = "https://custom.example.com/api/v1/";
 Userfront.init(tenantId);
 
 // Using `window.location.assign` rather than `window.location.href =` because
@@ -157,5 +158,32 @@ describe("redirectIfLoggedIn", () => {
 
     // Revert href
     window.location.href = originalHref;
+
+    // Clear mock
+    axios.get.mockReset();
+  });
+
+  it("should call removeAllCookies with request to custom baseUrl", async () => {
+    Userfront.init(tenantId, {
+      baseUrl: customBaseUrl,
+    });
+
+    Cookies.set(`access.${tenantId}`, mockAccessToken, {});
+
+    store.tokens.accessToken = mockAccessToken;
+
+    axios.get.mockImplementationOnce(() => ({}));
+    await Userfront.redirectIfLoggedIn();
+
+    // Should have called custom baseUrl
+    expect(axios.get).toHaveBeenCalledTimes(1);
+    expect(axios.get).toHaveBeenCalledWith(`${customBaseUrl}self`, {
+      headers: {
+        authorization: `Bearer ${store.tokens.accessToken}`,
+      },
+    });
+
+    // Clear mock
+    axios.get.mockReset();
   });
 });

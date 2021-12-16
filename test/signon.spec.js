@@ -24,7 +24,7 @@ jest.mock("../src/refresh.js", () => {
 jest.mock("axios");
 
 const tenantId = "abcd9876";
-Userfront.init(tenantId);
+const customBaseUrl = "https://custom.example.com/api/v1/";
 
 // Using `window.location.assign` rather than `window.location.href =` because
 // JSDOM throws an error "Error: Not implemented: navigation (except hash changes)"
@@ -51,9 +51,14 @@ const mockResponse = {
 };
 
 describe("signup", () => {
+  beforeEach(() => {
+    Userfront.init(tenantId);
+  });
+
   afterEach(() => {
     window.location.assign.mockClear();
   });
+
   describe("with username & password", () => {
     it("should send a request, set access and ID cookies, and initiate nonce exchange", async () => {
       // Mock the API response
@@ -197,6 +202,34 @@ describe("signup", () => {
         })
       ).rejects.toEqual(new Error(mockResponse.response.data.message));
     });
+
+    it("should sign up using custom baseUrl if defined", async () => {
+      Userfront.init(tenantId, {
+        baseUrl: customBaseUrl,
+      });
+
+      // Mock the API response
+      axios.post.mockImplementationOnce(() => mockResponse);
+
+      // Call signup()
+      const payload = {
+        email: idTokenUserDefaults.email,
+        name: idTokenUserDefaults.name,
+        data: idTokenUserDefaults.data,
+        password: "something",
+      };
+      await signup({
+        method: "password",
+        ...payload,
+      });
+
+      // Should have sent the proper API request
+      expect(axios.post).toHaveBeenCalledWith(`${customBaseUrl}auth/create`, {
+        tenantId,
+        username: undefined,
+        ...payload,
+      });
+    });
   });
 
   describe("with an SSO provider", () => {
@@ -211,6 +244,22 @@ describe("signup", () => {
     });
 
     it("should get provider link and redirect", () => {
+      signup({ method: provider });
+
+      // Assert getProviderLink was called and user is redirected
+      expect(window.location.assign).toHaveBeenCalledTimes(1);
+      expect(window.location.assign).toHaveBeenCalledWith(loginUrl);
+    });
+
+    it("should use custom baseUrl if defined", () => {
+      Userfront.init(tenantId, {
+        baseUrl: customBaseUrl,
+      });
+
+      const loginUrl =
+        `${customBaseUrl}auth/${provider}/login` +
+        `?tenant_id=${tenantId}&origin=${window.location.origin}`;
+
       signup({ method: provider });
 
       // Assert getProviderLink was called and user is redirected
@@ -259,6 +308,46 @@ describe("signup", () => {
       expect(res).toEqual(mockResponse.data);
     });
 
+    it("should send a request using custom baseUrl if defined", async () => {
+      Userfront.init(tenantId, {
+        baseUrl: customBaseUrl,
+      });
+
+      // Mock the API response
+      const mockResponse = {
+        data: {
+          message: "OK",
+          result: {
+            to: "link-registered@example.com",
+            whatever: "else",
+          },
+        },
+      };
+      axios.post.mockImplementationOnce(() => mockResponse);
+
+      // Call signup()
+      const payload = {
+        email: mockResponse.data.result.to,
+        name: idTokenUserDefaults.name,
+        username: idTokenUserDefaults.username,
+        data: idTokenUserDefaults.data,
+      };
+      const res = await signup({
+        method: "passwordless",
+        ...payload,
+      });
+
+      // Should have sent the proper API request
+      expect(axios.post).toHaveBeenCalledWith(`${customBaseUrl}auth/link`, {
+        tenantId,
+        options: undefined,
+        ...payload,
+      });
+
+      // Should have returned the response exactly
+      expect(res).toEqual(mockResponse.data);
+    });
+
     it("should respond with whatever error the server sends", async () => {
       // Mock the API response
       const mockResponseErr = {
@@ -282,6 +371,10 @@ describe("signup", () => {
 });
 
 describe("login", () => {
+  beforeEach(() => {
+    Userfront.init(tenantId);
+  });
+
   afterEach(() => {
     window.location.assign.mockClear();
   });
@@ -324,6 +417,34 @@ describe("login", () => {
       expect(window.location.assign).toHaveBeenCalledWith(
         mockResponse.data.redirectTo
       );
+    });
+
+    it("should send a login request using custom baseUrl if defined", async () => {
+      Userfront.init(tenantId, {
+        baseUrl: customBaseUrl,
+      });
+
+      // Mock the API response
+      axios.post.mockImplementationOnce(() => mockResponse);
+
+      // Call login()
+      const payload = {
+        emailOrUsername: idTokenUserDefaults.email,
+        password: "something",
+      };
+      const res = await login({
+        method: "password",
+        ...payload,
+      });
+
+      // Should have sent the proper API request
+      expect(axios.post).toHaveBeenCalledWith(`${customBaseUrl}auth/basic`, {
+        tenantId,
+        ...payload,
+      });
+
+      // Should have returned the proper value
+      expect(res).toEqual(mockResponse.data);
     });
 
     it("should login and not redirect if redirect = false", async () => {
@@ -468,6 +589,20 @@ describe("login", () => {
       expect(window.location.assign).toHaveBeenCalledTimes(1);
       expect(window.location.assign).toHaveBeenCalledWith(loginUrl);
     });
+
+    it("should get provider link and redirect using custom baseUrl", () => {
+      Userfront.init(tenantId, {
+        baseUrl: customBaseUrl,
+      });
+
+      const loginUrl = `${customBaseUrl}auth/${provider}/login?tenant_id=${tenantId}&origin=${window.location.origin}`;
+
+      login({ method: provider });
+
+      // Assert getProviderLink was called and user is redirected
+      expect(window.location.assign).toHaveBeenCalledTimes(1);
+      expect(window.location.assign).toHaveBeenCalledWith(loginUrl);
+    });
   });
 
   describe("with passwordless", () => {
@@ -506,6 +641,42 @@ describe("login", () => {
       expect(res).toEqual(mockResponse.data);
     });
 
+    it("should send a request and respond with OK using custom baseUrl", async () => {
+      Userfront.init(tenantId, {
+        baseUrl: customBaseUrl,
+      });
+
+      // Mock the API response
+      const mockResponse = {
+        data: {
+          message: "OK",
+          result: {
+            to: "link-registered@example.com",
+            whatever: "else",
+          },
+        },
+      };
+      axios.post.mockImplementationOnce(() => mockResponse);
+
+      // Call login()
+      const payload = {
+        email: mockResponse.data.result.to,
+      };
+      const res = await login({
+        method: "passwordless",
+        ...payload,
+      });
+
+      // Should have sent the proper API request
+      expect(axios.post).toHaveBeenCalledWith(`${customBaseUrl}auth/link`, {
+        tenantId,
+        ...payload,
+      });
+
+      // Should have returned the response exactly
+      expect(res).toEqual(mockResponse.data);
+    });
+
     it("should respond with whatever error the server sends", async () => {
       // Mock the API response
       const mockResponseErr = {
@@ -529,6 +700,10 @@ describe("login", () => {
 });
 
 describe("sendLoginLink", () => {
+  beforeEach(() => {
+    Userfront.init(tenantId);
+  });
+
   it("should respond with link information", async () => {
     const mockResponse = {
       data: {
@@ -558,6 +733,36 @@ describe("sendLoginLink", () => {
     expect(res).toEqual(mockResponse.data);
   });
 
+  it("should respond with link information using custom baseUrl", async () => {
+    Userfront.init(tenantId, {
+      baseUrl: customBaseUrl,
+    });
+
+    const mockResponse = {
+      data: {
+        message: "OK",
+        result: {
+          to: "link-requester@example.com",
+          whatever: "else",
+        },
+      },
+    };
+    // Mock the API response
+    axios.post.mockImplementationOnce(() => mockResponse);
+
+    // Call sendLoginLink()
+    const res = await sendLoginLink(mockResponse.data.result.to);
+
+    // Should have sent the proper API request
+    expect(axios.post).toHaveBeenCalledWith(`${customBaseUrl}auth/link`, {
+      tenantId,
+      email: mockResponse.data.result.to,
+    });
+
+    // Should have returned the proper value
+    expect(res).toEqual(mockResponse.data);
+  });
+
   it(`error should respond with whatever the server sends`, async () => {
     // Mock the API response
     const mockResponse = {
@@ -577,6 +782,10 @@ describe("sendLoginLink", () => {
 });
 
 describe("loginWithLink", () => {
+  beforeEach(() => {
+    Userfront.init(tenantId);
+  });
+
   afterEach(() => {
     window.location.assign.mockClear();
   });
@@ -624,6 +833,42 @@ describe("loginWithLink", () => {
 
     // Should have redirected correctly
     expect(window.location.assign).toHaveBeenCalledWith("/dashboard");
+  });
+
+  it("should login and redirect using custom baseUrl", async () => {
+    Userfront.init(tenantId, {
+      baseUrl: customBaseUrl,
+    });
+
+    // Update the userId to ensure it is overwritten
+    const newUserAttrs = {
+      userId: 2091,
+      email: "linker@example.com",
+    };
+    const mockResponseCopy = JSON.parse(JSON.stringify(mockResponse));
+    mockResponseCopy.data.tokens.id.value = createIdToken(newUserAttrs);
+
+    // Mock the API response
+    axios.put.mockImplementationOnce(() => mockResponseCopy);
+
+    // Call login()
+    const payload = {
+      token: "some-token",
+      uuid: "some-uuid",
+    };
+    const res = await login({
+      method: "link",
+      ...payload,
+    });
+
+    // Should have sent the proper API request
+    expect(axios.put).toHaveBeenCalledWith(`${customBaseUrl}auth/link`, {
+      tenantId,
+      ...payload,
+    });
+
+    // Should return the correct value
+    expect(res).toEqual(mockResponseCopy.data);
   });
 
   it("should read token, uuid, and redirect from the URL if not present", async () => {
@@ -716,6 +961,10 @@ describe("loginWithLink", () => {
 });
 
 describe("sendResetLink", () => {
+  beforeEach(() => {
+    Userfront.init(tenantId);
+  });
+
   it(`error should respond with whatever the server sends`, async () => {
     // Mock the API response
     const mockResponse = {
@@ -728,13 +977,46 @@ describe("sendResetLink", () => {
       },
     };
     axios.post.mockImplementationOnce(() => Promise.reject(mockResponse));
-    expect(sendResetLink({ email: "email@example.com" })).rejects.toEqual(
+    expect(sendResetLink("email@example.com")).rejects.toEqual(
       new Error(mockResponse.response.data.message)
     );
+  });
+
+  it(`should respond with whatever the server sends when using custom baseUrl`, async () => {
+    Userfront.init(tenantId, {
+      baseUrl: customBaseUrl,
+    });
+
+    // Mock the API response
+    const mockResponse = {
+      response: {
+        data: {
+          error: "Bad Request",
+          message: `That's a silly link request.`,
+          statusCode: 400,
+        },
+      },
+    };
+    axios.post.mockImplementationOnce(() => Promise.reject(mockResponse));
+
+    const email = "email@example.com";
+    expect(sendResetLink(email)).rejects.toEqual(
+      new Error(mockResponse.response.data.message)
+    );
+
+    // Should have sent the proper API request
+    expect(axios.post).toHaveBeenCalledWith(`${customBaseUrl}auth/reset/link`, {
+      email,
+      tenantId,
+    });
   });
 });
 
 describe("resetPassword", () => {
+  beforeEach(() => {
+    Userfront.init(tenantId);
+  });
+
   afterEach(() => {
     window.location.assign.mockClear();
   });
@@ -756,6 +1038,31 @@ describe("resetPassword", () => {
         ...options,
       }
     );
+
+    // Should have redirected the page
+    expect(window.location.assign).toHaveBeenCalledWith(
+      mockResponse.data.redirectTo
+    );
+  });
+
+  it("should send a password reset request with custom baseUrl", async () => {
+    Userfront.init(tenantId, {
+      baseUrl: customBaseUrl,
+    });
+
+    // Mock the API response
+    axios.put.mockImplementationOnce(() => Promise.resolve(mockResponse));
+
+    const options = { token: "token", uuid: "uuid", password: "password" };
+
+    // Call resetPassword
+    await resetPassword(options);
+
+    // Should have sent the proper API request
+    expect(axios.put).toHaveBeenCalledWith(`${customBaseUrl}auth/reset`, {
+      tenantId,
+      ...options,
+    });
 
     // Should have redirected the page
     expect(window.location.assign).toHaveBeenCalledWith(

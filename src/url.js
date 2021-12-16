@@ -1,6 +1,5 @@
 import axios from "axios";
 
-import { apiUrl } from "./constants.js";
 import { store } from "./store.js";
 import { removeAllCookies } from "./cookies.js";
 
@@ -41,7 +40,7 @@ export async function redirectIfLoggedIn({ redirect } = {}) {
 
   // If no path was provided, look up the path and then redirect there
   try {
-    const { data } = await axios.get(`${apiUrl}self`, {
+    const { data } = await axios.get(`${store.baseUrl}self`, {
       headers: {
         authorization: `Bearer ${store.tokens.accessToken}`,
       },

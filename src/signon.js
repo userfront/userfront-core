@@ -1,5 +1,4 @@
 import axios from "axios";
-import { apiUrl } from "./constants.js";
 import { setCookiesAndTokens } from "./cookies.js";
 import { store } from "./store.js";
 import { getQueryAttr, redirectToPath } from "./url.js";
@@ -88,7 +87,7 @@ async function signupWithPassword({
   redirect,
 } = {}) {
   try {
-    const { data } = await axios.post(`${apiUrl}auth/create`, {
+    const { data } = await axios.post(`${store.baseUrl}auth/create`, {
       tenantId: store.tenantId,
       username,
       name,
@@ -177,7 +176,7 @@ export function getProviderLink({ provider, redirect }) {
   if (!provider) throw new Error("Missing provider");
   if (!store.tenantId) throw new Error("Missing tenant ID");
 
-  let url = `https://api.userfront.com/v0/auth/${provider}/login?tenant_id=${store.tenantId}&origin=${window.location.origin}`;
+  let url = `${store.baseUrl}auth/${provider}/login?tenant_id=${store.tenantId}&origin=${window.location.origin}`;
 
   let redirectTo = redirect || getQueryAttr("redirect");
   if (redirect === false) {
@@ -203,7 +202,7 @@ async function loginWithPassword({
   redirect,
 }) {
   try {
-    const { data } = await axios.post(`${apiUrl}auth/basic`, {
+    const { data } = await axios.post(`${store.baseUrl}auth/basic`, {
       tenantId: store.tenantId,
       emailOrUsername: email || username || emailOrUsername,
       password,
@@ -237,7 +236,7 @@ export async function loginWithLink({ token, uuid, redirect } = {}) {
     uuid = uuid || getQueryAttr("uuid");
     if (!token || !uuid) return;
 
-    const { data } = await axios.put(`${apiUrl}auth/link`, {
+    const { data } = await axios.put(`${store.baseUrl}auth/link`, {
       token,
       uuid,
       tenantId: store.tenantId,
@@ -265,7 +264,7 @@ export async function loginWithLink({ token, uuid, redirect } = {}) {
  */
 export async function sendLoginLink(email) {
   try {
-    const { data } = await axios.post(`${apiUrl}auth/link`, {
+    const { data } = await axios.post(`${store.baseUrl}auth/link`, {
       email,
       tenantId: store.tenantId,
     });
@@ -287,7 +286,7 @@ export async function sendPasswordlessLink({
   options,
 }) {
   try {
-    const { data } = await axios.post(`${apiUrl}auth/link`, {
+    const { data } = await axios.post(`${store.baseUrl}auth/link`, {
       email,
       name,
       username,
@@ -307,7 +306,7 @@ export async function sendPasswordlessLink({
  */
 export async function sendResetLink(email) {
   try {
-    const { data } = await axios.post(`${apiUrl}auth/reset/link`, {
+    const { data } = await axios.post(`${store.baseUrl}auth/reset/link`, {
       email,
       tenantId: store.tenantId,
     });
@@ -322,7 +321,7 @@ export async function resetPassword({ uuid, token, password, redirect }) {
     token = token || getQueryAttr("token");
     uuid = uuid || getQueryAttr("uuid");
     if (!token || !uuid) throw new Error("Missing token or uuid");
-    const { data } = await axios.put(`${apiUrl}auth/reset`, {
+    const { data } = await axios.put(`${store.baseUrl}auth/reset`, {
       tenantId: store.tenantId,
       uuid,
       token,

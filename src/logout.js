@@ -1,5 +1,4 @@
 import axios from "axios";
-import { apiUrl } from "./constants.js";
 
 import { getIframe, postMessageAsPromise } from "./iframe.js";
 import { store } from "./store.js";
@@ -13,7 +12,7 @@ import { redirectToPath } from "./url";
 export async function logout({ redirect } = {}) {
   if (!store.tokens.accessToken) return removeAllCookies();
   try {
-    const { data } = await axios.get(`${apiUrl}auth/logout`, {
+    const { data } = await axios.get(`${store.baseUrl}auth/logout`, {
       headers: {
         authorization: `Bearer ${store.tokens.accessToken}`,
       },

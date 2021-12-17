@@ -155,6 +155,8 @@ export async function login({
       return sendPasswordlessLink({ email });
     case "link":
       return loginWithLink({ token, uuid, redirect });
+    case "saml":
+      return completeSamlLogin();
     default:
       throw new Error('Userfront.login called with invalid "method" property.');
   }

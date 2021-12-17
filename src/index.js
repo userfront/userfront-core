@@ -130,7 +130,6 @@ export default {
   sendLoginLink,
   sendResetLink,
   signup,
-  completeSamlLogin,
 
   // store
   store,

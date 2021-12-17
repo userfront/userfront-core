@@ -238,45 +238,4 @@ describe("addInitCallback() method", () => {
     expect(callbackA).not.toHaveBeenCalled();
     expect(callbackB).not.toHaveBeenCalled();
   });
-
-  it("should have correct methods & properties", () => {
-    expect(Object.keys(Userfront)).toEqual([
-      // index
-      "addInitCallback",
-      "init",
-      "registerUrlChangedEventListener",
-
-      //logout
-      "logout",
-
-      // mode
-      "mode",
-      "setMode",
-
-      // refresh
-      "refresh",
-
-      // signon
-      "login",
-      "resetPassword",
-      "sendLoginLink",
-      "sendResetLink",
-      "signup",
-      "completeSamlLogin",
-
-      // store
-      "store",
-
-      // tokens
-      "tokens",
-      "accessToken",
-      "idToken",
-
-      // url
-      "redirectIfLoggedIn",
-
-      // user
-      "user",
-    ]);
-  });
 });

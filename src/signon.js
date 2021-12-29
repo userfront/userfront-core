@@ -231,7 +231,7 @@ export async function completeSamlLogin() {
       return console.warn("Cannot complete SAML login without access token");
     }
 
-    const { data } = await axios.post(`${store.baseUrl}auth/saml/idp/token`, {
+    const { data } = await axios.get(`${store.baseUrl}auth/saml/idp/token`, {
       headers: {
         authorization: `Bearer ${store.tokens.accessToken}`,
       },

@@ -14,7 +14,6 @@ import {
   sendLoginLink,
   sendResetLink,
   resetPassword,
-  completeSamlLogin,
 } from "../src/signon.js";
 import { exchange } from "../src/refresh.js";
 import { store } from "../src/store.js";
@@ -1181,7 +1180,7 @@ describe("completeSamlLogin", () => {
     console.warn = jest.fn();
 
     expect(console.warn).not.toHaveBeenCalled();
-    await completeSamlLogin();
+    await login({ method: "saml" });
     expect(console.warn).toHaveBeenCalledWith(
       "Cannot complete SAML login without access token"
     );
@@ -1197,7 +1196,7 @@ describe("completeSamlLogin", () => {
     /*
      Steps for test:
        1. Log user in for access token to be set in store
-       2. Call `completeSamlLogin`
+       2. Call `login({ method: 'saml' })`
        3. Assert /auth/saml/idp/token request was made
        4. Assert client is redirect to /auth/saml/idp/login with token from step 3
      */
@@ -1237,8 +1236,8 @@ describe("completeSamlLogin", () => {
     };
     axios.post.mockImplementationOnce(() => mockTokenResponse);
 
-    // 2. Call `completeSamlLogin`
-    await completeSamlLogin();
+    // 2. Call login
+    await login({ method: "saml" });
 
     // 3. Assert /auth/saml/idp/token request was made
     expect(axios.post).toHaveBeenCalledWith(
@@ -1271,7 +1270,7 @@ describe("completeSamlLogin", () => {
       },
     };
     axios.post.mockImplementationOnce(() => Promise.reject(mockResponse));
-    expect(completeSamlLogin()).rejects.toEqual(
+    expect(login({ method: "saml" })).rejects.toEqual(
       new Error(mockResponse.response.data.message)
     );
   });

@@ -238,7 +238,7 @@ export async function completeSamlLogin() {
     });
 
     window.location.assign(
-      `${store.baseUrl}auth/saml/idp/login?tenantId=${store.tenantId}&token=${data.token}&uuid=${store.user.userUuid}`
+      `${store.baseUrl}auth/saml/idp/login?tenant_id=${store.tenantId}&token=${data.token}&uuid=${store.user.userUuid}`
     );
   } catch (error) {
     throwFormattedError(error);

@@ -140,7 +140,8 @@ describe("signon#completeSamlLogin", () => {
     // 4. Assert client was redirected to /auth/saml/idp/login with token from step 3
     expect(window.location.assign).toHaveBeenCalledWith(
       `${Userfront.store.baseUrl}auth/saml/idp/login` +
-        `?token=${mockTokenResponse.data.token}` +
+        `?tenant_id=${tenantId}` +
+        `&token=${mockTokenResponse.data.token}` +
         `&uuid=${Userfront.user.userUuid}`
     );
   });

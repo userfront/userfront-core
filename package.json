@@ -1,6 +1,6 @@
 {
   "name": "@userfront/core",
-  "version": "0.2.37",
+  "version": "0.2.38",
   "description": "Userfront core JS library",
   "source": "src/index.js",
   "main": "build/userfront-core.js",

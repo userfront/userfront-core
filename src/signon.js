@@ -225,7 +225,7 @@ async function loginWithPassword({
   }
 }
 
-export async function completeSamlLogin() {
+async function completeSamlLogin() {
   try {
     if (!store.tokens.accessToken) {
       return console.warn("Cannot complete SAML login without access token");

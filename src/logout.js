@@ -33,7 +33,7 @@ export async function logout({ method, redirect } = {}) {
 }
 
 async function completeSamlLogout() {
-  if (!store.tokens.accessToken) return removeAllCookies();
+  if (!store.tokens.accessToken) return;
 
   try {
     const { data } = await axios.get(`${store.baseUrl}auth/saml/idp/token`, {
@@ -42,14 +42,10 @@ async function completeSamlLogout() {
       },
     });
 
-    removeAllCookies();
     window.location.assign(
       `${store.baseUrl}auth/saml/idp/logout?tenant_id=${store.tenantId}&token=${data.token}&uuid=${store.user.userUuid}`
     );
   } catch (error) {
-    if (error?.response?.status === 401) {
-      removeAllCookies();
-    }
     throwFormattedError(error);
   }
 }

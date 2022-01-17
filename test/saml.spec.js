@@ -185,13 +185,13 @@ describe("logout({ method: 'saml' })", () => {
     };
     axios.get.mockImplementationOnce(() => mockTokenResponse);
 
-    // Access & ID token cookies should both exist before logout
+    // Access token, ID token, and user should all exist before and after logging
+    // out of service provider (should not log user out of tenant application, only
+    // the service provider)
     expect(Cookies.get(`access.${tenantId}`)).toBeTruthy();
     expect(Cookies.get(`id.${tenantId}`)).toBeTruthy();
     expect(Userfront.tokens.accessToken).toBeTruthy();
     expect(Userfront.tokens.idToken).toBeTruthy();
-
-    // User should exist before logout
     expect(Userfront.user.userId).toEqual(33);
     expect(Userfront.user.email).toEqual("johndoe@example.com");
 
@@ -216,19 +216,19 @@ describe("logout({ method: 'saml' })", () => {
         `&uuid=${Userfront.user.userUuid}`
     );
 
-    // Should have cleared the access and ID tokens
-    expect(Cookies.get(`access.${tenantId}`)).toBeFalsy();
-    expect(Cookies.get(`id.${tenantId}`)).toBeFalsy();
-    expect(Userfront.tokens.accessToken).toBeFalsy();
-    expect(Userfront.tokens.idToken).toBeFalsy();
+    // Should not have cleared the access and ID tokens
+    expect(Cookies.get(`access.${tenantId}`)).toBeTruthy();
+    expect(Cookies.get(`id.${tenantId}`)).toBeTruthy();
+    expect(Userfront.tokens.accessToken).toBeTruthy();
+    expect(Userfront.tokens.idToken).toBeTruthy();
 
-    // Should have cleared the user object
-    expect(Userfront.user.userId).toBeFalsy();
-    expect(Userfront.user.email).toBeFalsy();
+    // Should not have cleared the user object
+    expect(Userfront.user.userId).toBeTruthy();
+    expect(Userfront.user.email).toBeTruthy();
     expect(Userfront.user.update).toBeTruthy();
   });
 
-  it(`should remove cookies if store.tokens.accessToken isn't defined`, async () => {
+  it(`should return early if store.tokens.accessToken isn't defined`, async () => {
     // Init without access token
     Cookies.set(`access.${tenantId}`, "", {});
     Cookies.set(`id.${tenantId}`, mockIdToken, {});
@@ -243,11 +243,11 @@ describe("logout({ method: 'saml' })", () => {
     expect(axios.get).not.toHaveBeenCalled();
     expect(window.location.assign).not.toHaveBeenCalled();
 
-    // Should have cleared ID token and user
-    expect(Cookies.get(`id.${tenantId}`)).toBeFalsy();
-    expect(Userfront.tokens.idToken).toBeFalsy();
-    expect(Userfront.user.userId).toBeFalsy();
-    expect(Userfront.user.email).toBeFalsy();
+    // Should not have modified ID token or user
+    expect(Cookies.get(`id.${tenantId}`)).toBeTruthy();
+    expect(Userfront.tokens.idToken).toBeTruthy();
+    expect(Userfront.user.userId).toBeTruthy();
+    expect(Userfront.user.email).toBeTruthy();
     expect(Userfront.user.update).toBeTruthy();
   });
 
@@ -283,40 +283,5 @@ describe("logout({ method: 'saml' })", () => {
     // User should have not been modified
     expect(Userfront.user.userId).toBeTruthy();
     expect(Userfront.user.email).toBeTruthy();
-  });
-
-  it(`should remove cookies upon 401 error when requesting GET /auth/saml/idp/token`, async () => {
-    // Mock the API response
-    // https://axios-http.com/docs/handling_errors
-    const mockResponse = {
-      response: {
-        status: 401,
-        data: {
-          error: "Unauthorized",
-          message: "Unauthorized",
-          statusCode: 401,
-        },
-      },
-    };
-    axios.get.mockImplementationOnce(() => Promise.reject(mockResponse));
-
-    // logout() should throw error
-    try {
-      await logout({ method: "saml" });
-      expect("non-error").not.toBeDefined();
-    } catch (error) {
-      expect(error).toEqual(new Error(mockResponse.response.data.message));
-    }
-
-    // Should have cleared the access and ID tokens
-    expect(Cookies.get(`access.${tenantId}`)).toBeFalsy();
-    expect(Cookies.get(`id.${tenantId}`)).toBeFalsy();
-    expect(Userfront.tokens.accessToken).toBeFalsy();
-    expect(Userfront.tokens.idToken).toBeFalsy();
-
-    // Should have cleared the user object
-    expect(Userfront.user.userId).toBeFalsy();
-    expect(Userfront.user.email).toBeFalsy();
-    expect(Userfront.user.update).toBeTruthy();
   });
 });

@@ -47,7 +47,7 @@ window.location = {
   href: "https://example.com/login",
 };
 
-describe.only("signon#completeSamlLogin", () => {
+describe("signon#completeSamlLogin", () => {
   beforeAll(() => {
     // Clear any mock
     axios.get.mockReset();

@@ -228,7 +228,7 @@ describe("logout({ method: 'saml' })", () => {
     expect(Userfront.user.update).toBeTruthy();
   });
 
-  it(`should return early if store.tokens.accessToken isn't defined`, async () => {
+  it(`should return error to log in if store.tokens.accessToken isn't defined`, async () => {
     // Init without access token
     Cookies.set(`access.${tenantId}`, "", {});
     Cookies.set(`id.${tenantId}`, mockIdToken, {});
@@ -237,7 +237,17 @@ describe("logout({ method: 'saml' })", () => {
     expect(Userfront.user.userId).toEqual(33);
     expect(Userfront.user.email).toEqual("johndoe@example.com");
 
-    await logout({ method: "saml" });
+    // logout() should throw error
+    try {
+      await logout({ method: "saml" });
+      expect("non-error").not.toBeDefined();
+    } catch (error) {
+      expect(error).toEqual(
+        new Error(
+          "Access token is required to complete SAML logout process. Please log in to obtain token."
+        )
+      );
+    }
 
     // Should not have made request to /auth/saml/idp/token or redirected the user
     expect(axios.get).not.toHaveBeenCalled();

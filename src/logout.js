@@ -33,7 +33,11 @@ export async function logout({ method, redirect } = {}) {
 }
 
 async function completeSamlLogout() {
-  if (!store.tokens.accessToken) return;
+  if (!store.tokens.accessToken) {
+    throw new Error(
+      "Access token is required to complete SAML logout process. Please log in to obtain token."
+    );
+  }
 
   try {
     const { data } = await axios.get(`${store.baseUrl}auth/saml/idp/token`, {

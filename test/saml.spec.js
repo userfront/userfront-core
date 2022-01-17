@@ -47,7 +47,7 @@ window.location = {
   href: "https://example.com/login",
 };
 
-describe("signon#completeSamlLogin", () => {
+describe.only("signon#completeSamlLogin", () => {
   beforeAll(() => {
     // Clear any mock
     axios.get.mockReset();
@@ -165,7 +165,7 @@ describe("signon#completeSamlLogin", () => {
   });
 });
 
-describe("logout#completeSamlLogout", () => {
+describe("logout({ method: 'saml' })", () => {
   beforeEach(() => {
     axios.get.mockReset();
     Cookies.set(`id.${tenantId}`, mockIdToken, {});

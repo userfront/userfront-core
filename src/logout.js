@@ -34,9 +34,7 @@ export async function logout({ method, redirect } = {}) {
 
 async function completeSamlLogout() {
   if (!store.tokens.accessToken) {
-    throw new Error(
-      "Access token is required to complete SAML logout process. Please log in to obtain token."
-    );
+    throw new Error("Please log in to authorize your logout request.");
   }
 
   try {

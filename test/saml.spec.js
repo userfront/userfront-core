@@ -243,9 +243,7 @@ describe("logout({ method: 'saml' })", () => {
       expect("non-error").not.toBeDefined();
     } catch (error) {
       expect(error).toEqual(
-        new Error(
-          "Access token is required to complete SAML logout process. Please log in to obtain token."
-        )
+        new Error("Please log in to authorize your logout request.")
       );
     }
 

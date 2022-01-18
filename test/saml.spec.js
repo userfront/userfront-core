@@ -9,10 +9,12 @@ import {
   idTokenUserDefaults,
 } from "./config/utils.js";
 import { login } from "../src/signon.js";
-import { store } from "../src/store.js";
+import { logout } from "../src/logout.js";
 import { unsetTokens } from "../src/tokens.js";
 
 const tenantId = "abcd9876";
+const mockAccessToken = createAccessToken();
+const mockIdToken = createIdToken();
 
 jest.mock("../src/refresh.js", () => {
   return {
@@ -49,13 +51,12 @@ describe("signon#completeSamlLogin", () => {
   beforeAll(() => {
     // Clear any mock
     axios.get.mockReset();
-    Userfront.init(tenantId);
   });
 
   beforeEach(() => {
-    const mockAccessToken = "mockAccessToken";
+    Cookies.set(`id.${tenantId}`, mockIdToken, {});
     Cookies.set(`access.${tenantId}`, mockAccessToken, {});
-    store.tokens.accessToken = mockAccessToken;
+    Userfront.init(tenantId);
   });
 
   afterEach(() => {
@@ -132,7 +133,7 @@ describe("signon#completeSamlLogin", () => {
       `${Userfront.store.baseUrl}auth/saml/idp/token`,
       {
         headers: {
-          authorization: `Bearer ${store.tokens.accessToken}`,
+          authorization: `Bearer ${Userfront.tokens.accessToken}`,
         },
       }
     );
@@ -161,5 +162,134 @@ describe("signon#completeSamlLogin", () => {
     expect(login({ method: "saml" })).rejects.toEqual(
       new Error(mockResponse.response.data.message)
     );
+  });
+});
+
+describe("logout({ method: 'saml' })", () => {
+  beforeEach(() => {
+    axios.get.mockReset();
+    Cookies.set(`id.${tenantId}`, mockIdToken, {});
+    Cookies.set(`access.${tenantId}`, mockAccessToken, {});
+    Userfront.init(tenantId);
+  });
+
+  afterEach(() => {
+    window.location.assign.mockClear();
+  });
+
+  it(`should make request to token endpoint then redirect browser to SAML logout
+      endpoint`, async () => {
+    // Create mock response for token request
+    const mockTokenResponse = {
+      data: { token: "foo-bar-1234" },
+    };
+    axios.get.mockImplementationOnce(() => mockTokenResponse);
+
+    // Access token, ID token, and user should all exist before and after logging
+    // out of service provider (should not log user out of tenant application, only
+    // the service provider)
+    expect(Cookies.get(`access.${tenantId}`)).toBeTruthy();
+    expect(Cookies.get(`id.${tenantId}`)).toBeTruthy();
+    expect(Userfront.tokens.accessToken).toBeTruthy();
+    expect(Userfront.tokens.idToken).toBeTruthy();
+    expect(Userfront.user.userId).toEqual(33);
+    expect(Userfront.user.email).toEqual("johndoe@example.com");
+
+    const accessToken = Userfront.tokens.accessToken;
+    await logout({ method: "saml" });
+
+    // Assert GET /auth/saml/idp/token request was made
+    expect(axios.get).toHaveBeenCalledWith(
+      `${Userfront.store.baseUrl}auth/saml/idp/token`,
+      {
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    // Assert client was redirected to /auth/saml/idp/logout with token
+    expect(window.location.assign).toHaveBeenCalledWith(
+      `${Userfront.store.baseUrl}auth/saml/idp/logout` +
+        `?tenant_id=${tenantId}` +
+        `&token=${mockTokenResponse.data.token}` +
+        `&uuid=${Userfront.user.userUuid}`
+    );
+
+    // Should not have cleared the access and ID tokens
+    expect(Cookies.get(`access.${tenantId}`)).toBeTruthy();
+    expect(Cookies.get(`id.${tenantId}`)).toBeTruthy();
+    expect(Userfront.tokens.accessToken).toBeTruthy();
+    expect(Userfront.tokens.idToken).toBeTruthy();
+
+    // Should not have cleared the user object
+    expect(Userfront.user.userId).toBeTruthy();
+    expect(Userfront.user.email).toBeTruthy();
+    expect(Userfront.user.update).toBeTruthy();
+  });
+
+  it(`should return error to log in if store.tokens.accessToken isn't defined`, async () => {
+    // Init without access token
+    Cookies.set(`access.${tenantId}`, "", {});
+    Cookies.set(`id.${tenantId}`, mockIdToken, {});
+    Userfront.init(tenantId);
+    expect(Userfront.tokens.idToken).toBeTruthy();
+    expect(Userfront.user.userId).toEqual(33);
+    expect(Userfront.user.email).toEqual("johndoe@example.com");
+
+    // logout() should throw error
+    try {
+      await logout({ method: "saml" });
+      expect("non-error").not.toBeDefined();
+    } catch (error) {
+      expect(error).toEqual(
+        new Error("Please log in to authorize your logout request.")
+      );
+    }
+
+    // Should not have made request to /auth/saml/idp/token or redirected the user
+    expect(axios.get).not.toHaveBeenCalled();
+    expect(window.location.assign).not.toHaveBeenCalled();
+
+    // Should not have modified ID token or user
+    expect(Cookies.get(`id.${tenantId}`)).toBeTruthy();
+    expect(Userfront.tokens.idToken).toBeTruthy();
+    expect(Userfront.user.userId).toBeTruthy();
+    expect(Userfront.user.email).toBeTruthy();
+    expect(Userfront.user.update).toBeTruthy();
+  });
+
+  it(`error should respond with any error server sends`, async () => {
+    // Mock the API response
+    // https://axios-http.com/docs/handling_errors
+    const mockResponse = {
+      response: {
+        status: 400,
+        data: {
+          error: "Bad Request",
+          message: "Bad Request",
+          statusCode: 400,
+        },
+      },
+    };
+    axios.get.mockImplementationOnce(() => Promise.reject(mockResponse));
+
+    // logout() should throw error
+    try {
+      await logout({ method: "saml" });
+      expect("non-error").not.toBeDefined();
+    } catch (error) {
+      expect(error).toEqual(new Error(mockResponse.response.data.message));
+    }
+
+    // Access and ID tokens should not have been modified
+    expect(Cookies.get(`access.${tenantId}`)).toBeTruthy();
+    expect(Cookies.get(`id.${tenantId}`)).toBeTruthy();
+    expect(Userfront.tokens.accessToken).toBeTruthy();
+    expect(Userfront.tokens.idToken).toBeTruthy();
+
+    // User should have not been modified
+    expect(Userfront.user.userId).toBeTruthy();
+    expect(Userfront.user.email).toBeTruthy();
   });
 });

@@ -14,7 +14,6 @@ import {
   sendLoginLink,
   sendResetLink,
   signup,
-  completeSamlLogin,
 } from "./signon.js";
 import { logout } from "./logout.js";
 import { mode, setMode, setModeSync } from "./mode.js";

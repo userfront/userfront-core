@@ -121,7 +121,14 @@ export default {
   setMode,
 
   // refresh
-  refresh,
+  refresh: (a, b, c) => {
+    try {
+      console.warn(
+        "Userfront.refresh() is deprecated and will be removed. Please use Userfront.tokens.refresh() instead."
+      );
+    } catch (error) {}
+    return refresh(a, b, c);
+  },
 
   // signon
   login,

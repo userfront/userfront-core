@@ -40,6 +40,7 @@ describe("refresh with basic method", () => {
 
   afterEach(() => {
     resetStore(Userfront);
+    jest.resetAllMocks();
   });
 
   it("should send a refresh request and set cookies with response", async () => {
@@ -194,5 +195,26 @@ describe("refresh with basic method", () => {
     // Expect existing properties to be unchanged
     expect(Userfront.user.image).toEqual(initialUser.image);
     expect(Userfront.user.data).toEqual(initialUser.data);
+  });
+
+  it("Userfront.refresh() should log a deprecation message", async () => {
+    expect(Userfront.refresh).not.toEqual(refresh);
+
+    axios.get.mockResolvedValue({});
+
+    global.console = { warn: jest.fn() };
+    await Userfront.refresh();
+
+    expect(console.warn).toHaveBeenCalledWith(
+      "Userfront.refresh() is deprecated and will be removed. Please use Userfront.tokens.refresh() instead."
+    );
+    expect(axios.get).toHaveBeenCalledWith(
+      "https://api.userfront.com/v0/auth/refresh",
+      {
+        headers: {
+          authorization: `Bearer ${mockRefreshToken}`,
+        },
+      }
+    );
   });
 });

@@ -1,6 +1,7 @@
 import Cookies from "js-cookie";
 import Userfront from "../src/index.js";
 import { createAccessToken, createIdToken } from "./config/utils.js";
+import { refresh } from "../src/refresh.js";
 
 const tenantId = "abcd4321";
 const mockAccessToken = createAccessToken();
@@ -29,5 +30,9 @@ describe("Userfront.tokens helpers", () => {
 
   it("tokens.idTokenName should give name of ID token", () => {
     expect(Userfront.tokens.idTokenName).toEqual(`id.${tenantId}`);
+  });
+
+  it("tokens.refresh should equal the refresh method", () => {
+    expect(Userfront.tokens.refresh).toEqual(refresh);
   });
 });

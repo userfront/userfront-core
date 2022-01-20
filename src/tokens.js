@@ -3,6 +3,7 @@ import { store } from "./store.js";
 import { setUser, unsetUser } from "./user.js";
 import { refresh } from "./refresh.js";
 
+store.tokens = store.tokens || {};
 store.tokens.refresh = refresh;
 
 export function setTokenNames() {

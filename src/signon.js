@@ -209,7 +209,8 @@ async function loginWithPassword({
       emailOrUsername: email || username || emailOrUsername,
       password,
     });
-    if (data.tokens) {
+
+    if (data.hasOwnProperty("tokens")) {
       setCookiesAndTokens(data.tokens);
       await exchange(data);
       if (redirect === false) return data;
@@ -217,9 +218,13 @@ async function loginWithPassword({
         redirect || getQueryAttr("redirect") || data.redirectTo || "/"
       );
       return data;
-    } else {
-      throw new Error("Please try again.");
     }
+
+    if (data.hasOwnProperty("firstFactorCode")) {
+      return data;
+    }
+
+    throw new Error("Please try again.");
   } catch (error) {
     throwFormattedError(error);
   }
@@ -264,7 +269,7 @@ export async function loginWithLink({ token, uuid, redirect } = {}) {
       tenantId: store.tenantId,
     });
 
-    if (data.tokens) {
+    if (data.hasOwnProperty("tokens")) {
       setCookiesAndTokens(data.tokens);
       await exchange(data);
       if (redirect === false) return data;
@@ -272,9 +277,13 @@ export async function loginWithLink({ token, uuid, redirect } = {}) {
         redirect || getQueryAttr("redirect") || data.redirectTo || "/"
       );
       return data;
-    } else {
-      throw new Error("Problem logging in.");
     }
+
+    if (data.hasOwnProperty("firstFactorCode")) {
+      return data;
+    }
+
+    throw new Error("Problem logging in.");
   } catch (error) {
     throwFormattedError(error);
   }

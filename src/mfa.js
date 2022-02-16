@@ -13,14 +13,14 @@ import { throwFormattedError } from "./utils.js";
  * @param {String} to
  * @returns {Object}
  */
-export async function requestCode({
+export async function requestFirstFactorCode({
   firstFactorCode,
   strategy,
   channel,
   to,
 } = {}) {
   if (!firstFactorCode || !strategy || !channel || !to) {
-    throw new Error("Userfront.requestCode missing parameters.");
+    throw new Error("Userfront.requestFirstFactorCode missing parameters.");
   }
 
   try {
@@ -39,7 +39,7 @@ export async function requestCode({
 }
 
 /**
- * Submit a security code for MFA
+ * Submit a security code and first factor code for MFA
  * @param {String} firstFactorCode
  * @param {String} strategy
  * @param {String} to
@@ -47,7 +47,7 @@ export async function requestCode({
  * @param {String|Boolean} redirect Redirect to given path unless specified as `false`
  * @returns {Object}
  */
-export async function submitCode({
+export async function loginWithMfaSecurityCode({
   firstFactorCode,
   strategy,
   to,
@@ -55,7 +55,7 @@ export async function submitCode({
   redirect,
 } = {}) {
   if (!firstFactorCode || !strategy || !to || !securityCode) {
-    throw new Error("Userfront.submitCode missing parameters.");
+    throw new Error("Userfront.loginWithMfaSecurityCode missing parameters.");
   }
 
   try {

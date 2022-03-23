@@ -13,14 +13,14 @@ import { throwFormattedError } from "./utils.js";
  * @param {String} to
  * @returns {Object}
  */
-export async function requestFirstFactorCode({
+export async function sendSecurityCode({
   firstFactorCode,
   strategy,
   channel,
   to,
 } = {}) {
   if (!firstFactorCode || !strategy || !channel || !to) {
-    throw new Error("Userfront.requestFirstFactorCode missing parameters.");
+    throw new Error("Userfront.sendSecurityCode missing parameters.");
   }
 
   try {

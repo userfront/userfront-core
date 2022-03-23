@@ -7,7 +7,7 @@ import {
   createRefreshToken,
   idTokenUserDefaults,
 } from "./config/utils.js";
-import { requestFirstFactorCode, loginWithSecurityCode } from "../src/mfa.js";
+import { sendSecurityCode, loginWithSecurityCode } from "../src/mfa.js";
 import { exchange } from "../src/refresh.js";
 
 jest.mock("../src/refresh.js", () => {
@@ -60,58 +60,58 @@ const mockSubmitCodeResponse = {
   },
 };
 
-describe("requestFirstFactorCode", () => {
+describe("sendSecurityCode", () => {
   beforeEach(() => {
     Userfront.init(tenantId);
   });
 
   it(`should throw if missing parameters`, async () => {
-    expect(requestFirstFactorCode()).rejects.toEqual(
-      new Error("Userfront.requestFirstFactorCode missing parameters.")
+    expect(sendSecurityCode()).rejects.toEqual(
+      new Error("Userfront.sendSecurityCode missing parameters.")
     );
 
     // Missing firstFactorCode
     expect(
-      requestFirstFactorCode({
+      sendSecurityCode({
         strategy: "securityCode",
         channel: "sms",
         to: phoneNumber,
       })
     ).rejects.toEqual(
-      new Error("Userfront.requestFirstFactorCode missing parameters.")
+      new Error("Userfront.sendSecurityCode missing parameters.")
     );
 
     // Missing strategy
     expect(
-      requestFirstFactorCode({
+      sendSecurityCode({
         firstFactorCode,
         channel: "sms",
         to: phoneNumber,
       })
     ).rejects.toEqual(
-      new Error("Userfront.requestFirstFactorCode missing parameters.")
+      new Error("Userfront.sendSecurityCode missing parameters.")
     );
 
     // Missing channel
     expect(
-      requestFirstFactorCode({
+      sendSecurityCode({
         firstFactorCode,
         strategy: "securityCode",
         to: phoneNumber,
       })
     ).rejects.toEqual(
-      new Error("Userfront.requestFirstFactorCode missing parameters.")
+      new Error("Userfront.sendSecurityCode missing parameters.")
     );
 
     // Missing to
     expect(
-      requestFirstFactorCode({
+      sendSecurityCode({
         firstFactorCode,
         strategy: "securityCode",
         channel: "sms",
       })
     ).rejects.toEqual(
-      new Error("Userfront.requestFirstFactorCode missing parameters.")
+      new Error("Userfront.sendSecurityCode missing parameters.")
     );
 
     expect(axios.post).not.toHaveBeenCalled();
@@ -127,7 +127,7 @@ describe("requestFirstFactorCode", () => {
       channel: "sms",
       to: phoneNumber,
     };
-    const res = await requestFirstFactorCode(payload);
+    const res = await sendSecurityCode(payload);
 
     // Should have sent the proper API request
     expect(axios.post).toHaveBeenCalledWith(

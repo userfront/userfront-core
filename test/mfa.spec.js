@@ -7,7 +7,11 @@ import {
   createRefreshToken,
   idTokenUserDefaults,
 } from "./config/utils.js";
-import { sendSecurityCode, loginWithSecurityCode } from "../src/mfa.js";
+import {
+  sendSecurityCode,
+  sendSecurityCodeSms,
+  loginWithSecurityCode,
+} from "../src/mfa.js";
 import { exchange } from "../src/refresh.js";
 
 jest.mock("../src/refresh.js", () => {
@@ -66,9 +70,11 @@ describe("sendSecurityCode", () => {
   });
 
   it(`should throw if missing parameters`, async () => {
-    expect(sendSecurityCode()).rejects.toEqual(
-      new Error("Userfront.sendSecurityCode missing parameters.")
+    const missingParamsError = new Error(
+      "Userfront.sendSecurityCode missing parameters."
     );
+
+    expect(sendSecurityCode()).rejects.toEqual(missingParamsError);
 
     // Missing firstFactorCode
     expect(
@@ -77,9 +83,7 @@ describe("sendSecurityCode", () => {
         channel: "sms",
         to: phoneNumber,
       })
-    ).rejects.toEqual(
-      new Error("Userfront.sendSecurityCode missing parameters.")
-    );
+    ).rejects.toEqual(missingParamsError);
 
     // Missing strategy
     expect(
@@ -88,9 +92,7 @@ describe("sendSecurityCode", () => {
         channel: "sms",
         to: phoneNumber,
       })
-    ).rejects.toEqual(
-      new Error("Userfront.sendSecurityCode missing parameters.")
-    );
+    ).rejects.toEqual(missingParamsError);
 
     // Missing channel
     expect(
@@ -99,9 +101,7 @@ describe("sendSecurityCode", () => {
         strategy: "securityCode",
         to: phoneNumber,
       })
-    ).rejects.toEqual(
-      new Error("Userfront.sendSecurityCode missing parameters.")
-    );
+    ).rejects.toEqual(missingParamsError);
 
     // Missing to
     expect(
@@ -110,9 +110,7 @@ describe("sendSecurityCode", () => {
         strategy: "securityCode",
         channel: "sms",
       })
-    ).rejects.toEqual(
-      new Error("Userfront.sendSecurityCode missing parameters.")
-    );
+    ).rejects.toEqual(missingParamsError);
 
     expect(axios.post).not.toHaveBeenCalled();
   });
@@ -144,6 +142,66 @@ describe("sendSecurityCode", () => {
   });
 });
 
+describe("sendSecurityCodeSms", () => {
+  beforeAll(() => {
+    axios.post.mockClear();
+  });
+
+  beforeEach(() => {
+    Userfront.init(tenantId);
+  });
+
+  it(`should throw if missing parameters`, async () => {
+    const missingParamsError = new Error(
+      "Userfront.sendSecurityCodeSms missing parameters."
+    );
+
+    expect(sendSecurityCodeSms()).rejects.toEqual(missingParamsError);
+
+    // Missing firstFactorCode
+    expect(
+      sendSecurityCodeSms({
+        to: phoneNumber,
+      })
+    ).rejects.toEqual(missingParamsError);
+
+    // Missing to
+    expect(
+      sendSecurityCodeSms({
+        firstFactorCode,
+      })
+    ).rejects.toEqual(missingParamsError);
+
+    expect(axios.post).not.toHaveBeenCalled();
+  });
+
+  it(`should return message status upon successful submission`, async () => {
+    expect(Userfront.tokens.accessToken).toBeUndefined;
+
+    axios.post.mockImplementationOnce(() => mockRequestCodeResponse);
+    const payload = {
+      firstFactorCode,
+      to: phoneNumber,
+    };
+    const res = await sendSecurityCodeSms(payload);
+
+    // Should have sent the proper API request
+    expect(axios.post).toHaveBeenCalledWith(
+      `https://api.userfront.com/v0/auth/mfa`,
+      {
+        tenantId,
+        strategy: "securityCode",
+        channel: "sms",
+        ...payload,
+      }
+    );
+
+    // Should have returned the proper value
+    expect(res).toEqual(mockRequestCodeResponse.data);
+    expect(res.result.to).toEqual(payload.to);
+  });
+});
+
 describe("loginWithSecurityCode", () => {
   beforeEach(() => {
     Userfront.init(tenantId);
@@ -154,27 +212,25 @@ describe("loginWithSecurityCode", () => {
   });
 
   it(`should throw if missing parameters`, async () => {
-    expect(loginWithSecurityCode()).rejects.toEqual(
-      new Error("Userfront.loginWithSecurityCode missing parameters.")
+    const missingParamsError = new Error(
+      "Userfront.loginWithSecurityCode missing parameters."
     );
+
+    expect(loginWithSecurityCode()).rejects.toEqual(missingParamsError);
 
     // Missing to
     expect(
       loginWithSecurityCode({
         securityCode,
       })
-    ).rejects.toEqual(
-      new Error("Userfront.loginWithSecurityCode missing parameters.")
-    );
+    ).rejects.toEqual(missingParamsError);
 
     // Missing securityCode
     expect(
       loginWithSecurityCode({
         to: phoneNumber,
       })
-    ).rejects.toEqual(
-      new Error("Userfront.loginWithSecurityCode missing parameters.")
-    );
+    ).rejects.toEqual(missingParamsError);
 
     expect(axios.put).not.toHaveBeenCalled();
   });

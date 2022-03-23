@@ -6,7 +6,26 @@ import { exchange } from "./refresh.js";
 import { throwFormattedError } from "./utils.js";
 
 /**
- * Request a security code for MFA
+ * Send a security code to a phone number
+ * @param {String} firstFactorCode
+ * @param {String} to
+ * @returns {Object}
+ */
+export async function sendSecurityCodeSms({ firstFactorCode, to } = {}) {
+  if (!firstFactorCode || !to) {
+    throw new Error("Userfront.sendSecurityCodeSms missing parameters.");
+  }
+
+  return sendSecurityCode({
+    firstFactorCode,
+    to,
+    strategy: "securityCode",
+    channel: "sms",
+  });
+}
+
+/**
+ * Send an MFA security code
  * @param {String} firstFactorCode
  * @param {String} strategy
  * @param {String} channel

@@ -529,7 +529,7 @@ describe("login", () => {
       expect(window.location.assign).not.toHaveBeenCalled();
     });
 
-    it("should return MFA options if tenant requires", async () => {
+    it("should return MFA options if tenant requires MFA", async () => {
       exchange.mockClear();
 
       const mockMfaOptionsResponse = {
@@ -735,6 +735,74 @@ describe("login", () => {
         login({
           method: "passwordless",
           email: "valid@example.com",
+        })
+      ).rejects.toEqual(new Error(mockResponseErr.response.data.message));
+    });
+  });
+
+  describe("with MFA security code", () => {
+    it("should respond with tokens", async () => {
+      // Mock the API response
+      axios.put.mockImplementationOnce(() => mockResponse);
+
+      const phoneNumber = "+15558675309";
+      const securityCode = "123456";
+      const payload = {
+        to: phoneNumber,
+        securityCode,
+      };
+      const res = await login({
+        method: "securityCode",
+        redirect: false,
+        ...payload,
+      });
+
+      // Should have sent the proper API request
+      expect(axios.put).toHaveBeenCalledWith(
+        `https://api.userfront.com/v0/auth/mfa`,
+        {
+          tenantId,
+          ...payload,
+        }
+      );
+
+      // Should have returned expected response
+      expect(res).toEqual(mockResponse.data);
+    });
+
+    it("should redirect to correct path", async () => {
+      // Mock the API response
+      axios.put.mockImplementationOnce(() => mockResponse);
+
+      await login({
+        method: "securityCode",
+        to: "+15558675309",
+        securityCode: "123456",
+        redirect: "/custom",
+      });
+
+      // Client should be redirected
+      expect(window.location.assign).toHaveBeenCalledTimes(1);
+      expect(window.location.assign).toHaveBeenCalledWith("/custom");
+    });
+
+    it("should respond with whatever error the server sends", async () => {
+      // Mock the API response
+      const mockResponseErr = {
+        response: {
+          data: {
+            error: "Bad Request",
+            message: `That's an invalid phone number.`,
+            statusCode: 400,
+          },
+        },
+      };
+      axios.put.mockImplementationOnce(() => Promise.reject(mockResponseErr));
+      expect(
+        login({
+          method: "securityCode",
+          to: "999999",
+          securityCode: "123456",
         })
       ).rejects.toEqual(new Error(mockResponseErr.response.data.message));
     });

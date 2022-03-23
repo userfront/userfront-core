@@ -7,10 +7,7 @@ import {
   createRefreshToken,
   idTokenUserDefaults,
 } from "./config/utils.js";
-import {
-  requestFirstFactorCode,
-  loginWithMfaSecurityCode,
-} from "../src/mfa.js";
+import { requestFirstFactorCode, loginWithSecurityCode } from "../src/mfa.js";
 import { exchange } from "../src/refresh.js";
 
 jest.mock("../src/refresh.js", () => {
@@ -147,7 +144,7 @@ describe("requestFirstFactorCode", () => {
   });
 });
 
-describe("loginWithMfaSecurityCode", () => {
+describe("loginWithSecurityCode", () => {
   beforeEach(() => {
     Userfront.init(tenantId);
   });
@@ -157,52 +154,26 @@ describe("loginWithMfaSecurityCode", () => {
   });
 
   it(`should throw if missing parameters`, async () => {
-    expect(loginWithMfaSecurityCode()).rejects.toEqual(
-      new Error("Userfront.loginWithMfaSecurityCode missing parameters.")
-    );
-
-    // Missing firstFactorCode
-    expect(
-      loginWithMfaSecurityCode({
-        strategy: "securityCode",
-        to: phoneNumber,
-        securityCode,
-      })
-    ).rejects.toEqual(
-      new Error("Userfront.loginWithMfaSecurityCode missing parameters.")
-    );
-
-    // Missing strategy
-    expect(
-      loginWithMfaSecurityCode({
-        firstFactorCode,
-        to: phoneNumber,
-        securityCode,
-      })
-    ).rejects.toEqual(
-      new Error("Userfront.loginWithMfaSecurityCode missing parameters.")
+    expect(loginWithSecurityCode()).rejects.toEqual(
+      new Error("Userfront.loginWithSecurityCode missing parameters.")
     );
 
     // Missing to
     expect(
-      loginWithMfaSecurityCode({
-        firstFactorCode,
-        strategy: "securityCode",
+      loginWithSecurityCode({
         securityCode,
       })
     ).rejects.toEqual(
-      new Error("Userfront.loginWithMfaSecurityCode missing parameters.")
+      new Error("Userfront.loginWithSecurityCode missing parameters.")
     );
 
     // Missing securityCode
     expect(
-      loginWithMfaSecurityCode({
-        firstFactorCode,
-        strategy: "securityCode",
+      loginWithSecurityCode({
         to: phoneNumber,
       })
     ).rejects.toEqual(
-      new Error("Userfront.loginWithMfaSecurityCode missing parameters.")
+      new Error("Userfront.loginWithSecurityCode missing parameters.")
     );
 
     expect(axios.put).not.toHaveBeenCalled();
@@ -214,12 +185,10 @@ describe("loginWithMfaSecurityCode", () => {
 
     axios.put.mockImplementationOnce(() => mockSubmitCodeResponse);
     const payload = {
-      firstFactorCode,
-      strategy: "securityCode",
       to: phoneNumber,
       securityCode,
     };
-    const res = await loginWithMfaSecurityCode(payload);
+    const res = await loginWithSecurityCode(payload);
 
     // Should have sent the proper API request
     expect(axios.put).toHaveBeenCalledWith(
@@ -254,12 +223,10 @@ describe("loginWithMfaSecurityCode", () => {
 
     axios.put.mockImplementationOnce(() => mockSubmitCodeResponse);
     const payload = {
-      firstFactorCode,
-      strategy: "securityCode",
       to: phoneNumber,
       securityCode,
     };
-    const res = await loginWithMfaSecurityCode({
+    const res = await loginWithSecurityCode({
       ...payload,
       redirect,
     });
@@ -286,12 +253,10 @@ describe("loginWithMfaSecurityCode", () => {
 
     axios.put.mockImplementationOnce(() => mockSubmitCodeResponse);
     const payload = {
-      firstFactorCode,
-      strategy: "securityCode",
       to: phoneNumber,
       securityCode,
     };
-    const res = await loginWithMfaSecurityCode({
+    const res = await loginWithSecurityCode({
       ...payload,
       redirect: false,
     });

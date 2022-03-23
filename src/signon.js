@@ -4,6 +4,7 @@ import { store } from "./store.js";
 import { getQueryAttr, redirectToPath } from "./url.js";
 import { exchange } from "./refresh.js";
 import { throwFormattedError } from "./utils.js";
+import { loginWithSecurityCode } from "./mfa.js";
 
 /**
  * This file has methods for signing up and logging in
@@ -131,6 +132,8 @@ export async function login({
   password,
   token,
   uuid,
+  to,
+  securityCode,
   redirect,
 } = {}) {
   if (!method) {
@@ -155,6 +158,8 @@ export async function login({
       return sendPasswordlessLink({ email });
     case "link":
       return loginWithLink({ token, uuid, redirect });
+    case "securityCode":
+      return loginWithSecurityCode({ to, securityCode, redirect });
     case "saml":
       return completeSamlLogin();
     default:

@@ -8,6 +8,7 @@ import {
   setTokenNames,
 } from "./tokens";
 import { redirectIfLoggedIn } from "./url.js";
+import { requestFirstFactorCode, loginWithSecurityCode } from "./mfa.js";
 import {
   login,
   resetPassword,
@@ -150,6 +151,10 @@ export default {
 
   // user
   user,
+
+  // mfa
+  requestFirstFactorCode,
+  loginWithSecurityCode,
 
   // utils
 };

@@ -39,30 +39,24 @@ export async function requestFirstFactorCode({
 }
 
 /**
- * Submit a security code and first factor code for MFA
- * @param {String} firstFactorCode
- * @param {String} strategy
+ * Submit a phone number and MFA security code
  * @param {String} to
  * @param {String} securityCode
  * @param {String|Boolean} redirect Redirect to given path unless specified as `false`
  * @returns {Object}
  */
-export async function loginWithMfaSecurityCode({
-  firstFactorCode,
-  strategy,
+export async function loginWithSecurityCode({
   to,
   securityCode,
   redirect,
 } = {}) {
-  if (!firstFactorCode || !strategy || !to || !securityCode) {
-    throw new Error("Userfront.loginWithMfaSecurityCode missing parameters.");
+  if (!to || !securityCode) {
+    throw new Error("Userfront.loginWithSecurityCode missing parameters.");
   }
 
   try {
     const { data } = await axios.put(`${store.baseUrl}auth/mfa`, {
       tenantId: store.tenantId,
-      firstFactorCode,
-      strategy,
       to,
       securityCode,
     });

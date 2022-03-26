@@ -9,7 +9,7 @@ import {
 } from "./config/utils.js";
 import {
   sendSecurityCode,
-  sendSecurityCodeSms,
+  sendSms,
   loginWithSecurityCode,
 } from "../src/mfa.js";
 import { exchange } from "../src/refresh.js";
@@ -38,7 +38,7 @@ window.location = {
   href: "https://example.com/login",
 };
 
-const mockRequestCodeResponse = {
+const mockSendSmsResponse = {
   data: {
     message: "OK",
     result: {
@@ -50,7 +50,7 @@ const mockRequestCodeResponse = {
   },
 };
 
-const mockSubmitCodeResponse = {
+const mockLoginResponse = {
   data: {
     mode: "live",
     redirectTo: "/dashboard",
@@ -118,7 +118,7 @@ describe("sendSecurityCode", () => {
   it(`should return message status upon successful submission`, async () => {
     expect(Userfront.tokens.accessToken).toBeUndefined;
 
-    axios.post.mockImplementationOnce(() => mockRequestCodeResponse);
+    axios.post.mockImplementationOnce(() => mockSendSmsResponse);
     const payload = {
       firstFactorCode,
       strategy: "securityCode",
@@ -137,12 +137,12 @@ describe("sendSecurityCode", () => {
     );
 
     // Should have returned the proper value
-    expect(res).toEqual(mockRequestCodeResponse.data);
+    expect(res).toEqual(mockSendSmsResponse.data);
     expect(res.result.to).toEqual(payload.to);
   });
 });
 
-describe("sendSecurityCodeSms", () => {
+describe("sendSms", () => {
   beforeAll(() => {
     axios.post.mockClear();
   });
@@ -152,53 +152,64 @@ describe("sendSecurityCodeSms", () => {
   });
 
   it(`should throw if missing parameters`, async () => {
-    const missingParamsError = new Error(
-      "Userfront.sendSecurityCodeSms missing parameters."
+    expect(sendSms()).rejects.toEqual(
+      new Error('Userfront.sendSms called without "type" property.')
     );
-
-    expect(sendSecurityCodeSms()).rejects.toEqual(missingParamsError);
-
-    // Missing firstFactorCode
-    expect(
-      sendSecurityCodeSms({
-        to: phoneNumber,
-      })
-    ).rejects.toEqual(missingParamsError);
-
-    // Missing to
-    expect(
-      sendSecurityCodeSms({
-        firstFactorCode,
-      })
-    ).rejects.toEqual(missingParamsError);
-
-    expect(axios.post).not.toHaveBeenCalled();
   });
 
-  it(`should return message status upon successful submission`, async () => {
-    expect(Userfront.tokens.accessToken).toBeUndefined;
+  describe("type: securityCode", () => {
+    it(`should throw if missing parameters`, async () => {
+      const missingParamsError = new Error(
+        'Userfront.sendSms type "securityCode" requires "to" and "firstFactorCode".'
+      );
 
-    axios.post.mockImplementationOnce(() => mockRequestCodeResponse);
-    const payload = {
-      firstFactorCode,
-      to: phoneNumber,
-    };
-    const res = await sendSecurityCodeSms(payload);
+      // Missing firstFactorCode
+      expect(
+        sendSms({
+          type: "securityCode",
+          to: phoneNumber,
+        })
+      ).rejects.toEqual(missingParamsError);
 
-    // Should have sent the proper API request
-    expect(axios.post).toHaveBeenCalledWith(
-      `https://api.userfront.com/v0/auth/mfa`,
-      {
-        tenantId,
-        strategy: "securityCode",
-        channel: "sms",
+      // Missing to
+      expect(
+        sendSms({
+          type: "securityCode",
+          firstFactorCode,
+        })
+      ).rejects.toEqual(missingParamsError);
+
+      expect(axios.post).not.toHaveBeenCalled();
+    });
+
+    it(`should return message status upon successful submission`, async () => {
+      expect(Userfront.tokens.accessToken).toBeUndefined;
+
+      axios.post.mockImplementationOnce(() => mockSendSmsResponse);
+      const payload = {
+        to: phoneNumber,
+        firstFactorCode,
+      };
+      const res = await sendSms({
+        type: "securityCode",
         ...payload,
-      }
-    );
+      });
 
-    // Should have returned the proper value
-    expect(res).toEqual(mockRequestCodeResponse.data);
-    expect(res.result.to).toEqual(payload.to);
+      // Should have sent the proper API request
+      expect(axios.post).toHaveBeenCalledWith(
+        `https://api.userfront.com/v0/auth/mfa`,
+        {
+          tenantId,
+          strategy: "securityCode",
+          channel: "sms",
+          ...payload,
+        }
+      );
+
+      // Should have returned the proper value
+      expect(res).toEqual(mockSendSmsResponse.data);
+      expect(res.result.to).toEqual(payload.to);
+    });
   });
 });
 
@@ -218,7 +229,7 @@ describe("loginWithSecurityCode", () => {
 
     expect(loginWithSecurityCode()).rejects.toEqual(missingParamsError);
 
-    // Missing to
+    // Missing firstFactorCode
     expect(
       loginWithSecurityCode({
         securityCode,
@@ -228,7 +239,7 @@ describe("loginWithSecurityCode", () => {
     // Missing securityCode
     expect(
       loginWithSecurityCode({
-        to: phoneNumber,
+        firstFactorCode,
       })
     ).rejects.toEqual(missingParamsError);
 
@@ -239,9 +250,9 @@ describe("loginWithSecurityCode", () => {
     expect(Userfront.tokens.accessToken).toBeUndefined;
     expect(Userfront.user).toBeUndefined;
 
-    axios.put.mockImplementationOnce(() => mockSubmitCodeResponse);
+    axios.put.mockImplementationOnce(() => mockLoginResponse);
     const payload = {
-      to: phoneNumber,
+      firstFactorCode,
       securityCode,
     };
     const res = await loginWithSecurityCode(payload);
@@ -256,10 +267,10 @@ describe("loginWithSecurityCode", () => {
     );
 
     // Should have returned the proper value
-    expect(res).toEqual(mockSubmitCodeResponse.data);
+    expect(res).toEqual(mockLoginResponse.data);
 
     // Should have called exchange() with the API's response
-    expect(exchange).toHaveBeenCalledWith(mockSubmitCodeResponse.data);
+    expect(exchange).toHaveBeenCalledWith(mockLoginResponse.data);
 
     // Should have set the user object
     expect(Userfront.user.email).toEqual(idTokenUserDefaults.email);
@@ -267,7 +278,7 @@ describe("loginWithSecurityCode", () => {
 
     // Should have redirected correctly
     expect(window.location.assign).toHaveBeenCalledWith(
-      mockSubmitCodeResponse.data.redirectTo
+      mockLoginResponse.data.redirectTo
     );
   });
 
@@ -277,9 +288,9 @@ describe("loginWithSecurityCode", () => {
 
     const redirect = "/post-login";
 
-    axios.put.mockImplementationOnce(() => mockSubmitCodeResponse);
+    axios.put.mockImplementationOnce(() => mockLoginResponse);
     const payload = {
-      to: phoneNumber,
+      firstFactorCode,
       securityCode,
     };
     const res = await loginWithSecurityCode({
@@ -297,7 +308,7 @@ describe("loginWithSecurityCode", () => {
     );
 
     // Should have returned the proper value
-    expect(res).toEqual(mockSubmitCodeResponse.data);
+    expect(res).toEqual(mockLoginResponse.data);
 
     // Should have redirected to path
     expect(window.location.assign).toHaveBeenCalledWith(redirect);
@@ -307,9 +318,9 @@ describe("loginWithSecurityCode", () => {
     expect(Userfront.tokens.accessToken).toBeUndefined;
     expect(Userfront.user).toBeUndefined;
 
-    axios.put.mockImplementationOnce(() => mockSubmitCodeResponse);
+    axios.put.mockImplementationOnce(() => mockLoginResponse);
     const payload = {
-      to: phoneNumber,
+      firstFactorCode,
       securityCode,
     };
     const res = await loginWithSecurityCode({
@@ -327,11 +338,11 @@ describe("loginWithSecurityCode", () => {
     );
 
     // Should have returned the proper value
-    expect(res).toEqual(mockSubmitCodeResponse.data);
+    expect(res).toEqual(mockLoginResponse.data);
 
     // Should not have redirected
     expect(window.location.assign).not.toHaveBeenCalledWith(
-      mockSubmitCodeResponse.data.redirectTo
+      mockLoginResponse.data.redirectTo
     );
   });
 });

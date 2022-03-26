@@ -132,7 +132,7 @@ export async function login({
   password,
   token,
   uuid,
-  to,
+  firstFactorCode,
   securityCode,
   redirect,
 } = {}) {
@@ -158,8 +158,8 @@ export async function login({
       return sendPasswordlessLink({ email });
     case "link":
       return loginWithLink({ token, uuid, redirect });
-    case "securityCode":
-      return loginWithSecurityCode({ to, securityCode, redirect });
+    case "mfa":
+      return loginWithSecurityCode({ firstFactorCode, securityCode, redirect });
     case "saml":
       return completeSamlLogin();
     default:

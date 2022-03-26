@@ -26,6 +26,8 @@ jest.mock("axios");
 
 const tenantId = "abcd9876";
 const customBaseUrl = "https://custom.example.com/api/v1/";
+const firstFactorCode = "204a8def-651c-4ab2-9ca0-1e3fca9e280a";
+const securityCode = "123456";
 
 // Using `window.location.assign` rather than `window.location.href =` because
 // JSDOM throws an error "Error: Not implemented: navigation (except hash changes)"
@@ -745,14 +747,13 @@ describe("login", () => {
       // Mock the API response
       axios.put.mockImplementationOnce(() => mockResponse);
 
-      const phoneNumber = "+15558675309";
-      const securityCode = "123456";
       const payload = {
-        to: phoneNumber,
+        firstFactorCode,
         securityCode,
       };
+
       const res = await login({
-        method: "securityCode",
+        method: "mfa",
         redirect: false,
         ...payload,
       });
@@ -775,9 +776,9 @@ describe("login", () => {
       axios.put.mockImplementationOnce(() => mockResponse);
 
       await login({
-        method: "securityCode",
-        to: "+15558675309",
-        securityCode: "123456",
+        method: "mfa",
+        firstFactorCode,
+        securityCode,
         redirect: "/custom",
       });
 
@@ -792,17 +793,19 @@ describe("login", () => {
         response: {
           data: {
             error: "Bad Request",
-            message: `That's an invalid phone number.`,
+            message: "Phone number must be in E.164 format.",
             statusCode: 400,
           },
         },
       };
+
       axios.put.mockImplementationOnce(() => Promise.reject(mockResponseErr));
+
       expect(
         login({
-          method: "securityCode",
-          to: "999999",
-          securityCode: "123456",
+          method: "mfa",
+          firstFactorCode,
+          securityCode,
         })
       ).rejects.toEqual(new Error(mockResponseErr.response.data.message));
     });

@@ -6,30 +6,42 @@ import { exchange } from "./refresh.js";
 import { throwFormattedError } from "./utils.js";
 
 /**
- * Send a security code to a phone number
- * @param {String} firstFactorCode
- * @param {String} to
+ * Send an SMS to a phone number
+ * @param {String} type Type of SMS to send
+ * @param {String} to Phone number in E.164 format
+ * @param {String} firstFactorCode Identifier obtained from login() response
  * @returns {Object}
  */
-export async function sendSecurityCodeSms({ firstFactorCode, to } = {}) {
-  if (!firstFactorCode || !to) {
-    throw new Error("Userfront.sendSecurityCodeSms missing parameters.");
+export async function sendSms({ type, to, firstFactorCode } = {}) {
+  if (!type) {
+    throw new Error('Userfront.sendSms called without "type" property.');
   }
 
-  return sendSecurityCode({
-    firstFactorCode,
-    to,
-    strategy: "securityCode",
-    channel: "sms",
-  });
+  switch (type) {
+    case "securityCode":
+      if (!to || !firstFactorCode) {
+        throw new Error(
+          'Userfront.sendSms type "securityCode" requires "to" and "firstFactorCode".'
+        );
+      }
+
+      return sendSecurityCode({
+        firstFactorCode,
+        to,
+        strategy: "securityCode",
+        channel: "sms",
+      });
+    default:
+      throw new Error('Userfront.sendSms called with invalid "type" property.');
+  }
 }
 
 /**
  * Send an MFA security code
- * @param {String} firstFactorCode
- * @param {String} strategy
- * @param {String} channel
- * @param {String} to
+ * @param {String} firstFactorCode Identifier obtained from login() response
+ * @param {String} strategy Type of MFA strategy
+ * @param {String} channel Method of sending the security code
+ * @param {String} to Phone number in E.164 format
  * @returns {Object}
  */
 export async function sendSecurityCode({
@@ -58,25 +70,25 @@ export async function sendSecurityCode({
 }
 
 /**
- * Submit a phone number and MFA security code
- * @param {String} to
- * @param {String} securityCode
+ * Log in using firstFactorCode and MFA security code
+ * @param {String} firstFactorCode Identifier obtained from login() response
+ * @param {String} securityCode Code provided by the user
  * @param {String|Boolean} redirect Redirect to given path unless specified as `false`
  * @returns {Object}
  */
 export async function loginWithSecurityCode({
-  to,
+  firstFactorCode,
   securityCode,
   redirect,
 } = {}) {
-  if (!to || !securityCode) {
+  if (!firstFactorCode || !securityCode) {
     throw new Error("Userfront.loginWithSecurityCode missing parameters.");
   }
 
   try {
     const { data } = await axios.put(`${store.baseUrl}auth/mfa`, {
       tenantId: store.tenantId,
-      to,
+      firstFactorCode,
       securityCode,
     });
 

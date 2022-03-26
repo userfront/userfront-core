@@ -25,11 +25,37 @@ export function setCookie(value, options, type) {
  * @param {String} name
  */
 function removeCookie(name) {
-  Cookies.remove(name);
-  Cookies.remove(name, { secure: true, sameSite: "Lax" });
-  Cookies.remove(name, { secure: true, sameSite: "None" });
-  Cookies.remove(name, { secure: false, sameSite: "Lax" });
-  Cookies.remove(name, { secure: false, sameSite: "None" });
+  // Define all possible path and domain combinations
+  let paths, domains;
+  try {
+    const path = window.location.pathname;
+    const hostname = window.location.hostname;
+    const hostnameParts = hostname.split(".");
+    const primaryDomain = hostnameParts
+      .slice(Math.max(hostnameParts.length - 2, 0))
+      .join(".");
+    paths = [undefined, path, "/"];
+    domains = [
+      undefined,
+      hostname,
+      `.${hostname}`,
+      primaryDomain,
+      `.${primaryDomain}`,
+    ];
+  } catch (err) {
+    paths = [undefined, "/"];
+    domains = [undefined];
+  }
+
+  // Iterate over paths and domains, and remove cookies if present
+  paths.map((path) => {
+    domains.map((domain) => {
+      const options = {};
+      if (domain) options.domain = domain;
+      if (path) options.path = path;
+      Cookies.remove(name, options);
+    });
+  });
 }
 
 /**

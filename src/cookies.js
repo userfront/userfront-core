@@ -31,9 +31,7 @@ function removeCookie(name) {
     const path = window.location.pathname;
     const hostname = window.location.hostname;
     const hostnameParts = hostname.split(".");
-    const primaryDomain = hostnameParts
-      .slice(Math.max(hostnameParts.length - 2, 0))
-      .join(".");
+    const primaryDomain = hostnameParts.slice(-2).join(".");
     paths = [undefined, path, "/"];
     domains = [
       undefined,

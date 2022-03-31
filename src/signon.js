@@ -4,6 +4,7 @@ import { store } from "./store.js";
 import { getQueryAttr, redirectToPath } from "./url.js";
 import { exchange } from "./refresh.js";
 import { throwFormattedError } from "./utils.js";
+import { loginWithSecurityCode } from "./mfa.js";
 
 /**
  * This file has methods for signing up and logging in
@@ -131,6 +132,8 @@ export async function login({
   password,
   token,
   uuid,
+  firstFactorCode,
+  securityCode,
   redirect,
 } = {}) {
   if (!method) {
@@ -155,6 +158,8 @@ export async function login({
       return sendPasswordlessLink({ email });
     case "link":
       return loginWithLink({ token, uuid, redirect });
+    case "mfa":
+      return loginWithSecurityCode({ firstFactorCode, securityCode, redirect });
     case "saml":
       return completeSamlLogin();
     default:
@@ -209,7 +214,8 @@ async function loginWithPassword({
       emailOrUsername: email || username || emailOrUsername,
       password,
     });
-    if (data.tokens) {
+
+    if (data.hasOwnProperty("tokens")) {
       setCookiesAndTokens(data.tokens);
       await exchange(data);
       if (redirect === false) return data;
@@ -217,9 +223,13 @@ async function loginWithPassword({
         redirect || getQueryAttr("redirect") || data.redirectTo || "/"
       );
       return data;
-    } else {
-      throw new Error("Please try again.");
     }
+
+    if (data.hasOwnProperty("firstFactorCode")) {
+      return data;
+    }
+
+    throw new Error("Please try again.");
   } catch (error) {
     throwFormattedError(error);
   }
@@ -264,7 +274,7 @@ export async function loginWithLink({ token, uuid, redirect } = {}) {
       tenantId: store.tenantId,
     });
 
-    if (data.tokens) {
+    if (data.hasOwnProperty("tokens")) {
       setCookiesAndTokens(data.tokens);
       await exchange(data);
       if (redirect === false) return data;
@@ -272,9 +282,13 @@ export async function loginWithLink({ token, uuid, redirect } = {}) {
         redirect || getQueryAttr("redirect") || data.redirectTo || "/"
       );
       return data;
-    } else {
-      throw new Error("Problem logging in.");
     }
+
+    if (data.hasOwnProperty("firstFactorCode")) {
+      return data;
+    }
+
+    throw new Error("Problem logging in.");
   } catch (error) {
     throwFormattedError(error);
   }

@@ -26,6 +26,8 @@ jest.mock("axios");
 
 const tenantId = "abcd9876";
 const customBaseUrl = "https://custom.example.com/api/v1/";
+const firstFactorCode = "204a8def-651c-4ab2-9ca0-1e3fca9e280a";
+const securityCode = "123456";
 
 // Using `window.location.assign` rather than `window.location.href =` because
 // JSDOM throws an error "Error: Not implemented: navigation (except hash changes)"
@@ -529,6 +531,47 @@ describe("login", () => {
       expect(window.location.assign).not.toHaveBeenCalled();
     });
 
+    it("should return MFA options if tenant requires MFA", async () => {
+      exchange.mockClear();
+
+      const mockMfaOptionsResponse = {
+        data: {
+          mode: "live",
+          allowedStrategies: ["securityCode"],
+          allowedChannels: ["sms"],
+          firstFactorCode: "204a8def-651c-4ab2-9ca0-1e3fca9e280a",
+        },
+      };
+
+      axios.post.mockImplementationOnce(() => mockMfaOptionsResponse);
+
+      const payload = {
+        emailOrUsername: idTokenUserDefaults.email,
+        password: "something",
+      };
+      const res = await login({
+        method: "password",
+        ...payload,
+      });
+
+      // Should have sent the proper API request
+      expect(axios.post).toHaveBeenCalledWith(
+        `https://api.userfront.com/v0/auth/basic`,
+        {
+          tenantId,
+          ...payload,
+        }
+      );
+
+      // Should not have set the user object, called exchange, or redirected
+      expect(Userfront.user).toBeUndefined;
+      expect(exchange).not.toHaveBeenCalled();
+      expect(window.location.assign).not.toHaveBeenCalled();
+
+      // Should have returned MFA options & firstFactorCode
+      expect(res).toEqual(mockMfaOptionsResponse.data);
+    });
+
     it("password method error should respond with whatever error the server sends", async () => {
       // Mock the API response
       const mockResponse = {
@@ -694,6 +737,75 @@ describe("login", () => {
         login({
           method: "passwordless",
           email: "valid@example.com",
+        })
+      ).rejects.toEqual(new Error(mockResponseErr.response.data.message));
+    });
+  });
+
+  describe("with MFA security code", () => {
+    it("should respond with tokens", async () => {
+      // Mock the API response
+      axios.put.mockImplementationOnce(() => mockResponse);
+
+      const payload = {
+        firstFactorCode,
+        securityCode,
+      };
+
+      const res = await login({
+        method: "mfa",
+        redirect: false,
+        ...payload,
+      });
+
+      // Should have sent the proper API request
+      expect(axios.put).toHaveBeenCalledWith(
+        `https://api.userfront.com/v0/auth/mfa`,
+        {
+          tenantId,
+          ...payload,
+        }
+      );
+
+      // Should have returned expected response
+      expect(res).toEqual(mockResponse.data);
+    });
+
+    it("should redirect to correct path", async () => {
+      // Mock the API response
+      axios.put.mockImplementationOnce(() => mockResponse);
+
+      await login({
+        method: "mfa",
+        firstFactorCode,
+        securityCode,
+        redirect: "/custom",
+      });
+
+      // Client should be redirected
+      expect(window.location.assign).toHaveBeenCalledTimes(1);
+      expect(window.location.assign).toHaveBeenCalledWith("/custom");
+    });
+
+    it("should respond with whatever error the server sends", async () => {
+      // Mock the API response
+      const mockResponseErr = {
+        response: {
+          data: {
+            error: "Bad Request",
+            message: "Phone number must be in E.164 format.",
+            statusCode: 400,
+          },
+        },
+      };
+
+      axios.put.mockImplementationOnce(() => Promise.reject(mockResponseErr));
+
+      expect(
+        login({
+          method: "mfa",
+          firstFactorCode,
+          securityCode,
         })
       ).rejects.toEqual(new Error(mockResponseErr.response.data.message));
     });
@@ -958,6 +1070,47 @@ describe("loginWithLink", () => {
 
     // Should not have redirected
     expect(window.location.assign).not.toHaveBeenCalled();
+  });
+
+  it("should return MFA options if tenant requires", async () => {
+    exchange.mockClear();
+
+    const mockMfaOptionsResponse = {
+      data: {
+        mode: "live",
+        allowedStrategies: ["securityCode"],
+        allowedChannels: ["sms"],
+        firstFactorCode: "204a8def-651c-4ab2-9ca0-1e3fca9e280a",
+      },
+    };
+
+    axios.put.mockImplementationOnce(() => mockMfaOptionsResponse);
+
+    const payload = {
+      token: "some-token",
+      uuid: "some-uuid",
+    };
+    const res = await login({
+      method: "link",
+      ...payload,
+    });
+
+    // Should have sent the proper API request
+    expect(axios.put).toHaveBeenCalledWith(
+      `https://api.userfront.com/v0/auth/link`,
+      {
+        tenantId,
+        ...payload,
+      }
+    );
+
+    // Should not have set the user object, called exchange, or redirected
+    expect(Userfront.user).toBeUndefined;
+    expect(exchange).not.toHaveBeenCalled();
+    expect(window.location.assign).not.toHaveBeenCalled();
+
+    // Should have returned MFA options & firstFactorCode
+    expect(res).toEqual(mockMfaOptionsResponse.data);
   });
 });
 

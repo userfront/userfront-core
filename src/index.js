@@ -47,6 +47,10 @@ function init(tenantId, opts = {}) {
     ] = `https://${store.domain}`;
   }
 
+  if (opts.originHeader) {
+    axios.defaults.headers.common.origin = opts.originHeader
+  }
+
   setTokenNames();
   // setIframe(); // TODO re-enable when iframe is needed
   setTokensFromCookies();

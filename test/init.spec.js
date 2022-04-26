@@ -45,7 +45,7 @@ describe("init() method with domain option", () => {
     jest.resetAllMocks();
   });
 
-  it("should include the x-application-id header for mode", async () => {
+  it("should include the x-application-id and x-origin header for mode", async () => {
     store.mode = "test";
     Userfront.init(tenantId, { domain });
 
@@ -57,11 +57,16 @@ describe("init() method with domain option", () => {
     });
     await setMode();
 
+    const url = `https://${domain}`
+
     expect(axios.defaults.headers.common["x-application-id"]).toEqual(
-      `https://${domain}`
+      url
+    );
+    expect(axios.defaults.headers.common["x-origin"]).toEqual(
+      url
     );
     expect(axios.get).toHaveBeenCalledWith(
-      `https://api.userfront.com/v0/tenants/${tenantId}/mode`
+      `https://api.userfront.com/v0/tenants/${tenantId}/mode`,
     );
     expect(store.mode).toEqual("live");
   });
@@ -74,8 +79,13 @@ describe("init() method with domain option", () => {
 
     await Userfront.signup({ method: "password", email, password });
 
+    const url = `https://${domain}`
+
     expect(axios.defaults.headers.common["x-application-id"]).toEqual(
-      `https://${domain}`
+      url
+    );
+    expect(axios.defaults.headers.common["x-origin"]).toEqual(
+      url
     );
     expect(axios.post).toHaveBeenCalledWith(
       "https://api.userfront.com/v0/auth/create",
@@ -86,7 +96,7 @@ describe("init() method with domain option", () => {
         name: undefined,
         data: undefined,
         tenantId,
-      }
+      },
     );
   });
 
@@ -98,8 +108,13 @@ describe("init() method with domain option", () => {
 
     await Userfront.login({ method: "password", email, password });
 
+    const url = `https://${domain}`
+
     expect(axios.defaults.headers.common["x-application-id"]).toEqual(
       `https://${domain}`
+    );
+    expect(axios.defaults.headers.common["x-origin"]).toEqual(
+      url
     );
     expect(axios.post).toHaveBeenCalledWith(
       "https://api.userfront.com/v0/auth/basic",
@@ -125,8 +140,13 @@ describe("init() method with domain option", () => {
 
     await Userfront.logout();
 
+    const url = `https://${domain}`
+
     expect(axios.defaults.headers.common["x-application-id"]).toEqual(
-      `https://${domain}`
+      url
+    );
+    expect(axios.defaults.headers.common["x-origin"]).toEqual(
+      url
     );
     expect(axios.get).toHaveBeenCalledWith(
       "https://api.userfront.com/v0/auth/logout",

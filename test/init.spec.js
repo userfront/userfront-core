@@ -45,7 +45,7 @@ describe("init() method with domain option", () => {
     jest.resetAllMocks();
   });
 
-  it("should include the x-application-id and x-origin header for mode", async () => {
+  it("should include the x-application-id and x-origin headers for mode", async () => {
     store.mode = "test";
     Userfront.init(tenantId, { domain });
 
@@ -71,7 +71,7 @@ describe("init() method with domain option", () => {
     expect(store.mode).toEqual("live");
   });
 
-  it("should include the x-application-id header for signup", async () => {
+  it("should include the x-application-id and x-origin headers for signup", async () => {
     Userfront.init(tenantId, { domain });
 
     const email = "user@example.com";
@@ -100,7 +100,7 @@ describe("init() method with domain option", () => {
     );
   });
 
-  it("should include the x-application-id header for login", async () => {
+  it("should include the x-application-id and x-origin headers for login", async () => {
     Userfront.init(tenantId, { domain });
 
     const email = "user@example.com";
@@ -116,6 +116,7 @@ describe("init() method with domain option", () => {
     expect(axios.defaults.headers.common["x-origin"]).toEqual(
       url
     );
+
     expect(axios.post).toHaveBeenCalledWith(
       "https://api.userfront.com/v0/auth/basic",
       {
@@ -126,7 +127,7 @@ describe("init() method with domain option", () => {
     );
   });
 
-  it("should include the x-application-id header for logout", async () => {
+  it("should include the x-application-id and x-origin headers for logout", async () => {
     Userfront.init(tenantId, { domain });
 
     axios.get.mockResolvedValue({

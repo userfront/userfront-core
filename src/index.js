@@ -42,13 +42,13 @@ function init(tenantId, opts = {}) {
 
   if (opts.domain) {
     store.domain = opts.domain;
+    const url = `https://${store.domain}`;
     axios.defaults.headers.common[
       "x-application-id"
-    ] = `https://${store.domain}`;
-  }
-
-  if (opts.originHeader) {
-    axios.defaults.headers.common.origin = opts.originHeader
+    ] = url
+    axios.defaults.headers.common[
+      "x-origin"
+    ] = url
   }
 
   setTokenNames();

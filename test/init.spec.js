@@ -66,7 +66,7 @@ describe("init() method with domain option", () => {
       url
     );
     expect(axios.get).toHaveBeenCalledWith(
-      `https://api.userfront.com/v0/tenants/${tenantId}/mode`,
+      `https://api.userfront.com/v0/tenants/${tenantId}/mode`
     );
     expect(store.mode).toEqual("live");
   });
@@ -111,7 +111,7 @@ describe("init() method with domain option", () => {
     const url = `https://${domain}`
 
     expect(axios.defaults.headers.common["x-application-id"]).toEqual(
-      `https://${domain}`
+      url
     );
     expect(axios.defaults.headers.common["x-origin"]).toEqual(
       url

@@ -619,7 +619,7 @@ describe("login", () => {
     const provider = "google";
     const loginUrl = `https://api.userfront.com/v0/auth/${provider}/login?tenant_id=${tenantId}&origin=${window.location.origin}`;
 
-    it("should throw if provider is missing", () => {
+    it("should throw if missing `method`", () => {
       expect(login()).rejects.toEqual(
         new Error(`Userfront.login called without "method" property.`)
       );

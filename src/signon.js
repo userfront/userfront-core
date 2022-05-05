@@ -34,6 +34,7 @@ export async function signup({
     throw new Error('Userfront.signup called without "method" property.');
   }
   switch (method) {
+    case "apple":
     case "azure":
     case "facebook":
     case "github":
@@ -140,6 +141,7 @@ export async function login({
     throw new Error('Userfront.login called without "method" property.');
   }
   switch (method) {
+    case "apple":
     case "azure":
     case "facebook":
     case "github":

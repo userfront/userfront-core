@@ -3,7 +3,14 @@ import Signon from "../src/signon.js";
 
 import { getQueryAttr } from "../src/url.js";
 
-const providers = ["azure", "facebook", "github", "google", "linkedin"];
+const providers = [
+  "apple",
+  "azure",
+  "facebook",
+  "github",
+  "google",
+  "linkedin",
+];
 
 // Using `window.location.assign` rather than `window.location.href =` because
 // JSDOM throws an error "Error: Not implemented: navigation (except hash changes)"
@@ -46,6 +53,13 @@ describe("SSO", () => {
     afterEach(() => {
       signupWithSSOSpy.mockClear();
       assignMock.mockClear();
+    });
+
+    it("should throw if provider is not supported", () => {
+      expect(Userfront.signup({ method: "foobar" })).rejects.toEqual(
+        new Error(`Userfront.signup called with invalid "method" property.`)
+      );
+      expect(assignMock).not.toHaveBeenCalled();
     });
 
     it.each(providers)("calls signupWithSSO with each provider", (provider) => {
@@ -136,6 +150,13 @@ describe("SSO", () => {
     afterEach(() => {
       loginWithSSOSpy.mockClear();
       assignMock.mockClear();
+    });
+
+    it("should throw if provider is not supported", () => {
+      expect(Userfront.login({ method: "foobar" })).rejects.toEqual(
+        new Error(`Userfront.login called with invalid "method" property.`)
+      );
+      expect(assignMock).not.toHaveBeenCalled();
     });
 
     it.each(providers)("calls loginWithSSO with each provider", (provider) => {

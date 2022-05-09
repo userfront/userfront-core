@@ -27,7 +27,7 @@ jest.mock("axios");
 const tenantId = "abcd9876";
 const customBaseUrl = "https://custom.example.com/api/v1/";
 const firstFactorCode = "204a8def-651c-4ab2-9ca0-1e3fca9e280a";
-const securityCode = "123456";
+const verificationCode = "123456";
 
 // Using `window.location.assign` rather than `window.location.href =` because
 // JSDOM throws an error "Error: Not implemented: navigation (except hash changes)"
@@ -537,7 +537,7 @@ describe("login", () => {
       const mockMfaOptionsResponse = {
         data: {
           mode: "live",
-          allowedStrategies: ["securityCode"],
+          allowedStrategies: ["verificationCode"],
           allowedChannels: ["sms"],
           firstFactorCode: "204a8def-651c-4ab2-9ca0-1e3fca9e280a",
         },
@@ -742,14 +742,14 @@ describe("login", () => {
     });
   });
 
-  describe("with MFA security code", () => {
+  describe("with MFA verification code", () => {
     it("should respond with tokens", async () => {
       // Mock the API response
       axios.put.mockImplementationOnce(() => mockResponse);
 
       const payload = {
         firstFactorCode,
-        securityCode,
+        verificationCode,
       };
 
       const res = await login({
@@ -778,7 +778,7 @@ describe("login", () => {
       await login({
         method: "mfa",
         firstFactorCode,
-        securityCode,
+        verificationCode,
         redirect: "/custom",
       });
 
@@ -805,7 +805,7 @@ describe("login", () => {
         login({
           method: "mfa",
           firstFactorCode,
-          securityCode,
+          verificationCode,
         })
       ).rejects.toEqual(new Error(mockResponseErr.response.data.message));
     });
@@ -1078,7 +1078,7 @@ describe("loginWithLink", () => {
     const mockMfaOptionsResponse = {
       data: {
         mode: "live",
-        allowedStrategies: ["securityCode"],
+        allowedStrategies: ["verificationCode"],
         allowedChannels: ["sms"],
         firstFactorCode: "204a8def-651c-4ab2-9ca0-1e3fca9e280a",
       },

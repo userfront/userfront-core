@@ -18,17 +18,17 @@ export async function sendSms({ type, to, firstFactorCode } = {}) {
   }
 
   switch (type) {
-    case "securityCode":
+    case "verificationCode":
       if (!to || !firstFactorCode) {
         throw new Error(
-          'Userfront.sendSms type "securityCode" requires "to" and "firstFactorCode".'
+          'Userfront.sendSms type "verificationCode" requires "to" and "firstFactorCode".'
         );
       }
 
-      return sendSecurityCode({
+      return sendVerificationCode({
         firstFactorCode,
         to,
-        strategy: "securityCode",
+        strategy: "verificationCode",
         channel: "sms",
       });
     default:
@@ -37,21 +37,21 @@ export async function sendSms({ type, to, firstFactorCode } = {}) {
 }
 
 /**
- * Send an MFA security code
+ * Send an MFA verification code
  * @param {String} firstFactorCode Identifier obtained from login() response
  * @param {String} strategy Type of MFA strategy
- * @param {String} channel Method of sending the security code
+ * @param {String} channel Method of sending the verification code
  * @param {String} to Phone number in E.164 format
  * @returns {Object}
  */
-export async function sendSecurityCode({
+export async function sendVerificationCode({
   firstFactorCode,
   strategy,
   channel,
   to,
 } = {}) {
   if (!firstFactorCode || !strategy || !channel || !to) {
-    throw new Error("Userfront.sendSecurityCode missing parameters.");
+    throw new Error("Userfront.sendVerificationCode missing parameters.");
   }
 
   try {
@@ -70,26 +70,26 @@ export async function sendSecurityCode({
 }
 
 /**
- * Log in using firstFactorCode and MFA security code
+ * Log in using firstFactorCode and MFA verification code
  * @param {String} firstFactorCode Identifier obtained from login() response
- * @param {String} securityCode Code provided by the user
+ * @param {String} verificationCode Code provided by the user
  * @param {String|Boolean} redirect Redirect to given path unless specified as `false`
  * @returns {Object}
  */
-export async function loginWithSecurityCode({
+export async function loginWithVerificationCode({
   firstFactorCode,
-  securityCode,
+  verificationCode,
   redirect,
 } = {}) {
-  if (!firstFactorCode || !securityCode) {
-    throw new Error("Userfront.loginWithSecurityCode missing parameters.");
+  if (!firstFactorCode || !verificationCode) {
+    throw new Error("Userfront.loginWithVerificationCode missing parameters.");
   }
 
   try {
     const { data } = await axios.put(`${store.baseUrl}auth/mfa`, {
       tenantId: store.tenantId,
       firstFactorCode,
-      securityCode,
+      verificationCode,
     });
 
     setCookiesAndTokens(data.tokens);

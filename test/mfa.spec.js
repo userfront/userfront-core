@@ -8,9 +8,9 @@ import {
   idTokenUserDefaults,
 } from "./config/utils.js";
 import {
-  sendSecurityCode,
+  sendVerificationCode,
   sendSms,
-  loginWithSecurityCode,
+  loginWithVerificationCode,
 } from "../src/mfa.js";
 import { exchange } from "../src/refresh.js";
 
@@ -25,7 +25,7 @@ jest.mock("axios");
 const tenantId = "abcd9876";
 const firstFactorCode = "204a8def-651c-4ab2-9ca0-1e3fca9e280a";
 const phoneNumber = "+15558675309";
-const securityCode = "123456";
+const verificationCode = "123456";
 
 // Using `window.location.assign` rather than `window.location.href =` because
 // JSDOM throws an error "Error: Not implemented: navigation (except hash changes)"
@@ -64,22 +64,22 @@ const mockLoginResponse = {
   },
 };
 
-describe("sendSecurityCode", () => {
+describe("sendVerificationCode", () => {
   beforeEach(() => {
     Userfront.init(tenantId);
   });
 
   it(`should throw if missing parameters`, async () => {
     const missingParamsError = new Error(
-      "Userfront.sendSecurityCode missing parameters."
+      "Userfront.sendVerificationCode missing parameters."
     );
 
-    expect(sendSecurityCode()).rejects.toEqual(missingParamsError);
+    expect(sendVerificationCode()).rejects.toEqual(missingParamsError);
 
     // Missing firstFactorCode
     expect(
-      sendSecurityCode({
-        strategy: "securityCode",
+      sendVerificationCode({
+        strategy: "verificationCode",
         channel: "sms",
         to: phoneNumber,
       })
@@ -87,7 +87,7 @@ describe("sendSecurityCode", () => {
 
     // Missing strategy
     expect(
-      sendSecurityCode({
+      sendVerificationCode({
         firstFactorCode,
         channel: "sms",
         to: phoneNumber,
@@ -96,18 +96,18 @@ describe("sendSecurityCode", () => {
 
     // Missing channel
     expect(
-      sendSecurityCode({
+      sendVerificationCode({
         firstFactorCode,
-        strategy: "securityCode",
+        strategy: "verificationCode",
         to: phoneNumber,
       })
     ).rejects.toEqual(missingParamsError);
 
     // Missing to
     expect(
-      sendSecurityCode({
+      sendVerificationCode({
         firstFactorCode,
-        strategy: "securityCode",
+        strategy: "verificationCode",
         channel: "sms",
       })
     ).rejects.toEqual(missingParamsError);
@@ -121,11 +121,11 @@ describe("sendSecurityCode", () => {
     axios.post.mockImplementationOnce(() => mockSendSmsResponse);
     const payload = {
       firstFactorCode,
-      strategy: "securityCode",
+      strategy: "verificationCode",
       channel: "sms",
       to: phoneNumber,
     };
-    const res = await sendSecurityCode(payload);
+    const res = await sendVerificationCode(payload);
 
     // Should have sent the proper API request
     expect(axios.post).toHaveBeenCalledWith(
@@ -157,16 +157,16 @@ describe("sendSms", () => {
     );
   });
 
-  describe("type: securityCode", () => {
+  describe("type: verificationCode", () => {
     it(`should throw if missing parameters`, async () => {
       const missingParamsError = new Error(
-        'Userfront.sendSms type "securityCode" requires "to" and "firstFactorCode".'
+        'Userfront.sendSms type "verificationCode" requires "to" and "firstFactorCode".'
       );
 
       // Missing firstFactorCode
       expect(
         sendSms({
-          type: "securityCode",
+          type: "verificationCode",
           to: phoneNumber,
         })
       ).rejects.toEqual(missingParamsError);
@@ -174,7 +174,7 @@ describe("sendSms", () => {
       // Missing to
       expect(
         sendSms({
-          type: "securityCode",
+          type: "verificationCode",
           firstFactorCode,
         })
       ).rejects.toEqual(missingParamsError);
@@ -191,7 +191,7 @@ describe("sendSms", () => {
         firstFactorCode,
       };
       const res = await sendSms({
-        type: "securityCode",
+        type: "verificationCode",
         ...payload,
       });
 
@@ -200,7 +200,7 @@ describe("sendSms", () => {
         `https://api.userfront.com/v0/auth/mfa`,
         {
           tenantId,
-          strategy: "securityCode",
+          strategy: "verificationCode",
           channel: "sms",
           ...payload,
         }
@@ -213,7 +213,7 @@ describe("sendSms", () => {
   });
 });
 
-describe("loginWithSecurityCode", () => {
+describe("loginWithVerificationCode", () => {
   beforeEach(() => {
     Userfront.init(tenantId);
   });
@@ -224,21 +224,21 @@ describe("loginWithSecurityCode", () => {
 
   it(`should throw if missing parameters`, async () => {
     const missingParamsError = new Error(
-      "Userfront.loginWithSecurityCode missing parameters."
+      "Userfront.loginWithVerificationCode missing parameters."
     );
 
-    expect(loginWithSecurityCode()).rejects.toEqual(missingParamsError);
+    expect(loginWithVerificationCode()).rejects.toEqual(missingParamsError);
 
     // Missing firstFactorCode
     expect(
-      loginWithSecurityCode({
-        securityCode,
+      loginWithVerificationCode({
+        verificationCode,
       })
     ).rejects.toEqual(missingParamsError);
 
-    // Missing securityCode
+    // Missing verificationCode
     expect(
-      loginWithSecurityCode({
+      loginWithVerificationCode({
         firstFactorCode,
       })
     ).rejects.toEqual(missingParamsError);
@@ -253,9 +253,9 @@ describe("loginWithSecurityCode", () => {
     axios.put.mockImplementationOnce(() => mockLoginResponse);
     const payload = {
       firstFactorCode,
-      securityCode,
+      verificationCode,
     };
-    const res = await loginWithSecurityCode(payload);
+    const res = await loginWithVerificationCode(payload);
 
     // Should have sent the proper API request
     expect(axios.put).toHaveBeenCalledWith(
@@ -291,9 +291,9 @@ describe("loginWithSecurityCode", () => {
     axios.put.mockImplementationOnce(() => mockLoginResponse);
     const payload = {
       firstFactorCode,
-      securityCode,
+      verificationCode,
     };
-    const res = await loginWithSecurityCode({
+    const res = await loginWithVerificationCode({
       ...payload,
       redirect,
     });
@@ -321,9 +321,9 @@ describe("loginWithSecurityCode", () => {
     axios.put.mockImplementationOnce(() => mockLoginResponse);
     const payload = {
       firstFactorCode,
-      securityCode,
+      verificationCode,
     };
-    const res = await loginWithSecurityCode({
+    const res = await loginWithVerificationCode({
       ...payload,
       redirect: false,
     });

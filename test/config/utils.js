@@ -15,6 +15,7 @@ export const defaultIdTokenProperties = [
   "isConfirmed",
   "name",
   "email",
+  "phoneNumber",
   "username",
   "image",
   "data",

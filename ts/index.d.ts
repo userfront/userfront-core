@@ -7,6 +7,7 @@ export declare function addInitCallback(callback: Function): void;
 // user
 interface User {
   email?: string;
+  phoneNumber?: string;
   name?: string;
   image?: string;
   data?: object;
@@ -56,19 +57,24 @@ interface SignupResponse {
   mode: string;
   // User attributes
   userId?: number;
-  uuid?: string;
+  tenantId?: string;
+  userUuid?: string;
   username?: string;
   email?: string;
+  phoneNumber?: string;
   name?: string;
   image?: string;
   locked?: boolean;
   data?: object;
-  authorization?: object;
   isConfirmed?: boolean;
   lastActiveAt?: string;
-  updatedAt?: string;
+  lastMessagedAt?: string;
+  confirmedAt?: string;
   createdAt?: string;
+  updatedAt?: string;
   tenant?: object;
+  authorization?: object;
+  uuid?: string; // deprecated
   // Response
   tokens?: TokensObject;
   redirectTo?: string;
@@ -84,6 +90,8 @@ interface LoginResponse {
   redirectTo?: string;
   sessionId?: string;
   nonce?: string;
+  message?: string;
+  result?: LinkResult;
 }
 
 interface LogoutResponse {
@@ -92,10 +100,11 @@ interface LogoutResponse {
 }
 
 interface LinkResult {
-  to?: string;
+  email?: string;
   submittedAt?: string;
   messageId?: string;
   url?: string;
+  to?: string; // deprecated
 }
 
 interface LinkResponse {
@@ -109,6 +118,7 @@ export declare function signup({
   email,
   username,
   name,
+  data,
   password,
   redirect,
 }: {
@@ -116,6 +126,7 @@ export declare function signup({
   email?: string;
   username?: string;
   name?: string;
+  data?: object;
   password?: string;
   redirect?: string | boolean;
 }): Promise<SignupResponse>;

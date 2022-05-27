@@ -54,6 +54,7 @@ Userfront.user;
 /** =>
  * {
  *    email: "jane@example.com",
+ *    phoneNumber: "+15558675309",
  *    name: "Jane Example",
  *    image: "https://res.cloudinary.com/component/image/upload/avatars/avatar-plain-9.png",
  *    data: {},

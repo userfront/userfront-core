@@ -74,6 +74,8 @@ interface SignupResponse {
   redirectTo?: string;
   sessionId?: string;
   nonce?: string;
+  message?: string;
+  result?: LinkResult;
 }
 
 interface LoginResponse {

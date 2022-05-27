@@ -15,6 +15,7 @@ export function setUser() {
   // Set basic user information properties from ID token
   const propsToDefine = [
     "email",
+    "phoneNumber",
     "username",
     "name",
     "image",

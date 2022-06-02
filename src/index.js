@@ -12,6 +12,7 @@ import { sendSms } from "./mfa.js";
 import {
   login,
   resetPassword,
+  updateCurrentUserPassword,
   sendLoginLink,
   sendResetLink,
   signup,
@@ -138,6 +139,7 @@ export default {
   // signon
   login,
   resetPassword,
+  updateCurrentUserPassword,
   sendLoginLink,
   sendResetLink,
   signup,

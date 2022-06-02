@@ -397,10 +397,8 @@ export async function updateCurrentUserPassword({ password, existingPassword }) 
         "No access token found. You must be authenticated to use this function."
       )
     }
-    /**
-     * @todo handle the case theat existing password is not passed and it causes an error
-     */
-    const res = await axios.put(
+    
+    const { data } = await axios.put(
       `${store.baseUrl}auth/basic`,
       {
         tenantId: store.tenantId,
@@ -413,10 +411,6 @@ export async function updateCurrentUserPassword({ password, existingPassword }) 
         },
       },
     )
-
-    const { data } = res
-
-    console.log(res, data, res.status)
 
     return data
   } catch (error) {

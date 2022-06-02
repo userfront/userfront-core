@@ -112,6 +112,10 @@ interface LinkResponse {
   result?: LinkResult;
 }
 
+interface UpdateCurrentUserPasswordResult {
+  message: string;
+}
+
 // signup()
 export declare function signup({
   method,
@@ -178,6 +182,12 @@ export declare function resetPassword({
   uuid?: string;
   redirect?: string | boolean;
 }): Promise<LoginResponse>;
+
+// updateCurrentUserPassword()
+export declare function updateCurrentUserPassword({
+  password: string,
+  existingPassword?: string,
+})
 
 // sendLoginLink()
 export declare function sendLoginLink(email: string): Promise<LinkResponse>;

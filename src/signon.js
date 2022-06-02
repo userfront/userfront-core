@@ -389,3 +389,37 @@ export async function resetPassword({ uuid, token, password, redirect }) {
     throwFormattedError(error);
   }
 }
+
+export async function updateCurrentUserPassword({ password, existingPassword }) {
+  try {
+    if (!store.tokens.accessToken) {
+      throw new Error(
+        "No access token found. You must be authenticated to use this function."
+      )
+    }
+    /**
+     * @todo handle the case theat existing password is not passed and it causes an error
+     */
+    const res = await axios.put(
+      `${store.baseUrl}auth/basic`,
+      {
+        tenantId: store.tenantId,
+        password,
+        existingPassword,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${store.tokens.accessToken}`,
+        },
+      },
+    )
+
+    const { data } = res
+
+    console.log(res, data, res.status)
+
+    return data
+  } catch (error) {
+    throwFormattedError(error)
+  }
+}

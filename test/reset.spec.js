@@ -113,7 +113,7 @@ describe("updatePassword", () => {
   });
 
   describe("No method set (method is inferred)", () => {
-    it("should call updatePasswordWithLink() if JWT access token is not present", async () => {
+    it("should call updatePasswordWithLink() if token and uuid are present", async () => {
       // Mock the API response
       axios.put.mockImplementationOnce(() => Promise.resolve(mockResponse));
 
@@ -137,7 +137,7 @@ describe("updatePassword", () => {
       );
     });
 
-    it("should call updatePasswordWithJwt() if JWT access token is present", async () => {
+    it("should call updatePasswordWithJwt() if token and uuid are not present", async () => {
       // Add JWT access token
       setCookiesAndTokens(mockResponse.data.tokens);
 

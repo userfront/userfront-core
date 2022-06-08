@@ -110,10 +110,13 @@ describe("updatePassword", () => {
 
   afterEach(() => {
     window.location.assign.mockClear();
+
+    // Remove token and uuid from the URL
+    window.location.href = "https://example.com/reset";
   });
 
   describe("No method set (method is inferred)", () => {
-    it("should call updatePasswordWithLink() if token and uuid are present", async () => {
+    it("should call updatePasswordWithLink() if token and uuid are present in the method inputs", async () => {
       // Mock the API response
       axios.put.mockImplementationOnce(() => Promise.resolve(mockResponse));
 
@@ -127,6 +130,38 @@ describe("updatePassword", () => {
         `https://api.userfront.com/v0/auth/reset`,
         {
           tenantId,
+          ...options,
+        }
+      );
+
+      // Should have redirected the page
+      expect(window.location.assign).toHaveBeenCalledWith(
+        mockResponse.data.redirectTo
+      );
+    });
+
+    it("should call updatePasswordWithLink() if token and uuid are present in the URL", async () => {
+      // Add token and uuid to the URL
+      window.location.href = "https://example.com/reset?token=aaaaa&uuid=bbbbb";
+
+      // Add JWT access token (to ensure it is not used)
+      setCookiesAndTokens(mockResponse.data.tokens);
+
+      // Mock the API response
+      axios.put.mockImplementationOnce(() => Promise.resolve(mockResponse));
+
+      const options = { password: "password" };
+
+      // Call updatePassword
+      await updatePassword(options);
+
+      // Should have sent the proper API request
+      expect(axios.put).toHaveBeenCalledWith(
+        `https://api.userfront.com/v0/auth/reset`,
+        {
+          tenantId,
+          token: "aaaaa",
+          uuid: "bbbbb",
           ...options,
         }
       );

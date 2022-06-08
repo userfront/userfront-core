@@ -183,8 +183,8 @@ export declare function resetPassword({
   redirect?: string | boolean;
 }): Promise<LoginResponse>;
 
-// updateCurrentUserPassword()
-export declare function updateCurrentUserPassword({
+// setPassword()
+export declare function setPassword({
   password: string,
   existingPassword?: string,
 })

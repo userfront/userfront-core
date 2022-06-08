@@ -10,10 +10,10 @@ import {
 import { setCookiesAndTokens, removeAllCookies } from "../src/cookies.js";
 import {
   sendResetLink,
-  setPassword,
+  updatePassword,
   resetPassword,
-  setPasswordWithLink,
-  setPasswordWithJwt,
+  updatePasswordWithLink,
+  updatePasswordWithJwt,
 } from "../src/reset.js";
 
 const tenantId = "abcd9876";
@@ -98,12 +98,12 @@ describe("sendResetLink", () => {
 });
 
 describe("resetPassword", () => {
-  it("should be an alias for setPassword()", () => {
-    expect(resetPassword).toEqual(setPassword);
+  it("should be an alias for updatePassword()", () => {
+    expect(resetPassword).toEqual(updatePassword);
   });
 });
 
-describe("setPassword", () => {
+describe("updatePassword", () => {
   beforeEach(() => {
     Userfront.init(tenantId);
   });
@@ -113,14 +113,14 @@ describe("setPassword", () => {
   });
 
   describe("No method set (method is inferred)", () => {
-    it("should call setPasswordWithLink() if JWT access token is not present", async () => {
+    it("should call updatePasswordWithLink() if JWT access token is not present", async () => {
       // Mock the API response
       axios.put.mockImplementationOnce(() => Promise.resolve(mockResponse));
 
       const options = { token: "token", uuid: "uuid", password: "password" };
 
-      // Call setPassword
-      await setPassword(options);
+      // Call updatePassword
+      await updatePassword(options);
 
       // Should have sent the proper API request
       expect(axios.put).toHaveBeenCalledWith(
@@ -137,19 +137,19 @@ describe("setPassword", () => {
       );
     });
 
-    it("should call setPasswordWithJwt() if JWT access token is present", async () => {
+    it("should call updatePasswordWithJwt() if JWT access token is present", async () => {
       // Add JWT access token
       setCookiesAndTokens(mockResponse.data.tokens);
 
       // Mock the API response
       axios.put.mockImplementationOnce(() => Promise.resolve(mockResponse));
 
-      // Call setPassword()
+      // Call updatePassword()
       const options = {
         password: "new-password",
         existingPassword: "old-password",
       };
-      await setPassword(options);
+      await updatePassword(options);
 
       // Should have sent the proper API request
       expect(axios.put).toHaveBeenCalledWith(
@@ -170,15 +170,15 @@ describe("setPassword", () => {
     });
   });
 
-  describe("setPasswordWithLink()", () => {
+  describe("updatePasswordWithLink()", () => {
     it("should send a password reset request and then redirect the page", async () => {
       // Mock the API response
       axios.put.mockImplementationOnce(() => Promise.resolve(mockResponse));
 
       const options = { token: "token", uuid: "uuid", password: "password" };
 
-      // Call setPasswordWithLink
-      await setPasswordWithLink(options);
+      // Call updatePasswordWithLink
+      await updatePasswordWithLink(options);
 
       // Should have sent the proper API request
       expect(axios.put).toHaveBeenCalledWith(
@@ -205,8 +205,8 @@ describe("setPassword", () => {
 
       const options = { token: "token", uuid: "uuid", password: "password" };
 
-      // Call setPasswordWithLink
-      await setPasswordWithLink(options);
+      // Call updatePasswordWithLink
+      await updatePasswordWithLink(options);
 
       // Should have sent the proper API request
       expect(axios.put).toHaveBeenCalledWith(`${customBaseUrl}auth/reset`, {
@@ -240,8 +240,8 @@ describe("setPassword", () => {
         password: "password",
       };
 
-      // Call setPasswordWithLink
-      await setPasswordWithLink({ ...options, redirect: targetPath });
+      // Call updatePasswordWithLink
+      await updatePasswordWithLink({ ...options, redirect: targetPath });
 
       // Should have sent the proper API request
       expect(axios.put).toHaveBeenCalledWith(
@@ -270,8 +270,8 @@ describe("setPassword", () => {
         password: "password",
       };
 
-      // Call setPasswordWithLink
-      await setPasswordWithLink({ ...options, redirect: false });
+      // Call updatePasswordWithLink
+      await updatePasswordWithLink({ ...options, redirect: false });
 
       // Should have sent the proper API request
       expect(axios.put).toHaveBeenCalledWith(
@@ -303,12 +303,12 @@ describe("setPassword", () => {
       };
       axios.put.mockImplementationOnce(() => Promise.reject(mockResponse));
       expect(
-        setPasswordWithLink({ token: "token", uuid: "uuid" })
+        updatePasswordWithLink({ token: "token", uuid: "uuid" })
       ).rejects.toEqual(new Error(mockResponse.response.data.message));
     });
   });
 
-  describe("setPasswordWithJwt()", () => {
+  describe("updatePasswordWithJwt()", () => {
     beforeAll(() => {
       // Add JWT access token
       setCookiesAndTokens(mockResponse.data.tokens);
@@ -323,13 +323,13 @@ describe("setPassword", () => {
       // Mock the API response
       axios.put.mockImplementationOnce(() => Promise.resolve(mockResponse));
 
-      // Call setPassword()
+      // Call updatePassword()
       const options = {
         password: "new-password",
         existingPassword: "old-password",
       };
 
-      const data = await setPassword(options);
+      const data = await updatePassword(options);
 
       // Should have sent the proper API request
       expect(axios.put).toHaveBeenCalledWith(
@@ -361,9 +361,9 @@ describe("setPassword", () => {
         },
       };
       axios.put.mockImplementationOnce(() => Promise.reject(mockResponse));
-      expect(setPasswordWithJwt({ password: "new-password" })).rejects.toEqual(
-        new Error(mockResponse.response.data.message)
-      );
+      expect(
+        updatePasswordWithJwt({ password: "new-password" })
+      ).rejects.toEqual(new Error(mockResponse.response.data.message));
     });
   });
 });

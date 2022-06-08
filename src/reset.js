@@ -35,7 +35,7 @@ export async function sendResetLink(email) {
  * @property {String} redirect
  * @returns
  */
-export async function setPassword({
+export async function updatePassword({
   method,
   password,
   existingPassword,
@@ -46,28 +46,33 @@ export async function setPassword({
   switch (method) {
     // Allow for explicit setting of method
     case "link":
-      return setPasswordWithLink({ uuid, token, password, redirect });
+      return updatePasswordWithLink({ uuid, token, password, redirect });
     case "jwt":
-      return setPasswordWithJwt({ password, existingPassword });
+      return updatePasswordWithJwt({ password, existingPassword });
     default:
       // Default (no method provided) is to look for link credentials first, then JWT access token
       token = token || getQueryAttr("token");
       uuid = uuid || getQueryAttr("uuid");
       if (uuid && token) {
-        return setPasswordWithLink({ uuid, token, password, redirect });
+        return updatePasswordWithLink({ uuid, token, password, redirect });
       } else if (store.tokens.accessToken) {
-        return setPasswordWithJwt({ password, existingPassword });
+        return updatePasswordWithJwt({ password, existingPassword });
       } else {
         throw new Error(
-          "setPassword() was called without link credentials (token & uuid) or a JWT access token."
+          "updatePassword() was called without link credentials (token & uuid) or a JWT access token."
         );
       }
   }
 }
 
-export const resetPassword = setPassword;
+export const resetPassword = updatePassword;
 
-export async function setPasswordWithLink({ uuid, token, password, redirect }) {
+export async function updatePasswordWithLink({
+  uuid,
+  token,
+  password,
+  redirect,
+}) {
   try {
     token = token || getQueryAttr("token");
     uuid = uuid || getQueryAttr("uuid");
@@ -99,11 +104,11 @@ export async function setPasswordWithLink({ uuid, token, password, redirect }) {
   }
 }
 
-export async function setPasswordWithJwt({ password, existingPassword }) {
+export async function updatePasswordWithJwt({ password, existingPassword }) {
   try {
     if (!store.tokens.accessToken) {
       throw new Error(
-        `setPassword({ method: "jwt" }) was called without a JWT access token.`
+        `updatePassword({ method: "jwt" }) was called without a JWT access token.`
       );
     }
 

@@ -10,7 +10,7 @@ import {
 import { redirectIfLoggedIn } from "./url.js";
 import { sendSms } from "./mfa.js";
 import { login, sendLoginLink, signup } from "./signon.js";
-import { setPassword, resetPassword, sendResetLink } from "./reset.js";
+import { updatePassword, resetPassword, sendResetLink } from "./reset.js";
 import { logout } from "./logout.js";
 import { mode, setMode, setModeSync } from "./mode.js";
 // import { setIframe } from "./iframe.js";
@@ -129,7 +129,7 @@ export default {
   // signon
   login,
   resetPassword,
-  setPassword,
+  updatePassword,
   sendLoginLink,
   sendResetLink,
   signup,

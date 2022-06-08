@@ -20,7 +20,54 @@ export async function sendResetLink(email) {
   }
 }
 
-export async function resetPassword({ uuid, token, password, redirect }) {
+/**
+ * Set a user's password with their link credentials or JWT access token.
+ *
+ * If no method is provided, the order is:
+ * - Check for link credentials; then
+ * - Check for a JWT access token first
+ *
+ * @property {String} method (optional) "link" or "jwt"
+ * @property {String} password
+ * @property {String} existingPassword
+ * @property {String} uuid
+ * @property {String} token
+ * @property {String} redirect
+ * @returns
+ */
+export async function setPassword({
+  method,
+  password,
+  existingPassword,
+  uuid,
+  token,
+  redirect,
+}) {
+  switch (method) {
+    // Allow for explicit setting of method
+    case "link":
+      return setPasswordWithLink({ uuid, token, password, redirect });
+    case "jwt":
+      return setPasswordWithJwt({ password, existingPassword });
+    default:
+      // Default (no method provided) is to look for link credentials first, then JWT access token
+      token = token || getQueryAttr("token");
+      uuid = uuid || getQueryAttr("uuid");
+      if (uuid && token) {
+        return setPasswordWithLink({ uuid, token, password, redirect });
+      } else if (store.tokens.accessToken) {
+        return setPasswordWithJwt({ password, existingPassword });
+      } else {
+        throw new Error(
+          "setPassword() was called without link credentials (token & uuid) or a JWT access token."
+        );
+      }
+  }
+}
+
+export const resetPassword = setPassword;
+
+export async function setPasswordWithLink({ uuid, token, password, redirect }) {
   try {
     token = token || getQueryAttr("token");
     uuid = uuid || getQueryAttr("uuid");
@@ -52,11 +99,11 @@ export async function resetPassword({ uuid, token, password, redirect }) {
   }
 }
 
-export async function setPassword({ password, existingPassword }) {
+export async function setPasswordWithJwt({ password, existingPassword }) {
   try {
     if (!store.tokens.accessToken) {
       throw new Error(
-        "No access token found. You must be authenticated to use this function."
+        `setPassword({ method: "jwt" }) was called without a JWT access token.`
       );
     }
 

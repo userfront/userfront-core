@@ -193,6 +193,7 @@ export declare function resetPassword({
   token,
   uuid,
   redirect,
+  method,
 }: {
   password: string;
   existingPassword?: string;

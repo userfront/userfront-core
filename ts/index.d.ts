@@ -201,6 +201,7 @@ export declare function resetPassword({
   token?: string;
   uuid?: string;
   redirect?: string | boolean;
+  method?: 'link' | 'jwt';
 }): Promise<LoginResponse | UpdatePasswordResponse>;
 
 // sendLoginLink()

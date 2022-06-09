@@ -177,6 +177,7 @@ export declare function updatePassword({
   token,
   uuid,
   redirect,
+  method,
 }: {
   password: string;
   existingPassword?: string;

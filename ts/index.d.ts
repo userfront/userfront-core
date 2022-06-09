@@ -94,6 +94,10 @@ interface LoginResponse {
   result?: LinkResult;
 }
 
+interface UpdatePasswordResponse {
+  message?: string;
+}
+
 interface LogoutResponse {
   message: string;
   redirectTo?: string;
@@ -166,18 +170,39 @@ export declare function redirectIfLoggedIn({
   redirect?: string;
 }): Promise<void>;
 
-// resetPassword()
-export declare function resetPassword({
+// updatePassword()
+export declare function updatePassword({
   password,
+  existingPassword,
   token,
   uuid,
   redirect,
+  method,
 }: {
   password: string;
+  existingPassword?: string;
   token?: string;
   uuid?: string;
   redirect?: string | boolean;
-}): Promise<LoginResponse>;
+  method?: 'link' | 'jwt';
+}): Promise<LoginResponse | UpdatePasswordResponse>;
+
+// resetPassword()
+export declare function resetPassword({
+  password,
+  existingPassword,
+  token,
+  uuid,
+  redirect,
+  method,
+}: {
+  password: string;
+  existingPassword?: string;
+  token?: string;
+  uuid?: string;
+  redirect?: string | boolean;
+  method?: 'link' | 'jwt';
+}): Promise<LoginResponse | UpdatePasswordResponse>;
 
 // sendLoginLink()
 export declare function sendLoginLink(email: string): Promise<LinkResponse>;

@@ -9,13 +9,8 @@ import {
 } from "./tokens";
 import { redirectIfLoggedIn } from "./url.js";
 import { sendSms } from "./mfa.js";
-import {
-  login,
-  resetPassword,
-  sendLoginLink,
-  sendResetLink,
-  signup,
-} from "./signon.js";
+import { login, sendLoginLink, signup } from "./signon.js";
+import { updatePassword, resetPassword, sendResetLink } from "./reset.js";
 import { logout } from "./logout.js";
 import { mode, setMode, setModeSync } from "./mode.js";
 // import { setIframe } from "./iframe.js";
@@ -43,12 +38,8 @@ function init(tenantId, opts = {}) {
   if (opts.domain) {
     store.domain = opts.domain;
     const url = `https://${store.domain}`;
-    axios.defaults.headers.common[
-      "x-application-id"
-    ] = url
-    axios.defaults.headers.common[
-      "x-origin"
-    ] = url
+    axios.defaults.headers.common["x-application-id"] = url;
+    axios.defaults.headers.common["x-origin"] = url;
   }
 
   setTokenNames();
@@ -138,6 +129,7 @@ export default {
   // signon
   login,
   resetPassword,
+  updatePassword,
   sendLoginLink,
   sendResetLink,
   signup,

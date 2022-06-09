@@ -116,10 +116,6 @@ interface LinkResponse {
   result?: LinkResult;
 }
 
-interface UpdateCurrentUserPasswordResult {
-  message: string;
-}
-
 // signup()
 export declare function signup({
   method,

@@ -14,7 +14,7 @@ import {
   resetPassword,
   updatePasswordWithLink,
   updatePasswordWithJwt,
-} from "../src/reset.js";
+} from "../src/password.js";
 
 const tenantId = "abcd9876";
 const customBaseUrl = "https://custom.example.com/api/v1/";

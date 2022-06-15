@@ -9,8 +9,9 @@ import {
 } from "./tokens";
 import { redirectIfLoggedIn } from "./url.js";
 import { sendSms } from "./mfa.js";
-import { login, sendLoginLink, signup } from "./signon.js";
-import { updatePassword, resetPassword, sendResetLink } from "./reset.js";
+import { login, signup } from "./signon.js";
+import { sendLoginLink } from "./link.js";
+import { updatePassword, resetPassword, sendResetLink } from "./password.js";
 import { logout } from "./logout.js";
 import { mode, setMode, setModeSync } from "./mode.js";
 // import { setIframe } from "./iframe.js";

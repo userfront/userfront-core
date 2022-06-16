@@ -37,7 +37,7 @@ const mockSendSmsResponse = {
   data: {
     message: "OK",
     result: {
-      to: phoneNumber,
+      phoneNumber,
       submittedAt: new Date(),
       messageId: "204a8def-651c-4ab2-9ca0-1e3fca9e280a",
       status: "pending",
@@ -76,7 +76,7 @@ describe("sendVerificationCode", () => {
       sendVerificationCode({
         strategy: "verificationCode",
         channel: "sms",
-        to: phoneNumber,
+        phoneNumber,
       })
     ).rejects.toEqual(missingParamsError);
 
@@ -85,7 +85,7 @@ describe("sendVerificationCode", () => {
       sendVerificationCode({
         firstFactorCode,
         channel: "sms",
-        to: phoneNumber,
+        phoneNumber,
       })
     ).rejects.toEqual(missingParamsError);
 
@@ -94,7 +94,7 @@ describe("sendVerificationCode", () => {
       sendVerificationCode({
         firstFactorCode,
         strategy: "verificationCode",
-        to: phoneNumber,
+        phoneNumber,
       })
     ).rejects.toEqual(missingParamsError);
 
@@ -118,7 +118,7 @@ describe("sendVerificationCode", () => {
       firstFactorCode,
       strategy: "verificationCode",
       channel: "sms",
-      to: phoneNumber,
+      phoneNumber,
     };
     const res = await sendVerificationCode(payload);
 
@@ -155,19 +155,19 @@ describe("sendSms", () => {
   describe("type: verificationCode", () => {
     it(`should throw if missing parameters`, async () => {
       const missingParamsError = new Error(
-        'Userfront.sendSms type "verificationCode" requires "to" and "firstFactorCode".'
+        'Userfront.sendSms type "verificationCode" requires "phoneNumber" and "firstFactorCode".'
       );
 
       // Missing firstFactorCode
       expect(
         sendSms({
           type: "verificationCode",
-          to: phoneNumber,
+          phoneNumber,
         })
       ).rejects.toEqual(missingParamsError);
 
       // Missing to
-      expect(
+      expect(() =>
         sendSms({
           type: "verificationCode",
           firstFactorCode,
@@ -182,7 +182,7 @@ describe("sendSms", () => {
 
       axios.post.mockImplementationOnce(() => mockSendSmsResponse);
       const payload = {
-        to: phoneNumber,
+        phoneNumber,
         firstFactorCode,
       };
       const res = await sendSms({

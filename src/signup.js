@@ -3,10 +3,6 @@ import { signonWithSso } from "./sso.js";
 import { sendPasswordlessLink } from "./link.js";
 
 /**
- * This file has methods for signing up and logging in
- */
-
-/**
  * Register a user via the provided method. This method serves to call other
  * methods, depending on the "method" parameter passed in.
  * @param {String} method

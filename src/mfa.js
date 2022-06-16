@@ -8,26 +8,26 @@ import { throwFormattedError } from "./utils.js";
 /**
  * Send an SMS to a phone number
  * @param {String} type Type of SMS to send
- * @param {String} to Phone number in E.164 format
+ * @param {String} phoneNumber Phone number in E.164 format
  * @param {String} firstFactorCode Identifier obtained from login() response
  * @returns {Object}
  */
-export async function sendSms({ type, to, firstFactorCode } = {}) {
+export async function sendSms({ type, phoneNumber, firstFactorCode } = {}) {
   if (!type) {
     throw new Error('Userfront.sendSms called without "type" property.');
   }
 
   switch (type) {
     case "verificationCode":
-      if (!to || !firstFactorCode) {
+      if (!phoneNumber || !firstFactorCode) {
         throw new Error(
-          'Userfront.sendSms type "verificationCode" requires "to" and "firstFactorCode".'
+          'Userfront.sendSms type "verificationCode" requires "phoneNumber" and "firstFactorCode".'
         );
       }
 
       return sendVerificationCode({
         firstFactorCode,
-        to,
+        phoneNumber,
         strategy: "verificationCode",
         channel: "sms",
       });
@@ -41,16 +41,16 @@ export async function sendSms({ type, to, firstFactorCode } = {}) {
  * @param {String} firstFactorCode Identifier obtained from login() response
  * @param {String} strategy Type of MFA strategy
  * @param {String} channel Method of sending the verification code
- * @param {String} to Phone number in E.164 format
+ * @param {String} phoneNumber Phone number in E.164 format
  * @returns {Object}
  */
 export async function sendVerificationCode({
   firstFactorCode,
   strategy,
   channel,
-  to,
+  phoneNumber,
 } = {}) {
-  if (!firstFactorCode || !strategy || !channel || !to) {
+  if (!firstFactorCode || !strategy || !channel || !phoneNumber) {
     throw new Error("Userfront.sendVerificationCode missing parameters.");
   }
 
@@ -60,7 +60,7 @@ export async function sendVerificationCode({
       firstFactorCode,
       strategy,
       channel,
-      to,
+      phoneNumber,
     });
 
     return data;

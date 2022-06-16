@@ -3,7 +3,6 @@ import { signonWithSso } from "./sso.js";
 import { loginWithLink, sendPasswordlessLink } from "./link.js";
 import { loginWithTotp } from "./totp.js";
 import { completeSamlLogin } from "./saml.js";
-import { loginWithVerificationCode } from "./mfa.js";
 
 /**
  * Log a user in via the provided method. This method serves to call other
@@ -73,12 +72,6 @@ export async function login({
         email,
         username,
         phoneNumber,
-        redirect,
-      });
-    case "mfa":
-      return loginWithVerificationCode({
-        firstFactorCode,
-        verificationCode,
         redirect,
       });
     case "saml":

@@ -6,6 +6,7 @@ import {
   createIdToken,
   createRefreshToken,
   idTokenUserDefaults,
+  mockWindow,
 } from "./config/utils.js";
 import { login } from "../src/login.js";
 import { exchange } from "../src/refresh.js";
@@ -23,16 +24,10 @@ const customBaseUrl = "https://custom.example.com/api/v1/";
 const firstFactorCode = "204a8def-651c-4ab2-9ca0-1e3fca9e280a";
 const verificationCode = "123456";
 
-// Using `window.location.assign` rather than `window.location.href =` because
-// JSDOM throws an error "Error: Not implemented: navigation (except hash changes)"
-// JSDOM complains about this is because JSDOM does not implement methods like window.alert, window.location.assign, etc.
-// https://stackoverflow.com/a/54477957
-delete window.location;
-window.location = {
-  assign: jest.fn(),
+mockWindow({
   origin: "https://example.com",
   href: "https://example.com/login",
-};
+});
 
 // Mock API response
 const mockResponse = {

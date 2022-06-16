@@ -6,6 +6,7 @@ import Userfront from "../src/index.js";
 import { apiUrl } from "../src/constants.js";
 import { removeAllCookies } from "../src/cookies.js";
 import { store } from "../src/store.js";
+import { mockWindow } from "./config/utils.js";
 
 jest.mock("../src/cookies.js", () => {
   return {
@@ -20,16 +21,10 @@ const tenantId = "abcdefg";
 const customBaseUrl = "https://custom.example.com/api/v1/";
 Userfront.init(tenantId);
 
-// Using `window.location.assign` rather than `window.location.href =` because
-// JSDOM throws an error "Error: Not implemented: navigation (except hash changes)"
-// JSDOM complains about this is because JSDOM does not implement methods like window.alert, window.location.assign, etc.
-// https://stackoverflow.com/a/54477957
-delete window.location;
-window.location = {
-  assign: jest.fn(),
+mockWindow({
   origin: "https://example.com",
   href: "https://example.com/login",
-};
+});
 
 describe("redirectIfLoggedIn", () => {
   const mockAccessToken = "mockAccessToken";

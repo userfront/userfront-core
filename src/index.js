@@ -9,7 +9,8 @@ import {
 } from "./tokens";
 import { redirectIfLoggedIn } from "./url.js";
 import { sendSms } from "./mfa.js";
-import { login, signup } from "./signon.js";
+import { signup } from "./signup.js";
+import { login } from "./login.js";
 import { sendLoginLink } from "./link.js";
 import { updatePassword, resetPassword, sendResetLink } from "./password.js";
 import { logout } from "./logout.js";
@@ -27,7 +28,7 @@ let initCallbacks = [];
  * @param {String} tenantId
  */
 function init(tenantId, opts = {}) {
-  if (!tenantId) return console.warn("Userfront initialized without tenant ID");
+  if (!tenantId) return console.warn("Userfront initialized without tenantId");
 
   store.tenantId = tenantId;
 

@@ -7,7 +7,7 @@ import {
   createRefreshToken,
   idTokenUserDefaults,
 } from "./config/utils.js";
-import { signup } from "../src/signon.js";
+import { signup } from "../src/signup.js";
 import { exchange } from "../src/refresh.js";
 
 jest.mock("../src/refresh.js", () => {
@@ -274,11 +274,9 @@ describe("signup", () => {
       window.history.pushState({}, "", "/signup");
 
       Userfront.signup({ method: "google", redirect: false });
-      expect(signonWithSsoSpy).toHaveBeenCalledWith({
-        provider: "google",
-        redirect: false,
-      });
-      expect(assignMock).toHaveBeenCalledWith(
+
+      expect(window.location.assign).toHaveBeenCalledTimes(1);
+      expect(window.location.assign).toHaveBeenCalledWith(
         `https://api.userfront.com/v0/auth/google/login?` +
           `tenant_id=${tenantId}&` +
           `origin=${window.location.origin}&` +

@@ -3,6 +3,89 @@ import { setCookiesAndTokens } from "./cookies.js";
 import { store } from "./store.js";
 import { getQueryAttr, redirectToPath } from "./url.js";
 import { throwFormattedError } from "./utils.js";
+import { exchange } from "./refresh.js";
+
+/**
+ * Register a new user with username, name, email, and password.
+ * Redirect the browser after successful signup based on the redirectTo value returned.
+ * @param {String} username
+ * @param {String} name
+ * @param {String} email
+ * @param {String} password
+ * @param {Object} userData - alias for the user.data object, since "data" is used in the response
+ * @param {String} redirect - do not redirect if false, or redirect to a specific path
+ */
+export async function signupWithPassword({
+  username,
+  name,
+  email,
+  password,
+  userData,
+  redirect,
+} = {}) {
+  try {
+    const { data } = await axios.post(`${store.baseUrl}auth/create`, {
+      tenantId: store.tenantId,
+      username,
+      name,
+      email,
+      password,
+      data: userData,
+    });
+    if (data.tokens) {
+      setCookiesAndTokens(data.tokens);
+      await exchange(data);
+      if (redirect === false) return data;
+      redirectToPath(
+        redirect || getQueryAttr("redirect") || data.redirectTo || "/"
+      );
+      return data;
+    } else {
+      throw new Error("Please try again.");
+    }
+  } catch (error) {
+    throwFormattedError(error);
+  }
+}
+
+/**
+ * Log a user in with email/username and password.
+ * Redirect the browser after successful login based on the redirectTo value returned.
+ * @param {Object} options
+ */
+export async function loginWithPassword({
+  email,
+  username,
+  emailOrUsername,
+  password,
+  redirect,
+}) {
+  try {
+    const { data } = await axios.post(`${store.baseUrl}auth/basic`, {
+      tenantId: store.tenantId,
+      emailOrUsername: email || username || emailOrUsername,
+      password,
+    });
+
+    if (data.hasOwnProperty("tokens")) {
+      setCookiesAndTokens(data.tokens);
+      await exchange(data);
+      if (redirect === false) return data;
+      redirectToPath(
+        redirect || getQueryAttr("redirect") || data.redirectTo || "/"
+      );
+      return data;
+    }
+
+    if (data.hasOwnProperty("firstFactorCode")) {
+      return data;
+    }
+
+    throw new Error("Please try again.");
+  } catch (error) {
+    throwFormattedError(error);
+  }
+}
 
 /**
  * Send a password reset link to the provided email.

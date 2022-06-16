@@ -3,7 +3,7 @@ import { getQueryAttr } from "./url.js";
 
 export function getProviderLink({ provider, redirect }) {
   if (!provider) throw new Error("Missing provider");
-  if (!store.tenantId) throw new Error("Missing tenant ID");
+  if (!store.tenantId) throw new Error("Missing tenantId");
 
   let url = `${store.baseUrl}auth/${provider}/login?tenant_id=${store.tenantId}&origin=${window.location.origin}`;
 

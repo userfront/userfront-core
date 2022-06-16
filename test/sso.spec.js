@@ -66,7 +66,7 @@ describe("SSO", () => {
       store.tenantId = null;
 
       expect(() => signonWithSso({ provider: "google" })).toThrow(
-        "Missing tenant ID"
+        "Missing tenantId"
       );
     });
   });

@@ -7,7 +7,7 @@ import {
   createRefreshToken,
   idTokenUserDefaults,
 } from "./config/utils.js";
-import { login } from "../src/signon.js";
+import { login } from "../src/login.js";
 import { sendLoginLink } from "../src/link.js";
 import { exchange } from "../src/refresh.js";
 

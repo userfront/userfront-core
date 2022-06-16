@@ -8,7 +8,7 @@ import {
   createRefreshToken,
   idTokenUserDefaults,
 } from "./config/utils.js";
-import { login } from "../src/signon.js";
+import { login } from "../src/login.js";
 import { logout } from "../src/logout.js";
 import { unsetTokens } from "../src/tokens.js";
 
@@ -47,7 +47,7 @@ window.location = {
   href: "https://example.com/login",
 };
 
-describe("signon#completeSamlLogin", () => {
+describe("completeSamlLogin()", () => {
   beforeAll(() => {
     // Clear any mock
     axios.get.mockReset();

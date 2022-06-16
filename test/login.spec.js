@@ -7,7 +7,7 @@ import {
   createRefreshToken,
   idTokenUserDefaults,
 } from "./config/utils.js";
-import { login } from "../src/signon.js";
+import { login } from "../src/login.js";
 import { exchange } from "../src/refresh.js";
 
 jest.mock("../src/refresh.js", () => {

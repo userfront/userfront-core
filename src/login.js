@@ -1,6 +1,7 @@
 import { loginWithPassword } from "./password.js";
 import { signonWithSso } from "./sso.js";
 import { loginWithLink, sendPasswordlessLink } from "./link.js";
+import { loginWithTotp } from "./totp.js";
 import { completeSamlLogin } from "./saml.js";
 import { loginWithVerificationCode } from "./mfa.js";
 
@@ -18,14 +19,25 @@ import { loginWithVerificationCode } from "./mfa.js";
  */
 export async function login({
   method,
+  // User identifiers
+  userId,
+  userUuid,
   email,
   username,
   emailOrUsername,
+  phoneNumber,
+  // Password
   password,
+  // Link
   token,
   uuid,
+  // Totp
+  totpCode,
+  backupCode,
+  // Mfa
   firstFactorCode,
   verificationCode,
+  // Other
   redirect,
 } = {}) {
   if (!method) {
@@ -51,6 +63,18 @@ export async function login({
       return sendPasswordlessLink({ email });
     case "link":
       return loginWithLink({ token, uuid, redirect });
+    case "totp":
+      return loginWithTotp({
+        totpCode,
+        backupCode,
+        userId,
+        userUuid,
+        emailOrUsername,
+        email,
+        username,
+        phoneNumber,
+        redirect,
+      });
     case "mfa":
       return loginWithVerificationCode({
         firstFactorCode,

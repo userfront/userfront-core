@@ -50,7 +50,7 @@ describe("loginWithTotp()", () => {
   });
 
   it("should login and redirect", async () => {
-    // Update the userId to ensure it is overwritten
+    // To ensure they are updated on client
     const newAttrs = {
       email: "totp-user-updated@example.com",
       username: "totp-user-updated",
@@ -85,7 +85,7 @@ describe("loginWithTotp()", () => {
 
     // Should have set the user object
     expect(Userfront.user.email).toEqual(newAttrs.email);
-    expect(Userfront.user.userId).toEqual(newAttrs.userId);
+    expect(Userfront.user.username).toEqual(newAttrs.username);
 
     // Should have redirected correctly
     expect(window.location.assign).toHaveBeenCalledWith("/dashboard");
@@ -96,7 +96,7 @@ describe("loginWithTotp()", () => {
       baseUrl: customBaseUrl,
     });
 
-    // Update the userId to ensure it is overwritten
+    // To ensure they are updated on client
     const newAttrs = {
       userId: 2091,
       email: "linker@example.com",
@@ -125,7 +125,7 @@ describe("loginWithTotp()", () => {
   });
 
   it("should read redirect from the URL if not present", async () => {
-    // Update the userId to ensure it is overwritten
+    // To ensure they are updated on client
     const newAttrs = {
       email: "totp-2@example.com",
       username: "totp-2",
@@ -141,17 +141,20 @@ describe("loginWithTotp()", () => {
     // Mock the API response
     axios.post.mockImplementationOnce(() => mockResponseCopy);
 
-    // Call loginWithTotp()
-    const data = await loginWithTotp({
+    const payload = {
       userId: 123,
       totpCode: "456789",
-    });
+    };
+
+    // Call loginWithTotp()
+    const data = await loginWithTotp(payload);
 
     // Should have sent the proper API request
     expect(axios.post).toHaveBeenCalledWith(
       `https://api.userfront.com/v0/auth/totp`,
       {
         tenantId,
+        ...payload,
       }
     );
 
@@ -163,7 +166,7 @@ describe("loginWithTotp()", () => {
 
     // Should have set the user object
     expect(Userfront.user.email).toEqual(newAttrs.email);
-    expect(Userfront.user.userId).toEqual(newAttrs.userId);
+    expect(Userfront.user.username).toEqual(newAttrs.username);
 
     // Should have redirected correctly
     expect(window.location.assign).toHaveBeenCalledWith(redirect);

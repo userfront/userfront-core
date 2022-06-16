@@ -9,6 +9,7 @@ import {
   mockWindow,
 } from "./config/utils.js";
 import { login } from "../src/login.js";
+import { loginWithTotp } from "../src/totp.js";
 import { exchange } from "../src/refresh.js";
 
 jest.mock("../src/refresh.js", () => {
@@ -17,6 +18,7 @@ jest.mock("../src/refresh.js", () => {
     exchange: jest.fn(),
   };
 });
+jest.mock("../src/totp.js");
 jest.mock("axios");
 
 const tenantId = "abcd9876";
@@ -408,6 +410,33 @@ describe("login", () => {
           email: "valid@example.com",
         })
       ).rejects.toEqual(new Error(mockResponseErr.response.data.message));
+    });
+  });
+
+  describe("method: totp", () => {
+    const codeAttrs = [{ totpCode: "991234" }, { backupCode: "11111-aaaaa" }];
+    const identifierAttrs = [
+      { userId: 222 },
+      { userUuid: "326381e1-30b8-4280-93b6-ea27b2078966" },
+      { emailOrUsername: "myusername" },
+      { email: "user@example.com" },
+      { username: "ausername" },
+      { phoneNumber: "+15558675309" },
+    ];
+    // Loop over all input combos and ensure that loginWithTotp is called correctly for each
+    codeAttrs.map((codeAttr) => {
+      identifierAttrs.map((identifierAttr) => {
+        it(`should call loginWithTotp with ${codeAttr} and ${identifierAttr}`, () => {
+          // Call login for the combo
+          Userfront.login({ method: "totp", ...codeAttr, ...identifierAttr });
+
+          // Assert that loginWithTotp was called correctly
+          expect(loginWithTotp).toHaveBeenCalledWith({
+            ...codeAttr,
+            ...identifierAttr,
+          });
+        });
+      });
     });
   });
 

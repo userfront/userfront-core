@@ -33,6 +33,8 @@ describe("SSO", () => {
 
     it.each(providers)("with each provider", (provider) => {
       signonWithSso({ provider });
+
+      expect(window.location.assign).toHaveBeenCalledTimes(1);
       expect(window.location.assign).toHaveBeenCalledWith(
         `https://api.userfront.com/v0/auth/${provider}/login?` +
           `tenant_id=${tenantId}&` +
@@ -48,6 +50,7 @@ describe("SSO", () => {
 
       signonWithSso({ provider });
 
+      expect(window.location.assign).toHaveBeenCalledTimes(1);
       expect(window.location.assign).toHaveBeenCalledWith(
         `${customBaseUrl}auth/${provider}/login?` +
           `tenant_id=${tenantId}&` +

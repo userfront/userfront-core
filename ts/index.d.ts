@@ -138,18 +138,24 @@ export declare function signup({
 // login()
 export declare function login({
   method,
+  userId,
+  userUuid,
   email,
   username,
   emailOrUsername,
+  phoneNumber,
   password,
   token,
   uuid,
   redirect,
 }: {
   method: string;
+  userId?: number;
+  userUuid?: string;
   email?: string;
   username?: string;
   emailOrUsername?: string;
+  phoneNumber?: string;
   password?: string;
   token?: string;
   uuid?: string;
@@ -184,7 +190,7 @@ export declare function updatePassword({
   token?: string;
   uuid?: string;
   redirect?: string | boolean;
-  method?: 'link' | 'jwt';
+  method?: "link" | "jwt";
 }): Promise<LoginResponse | UpdatePasswordResponse>;
 
 // resetPassword()
@@ -201,7 +207,7 @@ export declare function resetPassword({
   token?: string;
   uuid?: string;
   redirect?: string | boolean;
-  method?: 'link' | 'jwt';
+  method?: "link" | "jwt";
 }): Promise<LoginResponse | UpdatePasswordResponse>;
 
 // sendLoginLink()

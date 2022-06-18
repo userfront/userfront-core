@@ -1,6 +1,5 @@
-import axios from "axios";
-
 import Userfront from "../src/index.js";
+import api from "../src/api.js";
 import {
   createAccessToken,
   createIdToken,
@@ -14,40 +13,33 @@ import {
 } from "../src/verificationCode.js";
 import { exchange } from "../src/refresh.js";
 
-jest.mock("../src/refresh.js", () => {
-  return {
-    __esModule: true,
-    exchange: jest.fn(),
-  };
-});
-jest.mock("axios");
+jest.mock("../src/refresh.js");
+jest.mock("../src/api.js");
 
 const tenantId = "abcd9876";
-const customBaseUrl = "https://custom.example.com/api/v1/";
 
 mockWindow({
   origin: "https://example.com",
   href: "https://example.com/login",
 });
 
-// Mock API response
-const mockResponse = {
-  data: {
-    message: "OK",
-    result: {
-      whatever: "response",
-    },
-  },
-};
-
 describe("sendVerificationCode()", () => {
+  // Mock API response
+  const mockResponse = {
+    data: {
+      message: "OK",
+      result: {
+        whatever: "response",
+      },
+    },
+  };
   beforeEach(() => {
     Userfront.init(tenantId);
   });
 
   it(`sms send should respond with API response information`, async () => {
     // Mock the API response
-    axios.post.mockImplementationOnce(() => mockResponse);
+    api.post.mockImplementationOnce(() => mockResponse);
 
     const payload = { channel: "sms", phoneNumber: "+15558769098" };
 
@@ -55,13 +47,10 @@ describe("sendVerificationCode()", () => {
     const data = await sendVerificationCode(payload);
 
     // Should have sent the proper API request
-    expect(axios.post).toHaveBeenCalledWith(
-      `https://api.userfront.com/v0/auth/code`,
-      {
-        tenantId,
-        ...payload,
-      }
-    );
+    expect(api.post).toHaveBeenCalledWith(`/auth/code`, {
+      tenantId,
+      ...payload,
+    });
 
     // Should have returned the proper value
     expect(data).toEqual(mockResponse.data);
@@ -69,7 +58,7 @@ describe("sendVerificationCode()", () => {
 
   it(`email send should respond with API response information`, async () => {
     // Mock the API response
-    axios.post.mockImplementationOnce(() => mockResponse);
+    api.post.mockImplementationOnce(() => mockResponse);
 
     const payload = { channel: "email", email: "user@example.com" };
 
@@ -77,13 +66,10 @@ describe("sendVerificationCode()", () => {
     const data = await sendVerificationCode(payload);
 
     // Should have sent the proper API request
-    expect(axios.post).toHaveBeenCalledWith(
-      `https://api.userfront.com/v0/auth/code`,
-      {
-        tenantId,
-        ...payload,
-      }
-    );
+    expect(api.post).toHaveBeenCalledWith(`/auth/code`, {
+      tenantId,
+      ...payload,
+    });
 
     // Should have returned the proper value
     expect(data).toEqual(mockResponse.data);
@@ -92,18 +78,16 @@ describe("sendVerificationCode()", () => {
   it(`error should respond with whatever the server sends`, async () => {
     // Mock the API response
     const mockResponse = {
-      response: {
-        data: {
-          error: "Bad Request",
-          message: `Can't use email with SMS (duh)`,
-          statusCode: 400,
-        },
+      data: {
+        error: "Bad Request",
+        message: `Can't use email with SMS (duh)`,
+        statusCode: 400,
       },
     };
-    axios.post.mockImplementationOnce(() => Promise.reject(mockResponse));
+    api.post.mockImplementationOnce(() => Promise.reject(mockResponse));
     expect(() =>
       sendVerificationCode({ channel: "email", email: "email@example.com" })
-    ).rejects.toEqual(new Error(mockResponse.response.data.message));
+    ).rejects.toEqual(new Error(mockResponse.data.message));
   });
 
   it("should error if channel and identifier do not match", async () => {
@@ -121,7 +105,20 @@ describe("sendVerificationCode()", () => {
   });
 });
 
-xdescribe("loginWithVerificationCode()", () => {
+describe("loginWithVerificationCode()", () => {
+  // Mock API response
+  const mockResponse = {
+    data: {
+      tokens: {
+        access: { value: createAccessToken() },
+        id: { value: createIdToken() },
+        refresh: { value: createRefreshToken() },
+      },
+      nonce: "nonce-value",
+      redirectTo: "/dashboard",
+    },
+  };
+
   beforeEach(() => {
     Userfront.init(tenantId);
   });
@@ -132,87 +129,52 @@ xdescribe("loginWithVerificationCode()", () => {
 
   it("should login and redirect", async () => {
     // Update the userId to ensure it is overwritten
-    const newAttrs = {
+    const userAttrs = {
       userId: 2091,
-      email: "linker@example.com",
+      email: "verified@example.com",
     };
     const mockResponseCopy = JSON.parse(JSON.stringify(mockResponse));
-    mockResponseCopy.data.tokens.id.value = createIdToken(newAttrs);
+    mockResponseCopy.data.tokens.id.value = createIdToken(userAttrs);
 
     // Mock the API response
-    axios.put.mockImplementationOnce(() => mockResponseCopy);
+    api.put.mockImplementationOnce(() => mockResponseCopy);
 
     // Call loginWithVerificationCode()
     const payload = {
-      token: "some-token",
-      uuid: "some-uuid",
+      channel: "email",
+      email: userAttrs.email,
+      verificationCode: "123467",
     };
     const data = await loginWithVerificationCode(payload);
 
     // Should have sent the proper API request
-    expect(axios.put).toHaveBeenCalledWith(
-      `https://api.userfront.com/v0/auth/link`,
-      {
-        tenantId,
-        ...payload,
-      }
-    );
-
-    // Should return the correct value
-    expect(data).toEqual(mockResponseCopy.data);
-
-    // Should have called exchange() with the API's response
-    expect(exchange).toHaveBeenCalledWith(mockResponseCopy.data);
-
-    // Should have set the user object
-    expect(Userfront.user.email).toEqual(newAttrs.email);
-    expect(Userfront.user.userId).toEqual(newAttrs.userId);
-
-    // Should have redirected correctly
-    expect(window.location.assign).toHaveBeenCalledWith("/dashboard");
-  });
-
-  it("should login and redirect using custom baseUrl", async () => {
-    Userfront.init(tenantId, {
-      baseUrl: customBaseUrl,
-    });
-
-    // Update the userId to ensure it is overwritten
-    const newAttrs = {
-      userId: 2091,
-      email: "linker@example.com",
-    };
-    const mockResponseCopy = JSON.parse(JSON.stringify(mockResponse));
-    mockResponseCopy.data.tokens.id.value = createIdToken(newAttrs);
-
-    // Mock the API response
-    axios.put.mockImplementationOnce(() => mockResponseCopy);
-
-    // Call loginWithVerificationCode()
-    const payload = {
-      token: "some-token",
-      uuid: "some-uuid",
-    };
-    const data = await loginWithVerificationCode(payload);
-
-    // Should have sent the proper API request
-    expect(axios.put).toHaveBeenCalledWith(`${customBaseUrl}auth/link`, {
+    expect(api.put).toHaveBeenCalledWith(`/auth/code`, {
       tenantId,
       ...payload,
     });
 
     // Should return the correct value
-    expect(data).toEqual(mockResponseCopy.data);
+    expect(data).toEqual(mockResponseCopy.res);
+
+    // Should have called exchange() with the API's response
+    expect(exchange).toHaveBeenCalledWith(mockResponseCopy.res);
+
+    // Should have set the user object
+    expect(Userfront.user.email).toEqual(userAttrs.email);
+    expect(Userfront.user.userId).toEqual(userAttrs.userId);
+
+    // Should have redirected correctly
+    expect(window.location.assign).toHaveBeenCalledWith("/dashboard");
   });
 
   it("should read token, uuid, and redirect from the URL if not present", async () => {
     // Update the userId to ensure it is overwritten
-    const newAttrs = {
+    const userAttrs = {
       userId: 98100,
-      email: "linker-2@example.com",
+      email: "verified-2@example.com",
     };
     const mockResponseCopy = JSON.parse(JSON.stringify(mockResponse));
-    mockResponseCopy.data.tokens.id.value = createIdToken(newAttrs);
+    mockResponseCopy.data.tokens.id.value = createIdToken(userAttrs);
 
     const query = {
       token: "some-token",
@@ -225,29 +187,26 @@ xdescribe("loginWithVerificationCode()", () => {
     window.location.href = `https://example.com/login?token=${query.token}&uuid=${query.uuid}&redirect=${redirect}`;
 
     // Mock the API response
-    axios.put.mockImplementationOnce(() => mockResponseCopy);
+    api.put.mockImplementationOnce(() => mockResponseCopy);
 
     // Call loginWithVerificationCode()
     const data = await loginWithVerificationCode();
 
     // Should have sent the proper API request
-    expect(axios.put).toHaveBeenCalledWith(
-      `https://api.userfront.com/v0/auth/link`,
-      {
-        tenantId,
-        ...query,
-      }
-    );
+    expect(api.put).toHaveBeenCalledWith(`/auth/code`, {
+      tenantId,
+      ...query,
+    });
 
     // Should return the correct value
-    expect(data).toEqual(mockResponseCopy.data);
+    expect(data).toEqual(mockResponseCopy.res);
 
     // Should have called exchange() with the API's response
-    expect(exchange).toHaveBeenCalledWith(mockResponseCopy.data);
+    expect(exchange).toHaveBeenCalledWith(mockResponseCopy.res);
 
     // Should have set the user object
-    expect(Userfront.user.email).toEqual(newAttrs.email);
-    expect(Userfront.user.userId).toEqual(newAttrs.userId);
+    expect(Userfront.user.email).toEqual(userAttrs.email);
+    expect(Userfront.user.userId).toEqual(userAttrs.userId);
 
     // Should have redirected correctly
     expect(window.location.assign).toHaveBeenCalledWith(redirect);
@@ -257,7 +216,7 @@ xdescribe("loginWithVerificationCode()", () => {
   });
 
   it("should not redirect if redirect = false", async () => {
-    axios.put.mockImplementationOnce(() => mockResponse);
+    api.put.mockImplementationOnce(() => mockResponse);
 
     // Call loginWithVerificationCode()
     const payload = {
@@ -270,13 +229,10 @@ xdescribe("loginWithVerificationCode()", () => {
     });
 
     // Should have sent the proper API request
-    expect(axios.put).toHaveBeenCalledWith(
-      `https://api.userfront.com/v0/auth/link`,
-      {
-        tenantId,
-        ...payload,
-      }
-    );
+    expect(api.put).toHaveBeenCalledWith(`/auth/code`, {
+      tenantId,
+      ...payload,
+    });
 
     // Should return the correct value
     expect(data).toEqual(mockResponse.data);
@@ -290,43 +246,5 @@ xdescribe("loginWithVerificationCode()", () => {
 
     // Should not have redirected
     expect(window.location.assign).not.toHaveBeenCalled();
-  });
-
-  it("should return MFA options if tenant requires", async () => {
-    exchange.mockClear();
-
-    const mockMfaOptionsResponse = {
-      data: {
-        mode: "live",
-        allowedStrategies: ["verificationCode"],
-        allowedChannels: ["sms"],
-        firstFactorCode: "204a8def-651c-4ab2-9ca0-1e3fca9e280a",
-      },
-    };
-
-    axios.put.mockImplementationOnce(() => mockMfaOptionsResponse);
-
-    const payload = {
-      token: "some-token",
-      uuid: "some-uuid",
-    };
-    const data = await loginWithVerificationCode(payload);
-
-    // Should have sent the proper API request
-    expect(axios.put).toHaveBeenCalledWith(
-      `https://api.userfront.com/v0/auth/link`,
-      {
-        tenantId,
-        ...payload,
-      }
-    );
-
-    // Should not have set the user object, called exchange, or redirected
-    expect(Userfront.user).toBeUndefined;
-    expect(exchange).not.toHaveBeenCalled();
-    expect(window.location.assign).not.toHaveBeenCalled();
-
-    // Should have returned MFA options & firstFactorCode
-    expect(data).toEqual(mockMfaOptionsResponse.data);
   });
 });

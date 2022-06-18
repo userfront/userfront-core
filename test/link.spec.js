@@ -1,6 +1,5 @@
-import axios from "axios";
-
 import Userfront from "../src/index.js";
+import api from "../src/api.js";
 import {
   createAccessToken,
   createIdToken,
@@ -13,18 +12,14 @@ import {
   loginWithLink,
   sendPasswordlessLink,
 } from "../src/link.js";
+import { throwFormattedError } from "../src/utils.js";
 import { exchange } from "../src/refresh.js";
 
-jest.mock("../src/refresh.js", () => {
-  return {
-    __esModule: true,
-    exchange: jest.fn(),
-  };
-});
-jest.mock("axios");
+jest.mock("../src/refresh.js");
+jest.mock("../src/api.js");
+jest.mock("../src/utils.js");
 
 const tenantId = "abcd9876";
-const customBaseUrl = "https://custom.example.com/api/v1/";
 
 mockWindow({
   origin: "https://example.com",
@@ -60,46 +55,13 @@ describe("sendLoginLink", () => {
       },
     };
     // Mock the API response
-    axios.post.mockImplementationOnce(() => mockResponse);
+    api.post.mockImplementationOnce(() => mockResponse);
 
     // Call sendLoginLink()
-    const data = await sendLoginLink(mockResponse.data.result.email);
+    const res = await sendLoginLink(mockResponse.data.result.email);
 
     // Should have sent the proper API request
-    expect(axios.post).toHaveBeenCalledWith(
-      `https://api.userfront.com/v0/auth/link`,
-      {
-        tenantId,
-        email: mockResponse.data.result.email,
-      }
-    );
-
-    // Should have returned the proper value
-    expect(data).toEqual(mockResponse.data);
-  });
-
-  it("should respond with link information using custom baseUrl", async () => {
-    Userfront.init(tenantId, {
-      baseUrl: customBaseUrl,
-    });
-
-    const mockResponse = {
-      data: {
-        message: "OK",
-        result: {
-          email: "link-requester@example.com",
-          whatever: "else",
-        },
-      },
-    };
-    // Mock the API response
-    axios.post.mockImplementationOnce(() => mockResponse);
-
-    // Call sendLoginLink()
-    const data = await sendLoginLink(mockResponse.data.result.email);
-
-    // Should have sent the proper API request
-    expect(axios.post).toHaveBeenCalledWith(`${customBaseUrl}auth/link`, {
+    expect(api.post).toHaveBeenCalledWith(`/auth/link`, {
       tenantId,
       email: mockResponse.data.result.email,
     });
@@ -108,21 +70,18 @@ describe("sendLoginLink", () => {
     expect(data).toEqual(mockResponse.data);
   });
 
-  it(`error should respond with whatever the server sends`, async () => {
+  it.only(`error should respond with whatever the server sends`, async () => {
     // Mock the API response
     const mockResponse = {
-      response: {
-        data: {
-          error: "Bad Request",
-          message: `That's a silly link request.`,
-          statusCode: 400,
-        },
+      data: {
+        error: "Bad Request",
+        message: `That's a silly link request.`,
+        statusCode: 400,
       },
     };
-    axios.post.mockImplementationOnce(() => Promise.reject(mockResponse));
-    expect(sendLoginLink({ email: "email@example.com" })).rejects.toEqual(
-      new Error(mockResponse.response.data.message)
-    );
+    api.post.mockImplementationOnce(() => Promise.reject(mockResponse));
+    await sendLoginLink({ email: "email@example.com" });
+    expect(throwFormattedError).toHaveBeenCalledWith(mockResponse);
   });
 });
 
@@ -142,76 +101,28 @@ describe("sendPasswordlessLink", () => {
         },
       },
     };
-    axios.post.mockImplementationOnce(() => mockResponse);
+    api.post.mockImplementationOnce(() => mockResponse);
 
     // Call sendPasswordlessLink()
     const payload = {
       email: mockResponse.data.result.email,
       name: idTokenUserDefaults.name,
       username: idTokenUserDefaults.username,
-      data: idTokenUserDefaults.data,
+      data: idTokenUserDefaults.res,
       options: {
         custom: "option",
       },
     };
-    const data = await sendPasswordlessLink({
+    const res = await sendPasswordlessLink({
       email: payload.email,
       name: payload.name,
       username: payload.username,
-      userData: payload.data,
+      userData: payload.res,
       options: payload.options,
     });
 
     // Should have sent the proper API request
-    expect(axios.post).toHaveBeenCalledWith(
-      `https://api.userfront.com/v0/auth/link`,
-      {
-        tenantId,
-        ...payload,
-      }
-    );
-
-    // Should have returned the response exactly
-    expect(data).toEqual(mockResponse.data);
-  });
-
-  it("should send a request using custom baseUrl if defined", async () => {
-    Userfront.init(tenantId, {
-      baseUrl: customBaseUrl,
-    });
-
-    // Mock the API response
-    const mockResponse = {
-      data: {
-        message: "OK",
-        result: {
-          email: "link-registered@example.com",
-          whatever: "else",
-        },
-      },
-    };
-    axios.post.mockImplementationOnce(() => mockResponse);
-
-    // Call sendPasswordlessLink()
-    const payload = {
-      email: mockResponse.data.result.email,
-      name: idTokenUserDefaults.name,
-      username: idTokenUserDefaults.username,
-      data: idTokenUserDefaults.data,
-      options: {
-        custom: "option",
-      },
-    };
-    const data = await sendPasswordlessLink({
-      email: payload.email,
-      name: payload.name,
-      username: payload.username,
-      userData: payload.data,
-      options: payload.options,
-    });
-
-    // Should have sent the proper API request
-    expect(axios.post).toHaveBeenCalledWith(`${customBaseUrl}auth/link`, {
+    expect(api.post).toHaveBeenCalledWith(`/auth/link`, {
       tenantId,
       ...payload,
     });
@@ -223,20 +134,18 @@ describe("sendPasswordlessLink", () => {
   it("should respond with whatever error the server sends", async () => {
     // Mock the API response
     const mockResponseErr = {
-      response: {
-        data: {
-          error: "Bad Request",
-          message: `That's a dumb email address.`,
-          statusCode: 400,
-        },
+      data: {
+        error: "Bad Request",
+        message: `That's a dumb email address.`,
+        statusCode: 400,
       },
     };
-    axios.post.mockImplementationOnce(() => Promise.reject(mockResponseErr));
+    api.post.mockImplementationOnce(() => Promise.reject(mockResponseErr));
     expect(
       sendPasswordlessLink({
         email: "valid@example.com",
       })
-    ).rejects.toEqual(new Error(mockResponseErr.response.data.message));
+    ).rejects.toEqual(new Error(mockResponseErr.data.message));
   });
 });
 
@@ -259,29 +168,26 @@ describe("loginWithLink", () => {
     mockResponseCopy.data.tokens.id.value = createIdToken(newAttrs);
 
     // Mock the API response
-    axios.put.mockImplementationOnce(() => mockResponseCopy);
+    api.put.mockImplementationOnce(() => mockResponseCopy);
 
     // Call loginWithLink()
     const payload = {
       token: "some-token",
       uuid: "some-uuid",
     };
-    const data = await loginWithLink(payload);
+    const res = await loginWithLink(payload);
 
     // Should have sent the proper API request
-    expect(axios.put).toHaveBeenCalledWith(
-      `https://api.userfront.com/v0/auth/link`,
-      {
-        tenantId,
-        ...payload,
-      }
-    );
+    expect(api.put).toHaveBeenCalledWith(`/auth/link`, {
+      tenantId,
+      ...payload,
+    });
 
     // Should return the correct value
-    expect(data).toEqual(mockResponseCopy.data);
+    expect(data).toEqual(mockResponseCopy.res);
 
     // Should have called exchange() with the API's response
-    expect(exchange).toHaveBeenCalledWith(mockResponseCopy.data);
+    expect(exchange).toHaveBeenCalledWith(mockResponseCopy.res);
 
     // Should have set the user object
     expect(Userfront.user.email).toEqual(newAttrs.email);
@@ -289,39 +195,6 @@ describe("loginWithLink", () => {
 
     // Should have redirected correctly
     expect(window.location.assign).toHaveBeenCalledWith("/dashboard");
-  });
-
-  it("should login and redirect using custom baseUrl", async () => {
-    Userfront.init(tenantId, {
-      baseUrl: customBaseUrl,
-    });
-
-    // Update the userId to ensure it is overwritten
-    const newAttrs = {
-      userId: 2091,
-      email: "linker@example.com",
-    };
-    const mockResponseCopy = JSON.parse(JSON.stringify(mockResponse));
-    mockResponseCopy.data.tokens.id.value = createIdToken(newAttrs);
-
-    // Mock the API response
-    axios.put.mockImplementationOnce(() => mockResponseCopy);
-
-    // Call loginWithLink()
-    const payload = {
-      token: "some-token",
-      uuid: "some-uuid",
-    };
-    const data = await loginWithLink(payload);
-
-    // Should have sent the proper API request
-    expect(axios.put).toHaveBeenCalledWith(`${customBaseUrl}auth/link`, {
-      tenantId,
-      ...payload,
-    });
-
-    // Should return the correct value
-    expect(data).toEqual(mockResponseCopy.data);
   });
 
   it("should read token, uuid, and redirect from the URL if not present", async () => {
@@ -344,25 +217,22 @@ describe("loginWithLink", () => {
     window.location.href = `https://example.com/login?token=${query.token}&uuid=${query.uuid}&redirect=${redirect}`;
 
     // Mock the API response
-    axios.put.mockImplementationOnce(() => mockResponseCopy);
+    api.put.mockImplementationOnce(() => mockResponseCopy);
 
     // Call loginWithLink()
-    const data = await loginWithLink();
+    const res = await loginWithLink();
 
     // Should have sent the proper API request
-    expect(axios.put).toHaveBeenCalledWith(
-      `https://api.userfront.com/v0/auth/link`,
-      {
-        tenantId,
-        ...query,
-      }
-    );
+    expect(api.put).toHaveBeenCalledWith(`/auth/link`, {
+      tenantId,
+      ...query,
+    });
 
     // Should return the correct value
-    expect(data).toEqual(mockResponseCopy.data);
+    expect(data).toEqual(mockResponseCopy.res);
 
     // Should have called exchange() with the API's response
-    expect(exchange).toHaveBeenCalledWith(mockResponseCopy.data);
+    expect(exchange).toHaveBeenCalledWith(mockResponseCopy.res);
 
     // Should have set the user object
     expect(Userfront.user.email).toEqual(newAttrs.email);
@@ -376,26 +246,23 @@ describe("loginWithLink", () => {
   });
 
   it("should not redirect if redirect = false", async () => {
-    axios.put.mockImplementationOnce(() => mockResponse);
+    api.put.mockImplementationOnce(() => mockResponse);
 
     // Call loginWithLink()
     const payload = {
       token: "some-token",
       uuid: "some-uuid",
     };
-    const data = await loginWithLink({
+    const res = await loginWithLink({
       redirect: false,
       ...payload,
     });
 
     // Should have sent the proper API request
-    expect(axios.put).toHaveBeenCalledWith(
-      `https://api.userfront.com/v0/auth/link`,
-      {
-        tenantId,
-        ...payload,
-      }
-    );
+    expect(api.put).toHaveBeenCalledWith(`/auth/link`, {
+      tenantId,
+      ...payload,
+    });
 
     // Should return the correct value
     expect(data).toEqual(mockResponse.data);
@@ -423,22 +290,19 @@ describe("loginWithLink", () => {
       },
     };
 
-    axios.put.mockImplementationOnce(() => mockMfaOptionsResponse);
+    api.put.mockImplementationOnce(() => mockMfaOptionsResponse);
 
     const payload = {
       token: "some-token",
       uuid: "some-uuid",
     };
-    const data = await loginWithLink(payload);
+    const res = await loginWithLink(payload);
 
     // Should have sent the proper API request
-    expect(axios.put).toHaveBeenCalledWith(
-      `https://api.userfront.com/v0/auth/link`,
-      {
-        tenantId,
-        ...payload,
-      }
-    );
+    expect(api.put).toHaveBeenCalledWith(`/auth/link`, {
+      tenantId,
+      ...payload,
+    });
 
     // Should not have set the user object, called exchange, or redirected
     expect(Userfront.user).toBeUndefined;

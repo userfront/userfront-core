@@ -1,7 +1,6 @@
 import Userfront from "../src/index.js";
 import { signonWithSso } from "../src/sso.js";
 import { getQueryAttr } from "../src/url.js";
-import { store } from "../src/store.js";
 import { mockWindow } from "./config/utils.js";
 
 const providers = [
@@ -19,7 +18,6 @@ mockWindow({
 });
 
 const tenantId = "abcdefg";
-const customBaseUrl = "https://custom.example.com/api/v1/";
 
 describe("SSO", () => {
   describe("signonWithSso()", () => {
@@ -40,30 +38,6 @@ describe("SSO", () => {
           `tenant_id=${tenantId}&` +
           `origin=${window.location.origin}&` +
           `redirect=${encodeURIComponent(getQueryAttr("redirect"))}`
-      );
-    });
-
-    it.each(providers)("with each provider; to custom baseUrl", (provider) => {
-      Userfront.init(tenantId, {
-        baseUrl: customBaseUrl,
-      });
-
-      signonWithSso({ provider });
-
-      expect(window.location.assign).toHaveBeenCalledTimes(1);
-      expect(window.location.assign).toHaveBeenCalledWith(
-        `${customBaseUrl}auth/${provider}/login?` +
-          `tenant_id=${tenantId}&` +
-          `origin=${window.location.origin}&` +
-          `redirect=${encodeURIComponent(getQueryAttr("redirect"))}`
-      );
-    });
-
-    it("should throw if no tenantId", async () => {
-      store.tenantId = null;
-
-      expect(() => signonWithSso({ provider: "google" })).toThrow(
-        "Missing tenantId"
       );
     });
   });

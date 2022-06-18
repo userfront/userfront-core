@@ -1,5 +1,5 @@
 import Cookies from "js-cookie";
-import axios from "axios";
+import { get } from "./api.js";
 import { setCookiesAndTokens } from "./cookies.js";
 import { store } from "./store.js";
 // import { getIframe, postMessageAsPromise } from "./iframe.js";
@@ -29,7 +29,7 @@ export async function refresh() {
 async function basicRefresh() {
   const refreshToken = Cookies.get(store.tokens.refreshTokenName);
   try {
-    const { data, status } = await axios.get(`${store.baseUrl}auth/refresh`, {
+    const { data, status } = await get(`/auth/refresh`, {
       headers: {
         authorization: `Bearer ${refreshToken}`,
       },

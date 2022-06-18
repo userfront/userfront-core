@@ -3,8 +3,7 @@
  * between Userfront.refresh() [which requires setUser()]
  * and Userfront.user.update() [which requires refresh()].
  */
-
-import axios from "axios";
+import { put } from "./api.js";
 import { refresh } from "./refresh.js";
 import { store } from "./store.js";
 import { getJWTPayload } from "./utils.js";
@@ -19,7 +18,7 @@ export async function update(payload) {
   }
 
   // Make request to update the user
-  await axios.put(`${store.baseUrl}self`, payload, {
+  await put(`/self`, payload, {
     headers: {
       authorization: `Bearer ${store.tokens.accessToken}`,
     },

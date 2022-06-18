@@ -1,7 +1,6 @@
-import axios from "axios";
 import Cookies from "js-cookie";
-
 import Userfront from "../src/index.js";
+import api from "../src/api.js";
 import {
   createAccessToken,
   createIdToken,
@@ -13,17 +12,12 @@ import { login } from "../src/login.js";
 import { logout } from "../src/logout.js";
 import { unsetTokens } from "../src/tokens.js";
 
+jest.mock("../src/api.js");
+
 const tenantId = "abcd9876";
 const mockAccessToken = createAccessToken();
 const mockIdToken = createIdToken();
 
-jest.mock("../src/refresh.js", () => {
-  return {
-    __esModule: true,
-    exchange: jest.fn(),
-  };
-});
-jest.mock("axios");
 // Mock API response
 const mockResponse = {
   data: {
@@ -45,7 +39,7 @@ mockWindow({
 describe("completeSamlLogin()", () => {
   beforeAll(() => {
     // Clear any mock
-    axios.get.mockReset();
+    api.get.mockReset();
   });
 
   beforeEach(() => {
@@ -70,7 +64,7 @@ describe("completeSamlLogin()", () => {
     console.warn.mockClear();
 
     // Should not have made request to /auth/saml/idp/token or redirected the user
-    expect(axios.get).not.toHaveBeenCalled();
+    expect(api.get).not.toHaveBeenCalled();
     expect(window.location.assign).not.toHaveBeenCalled();
   });
 
@@ -86,26 +80,23 @@ describe("completeSamlLogin()", () => {
     expect(Userfront.tokens.accessToken).toBeUndefined;
 
     // 1. Log user in
-    axios.post.mockImplementationOnce(() => mockResponse);
+    api.post.mockImplementationOnce(() => mockResponse);
     const payload = {
       emailOrUsername: idTokenUserDefaults.email,
       password: "something",
     };
-    const res = await login({
+    const data = await login({
       method: "password",
       ...payload,
     });
     // Should have sent the proper API request
-    expect(axios.post).toHaveBeenCalledWith(
-      `https://api.userfront.com/v0/auth/basic`,
-      {
-        tenantId,
-        ...payload,
-      }
-    );
+    expect(api.post).toHaveBeenCalledWith(`/auth/basic`, {
+      tenantId,
+      ...payload,
+    });
 
     // Should have returned the proper value
-    expect(res).toEqual(mockResponse.data);
+    expect(data).toEqual(mockResponse.data);
 
     // Should have set the user object
     expect(Userfront.user.email).toEqual(idTokenUserDefaults.email);
@@ -117,21 +108,18 @@ describe("completeSamlLogin()", () => {
     const mockTokenResponse = {
       data: { token: "foo-bar-1234" },
     };
-    axios.get.mockImplementationOnce(() => mockTokenResponse);
+    api.get.mockImplementationOnce(() => mockTokenResponse);
 
     // 2. Call login
     await login({ method: "saml" });
 
     // 3. Assert GET /auth/saml/idp/token request was made
     expect(console.warn).not.toHaveBeenCalled();
-    expect(axios.get).toHaveBeenCalledWith(
-      `${Userfront.store.baseUrl}auth/saml/idp/token`,
-      {
-        headers: {
-          authorization: `Bearer ${Userfront.tokens.accessToken}`,
-        },
-      }
-    );
+    expect(api.get).toHaveBeenCalledWith(`/auth/saml/idp/token`, {
+      headers: {
+        authorization: `Bearer ${Userfront.tokens.accessToken}`,
+      },
+    });
 
     // 4. Assert client was redirected to /auth/saml/idp/login with token from step 3
     expect(window.location.assign).toHaveBeenCalledWith(
@@ -153,7 +141,7 @@ describe("completeSamlLogin()", () => {
         },
       },
     };
-    axios.get.mockImplementationOnce(() => Promise.reject(mockResponse));
+    api.get.mockImplementationOnce(() => Promise.reject(mockResponse));
     expect(login({ method: "saml" })).rejects.toEqual(
       new Error(mockResponse.response.data.message)
     );
@@ -162,7 +150,7 @@ describe("completeSamlLogin()", () => {
 
 describe("logout({ method: 'saml' })", () => {
   beforeEach(() => {
-    axios.get.mockReset();
+    api.get.mockReset();
     Cookies.set(`id.${tenantId}`, mockIdToken, {});
     Cookies.set(`access.${tenantId}`, mockAccessToken, {});
     Userfront.init(tenantId);
@@ -178,7 +166,7 @@ describe("logout({ method: 'saml' })", () => {
     const mockTokenResponse = {
       data: { token: "foo-bar-1234" },
     };
-    axios.get.mockImplementationOnce(() => mockTokenResponse);
+    api.get.mockImplementationOnce(() => mockTokenResponse);
 
     // Access token, ID token, and user should all exist before and after logging
     // out of service provider (should not log user out of tenant application, only
@@ -194,14 +182,11 @@ describe("logout({ method: 'saml' })", () => {
     await logout({ method: "saml" });
 
     // Assert GET /auth/saml/idp/token request was made
-    expect(axios.get).toHaveBeenCalledWith(
-      `${Userfront.store.baseUrl}auth/saml/idp/token`,
-      {
-        headers: {
-          authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
+    expect(api.get).toHaveBeenCalledWith(`/auth/saml/idp/token`, {
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+      },
+    });
 
     // Assert client was redirected to /auth/saml/idp/logout with token
     expect(window.location.assign).toHaveBeenCalledWith(
@@ -243,7 +228,7 @@ describe("logout({ method: 'saml' })", () => {
     }
 
     // Should not have made request to /auth/saml/idp/token or redirected the user
-    expect(axios.get).not.toHaveBeenCalled();
+    expect(api.get).not.toHaveBeenCalled();
     expect(window.location.assign).not.toHaveBeenCalled();
 
     // Should not have modified ID token or user
@@ -256,7 +241,6 @@ describe("logout({ method: 'saml' })", () => {
 
   it(`error should respond with any error server sends`, async () => {
     // Mock the API response
-    // https://axios-http.com/docs/handling_errors
     const mockResponse = {
       response: {
         status: 400,
@@ -267,7 +251,7 @@ describe("logout({ method: 'saml' })", () => {
         },
       },
     };
-    axios.get.mockImplementationOnce(() => Promise.reject(mockResponse));
+    api.get.mockImplementationOnce(() => Promise.reject(mockResponse));
 
     // logout() should throw error
     try {

@@ -63,7 +63,8 @@ describe("init() method with domain option", () => {
     expect(axios.defaults.headers.common["x-application-id"]).toEqual(url);
     expect(axios.defaults.headers.common["x-origin"]).toEqual(url);
     expect(axios.get).toHaveBeenCalledWith(
-      `https://api.userfront.com/v0/tenants/${tenantId}/mode`
+      `https://api.userfront.com/v0/tenants/${tenantId}/mode`,
+      undefined
     );
     expect(store.mode).toEqual("live");
   });
@@ -89,7 +90,8 @@ describe("init() method with domain option", () => {
         name: undefined,
         data: undefined,
         tenantId,
-      }
+      },
+      undefined
     );
   });
 
@@ -112,7 +114,8 @@ describe("init() method with domain option", () => {
         emailOrUsername: email,
         password,
         tenantId,
-      }
+      },
+      undefined
     );
   });
 

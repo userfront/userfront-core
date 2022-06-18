@@ -1,6 +1,5 @@
-import axios from "axios";
-
 import Userfront from "../src/index.js";
+import api from "../src/api.js";
 import {
   createAccessToken,
   createIdToken,
@@ -8,20 +7,13 @@ import {
   idTokenUserDefaults,
   mockWindow,
 } from "./config/utils.js";
-import { signupWithPassword, loginWithPassword } from "../src/password.js";
 import { exchange } from "../src/refresh.js";
+import { signupWithPassword, loginWithPassword } from "../src/password.js";
 
-jest.mock("../src/refresh.js", () => {
-  return {
-    __esModule: true,
-    exchange: jest.fn(),
-  };
-});
-jest.mock("../src/totp.js");
-jest.mock("axios");
+jest.mock("../src/api.js");
+jest.mock("../src/refresh.js");
 
 const tenantId = "abcd9876";
-const customBaseUrl = "https://pass.word.example.com/password/";
 
 mockWindow({
   origin: "https://example.com",
@@ -52,7 +44,7 @@ describe("signupWithPassword()", () => {
 
   it("should send a request, set access and ID cookies, and initiate nonce exchange", async () => {
     // Mock the API response
-    axios.post.mockImplementationOnce(() => mockResponse);
+    api.post.mockImplementationOnce(() => mockResponse);
 
     // Call signupWithPassword()
     const payload = {
@@ -64,16 +56,13 @@ describe("signupWithPassword()", () => {
     const data = await signupWithPassword(payload);
 
     // Should have sent the proper API request
-    expect(axios.post).toHaveBeenCalledWith(
-      `https://api.userfront.com/v0/auth/create`,
-      {
-        tenantId,
-        email: payload.email,
-        name: payload.name,
-        data: payload.userData,
-        password: payload.password,
-      }
-    );
+    expect(api.post).toHaveBeenCalledWith(`/auth/create`, {
+      tenantId,
+      email: payload.email,
+      name: payload.name,
+      data: payload.userData,
+      password: payload.password,
+    });
 
     // Should have called exchange() with the API's response
     expect(exchange).toHaveBeenCalledWith(mockResponse.data);
@@ -93,7 +82,7 @@ describe("signupWithPassword()", () => {
 
   it("should sign up and redirect to provided path", async () => {
     // Mock the API response
-    axios.post.mockImplementationOnce(() => mockResponse);
+    api.post.mockImplementationOnce(() => mockResponse);
 
     // Call signupWithPassword()
     const payload = {
@@ -104,14 +93,11 @@ describe("signupWithPassword()", () => {
     const data = await signupWithPassword(payload);
 
     // Should have sent the proper API request
-    expect(axios.post).toHaveBeenCalledWith(
-      `https://api.userfront.com/v0/auth/create`,
-      {
-        tenantId,
-        email: payload.email,
-        password: payload.password,
-      }
-    );
+    expect(api.post).toHaveBeenCalledWith(`/auth/create`, {
+      tenantId,
+      email: payload.email,
+      password: payload.password,
+    });
 
     // Should have called exchange() with the API's response
     expect(exchange).toHaveBeenCalledWith(mockResponse.data);
@@ -137,7 +123,7 @@ describe("signupWithPassword()", () => {
     mockResponseCopy.data.tokens.id.value = createIdToken(newAttrs);
 
     // Mock the API response
-    axios.post.mockImplementationOnce(() => mockResponseCopy);
+    api.post.mockImplementationOnce(() => mockResponseCopy);
 
     // Call signupWithPassword() with redirect = false
     const payload = {
@@ -150,13 +136,10 @@ describe("signupWithPassword()", () => {
     });
 
     // Should have sent the proper API request
-    expect(axios.post).toHaveBeenCalledWith(
-      `https://api.userfront.com/v0/auth/create`,
-      {
-        tenantId,
-        ...payload,
-      }
-    );
+    expect(api.post).toHaveBeenCalledWith(`/auth/create`, {
+      tenantId,
+      ...payload,
+    });
 
     // Should have called exchange() with the API's response
     expect(exchange).toHaveBeenCalledWith(mockResponse.data);
@@ -167,28 +150,6 @@ describe("signupWithPassword()", () => {
 
     // Should not have redirected
     expect(window.location.assign).not.toHaveBeenCalled();
-  });
-
-  it("should sign up using custom baseUrl if defined", async () => {
-    Userfront.init(tenantId, {
-      baseUrl: customBaseUrl,
-    });
-
-    // Mock the API response
-    axios.post.mockImplementationOnce(() => mockResponse);
-
-    // Call signupWithPassword()
-    const payload = {
-      email: "user@example.com",
-      password: "something",
-    };
-    await signupWithPassword(payload);
-
-    // Should have sent the proper API request
-    expect(axios.post).toHaveBeenCalledWith(`${customBaseUrl}auth/create`, {
-      tenantId,
-      ...payload,
-    });
   });
 
   it("should respond with whatever error the server sends", async () => {
@@ -202,7 +163,7 @@ describe("signupWithPassword()", () => {
         },
       },
     };
-    axios.post.mockImplementationOnce(() => Promise.reject(mockResponse));
+    api.post.mockImplementationOnce(() => Promise.reject(mockResponse));
     expect(
       signupWithPassword({
         email: "valid@example.com",
@@ -224,7 +185,7 @@ describe("loginWithPassword()", () => {
   describe("with username & password", () => {
     it("should send a request, set access and ID cookies, and initiate nonce exchange", async () => {
       // Mock the API response
-      axios.post.mockImplementationOnce(() => mockResponse);
+      api.post.mockImplementationOnce(() => mockResponse);
 
       // Call loginWithPassword()
       const payload = {
@@ -234,13 +195,10 @@ describe("loginWithPassword()", () => {
       const data = await loginWithPassword(payload);
 
       // Should have sent the proper API request
-      expect(axios.post).toHaveBeenCalledWith(
-        `https://api.userfront.com/v0/auth/basic`,
-        {
-          tenantId,
-          ...payload,
-        }
-      );
+      expect(api.post).toHaveBeenCalledWith(`/auth/basic`, {
+        tenantId,
+        ...payload,
+      });
 
       // Should have returned the proper value
       expect(data).toEqual(mockResponse.data);
@@ -258,31 +216,6 @@ describe("loginWithPassword()", () => {
       );
     });
 
-    it("should send a login request using custom baseUrl if defined", async () => {
-      Userfront.init(tenantId, {
-        baseUrl: customBaseUrl,
-      });
-
-      // Mock the API response
-      axios.post.mockImplementationOnce(() => mockResponse);
-
-      // Call loginWithPassword()
-      const payload = {
-        emailOrUsername: idTokenUserDefaults.email,
-        password: "something",
-      };
-      const data = await loginWithPassword(payload);
-
-      // Should have sent the proper API request
-      expect(axios.post).toHaveBeenCalledWith(`${customBaseUrl}auth/basic`, {
-        tenantId,
-        ...payload,
-      });
-
-      // Should have returned the proper value
-      expect(data).toEqual(mockResponse.data);
-    });
-
     it("should login and not redirect if redirect = false", async () => {
       // Update the userId to ensure it is overwritten
       const newAttrs = {
@@ -293,7 +226,7 @@ describe("loginWithPassword()", () => {
       mockResponseCopy.data.tokens.id.value = createIdToken(newAttrs);
 
       // Mock the API response
-      axios.post.mockImplementationOnce(() => mockResponseCopy);
+      api.post.mockImplementationOnce(() => mockResponseCopy);
 
       // Call loginWithPassword() with redirect = false
       const payload = {
@@ -306,14 +239,11 @@ describe("loginWithPassword()", () => {
       });
 
       // Should have sent the proper API request
-      expect(axios.post).toHaveBeenCalledWith(
-        `https://api.userfront.com/v0/auth/basic`,
-        {
-          tenantId,
-          emailOrUsername: payload.email,
-          password: payload.password,
-        }
-      );
+      expect(api.post).toHaveBeenCalledWith(`/auth/basic`, {
+        tenantId,
+        emailOrUsername: payload.email,
+        password: payload.password,
+      });
 
       // Should have called exchange() with the API's response
       expect(exchange).toHaveBeenCalledWith(mockResponseCopy.data);
@@ -330,7 +260,7 @@ describe("loginWithPassword()", () => {
     });
 
     it("should login and redirect to a provided path", async () => {
-      axios.post.mockImplementationOnce(() => mockResponse);
+      api.post.mockImplementationOnce(() => mockResponse);
 
       // Call loginWithPassword() with redirect = false
       const payload = {
@@ -343,13 +273,10 @@ describe("loginWithPassword()", () => {
       });
 
       // Should have sent the proper API request
-      expect(axios.post).toHaveBeenCalledWith(
-        `https://api.userfront.com/v0/auth/basic`,
-        {
-          tenantId,
-          ...payload,
-        }
-      );
+      expect(api.post).toHaveBeenCalledWith(`/auth/basic`, {
+        tenantId,
+        ...payload,
+      });
 
       // Should have called exchange() with the API's response
       expect(exchange).toHaveBeenCalledWith(mockResponse.data);
@@ -373,7 +300,7 @@ describe("loginWithPassword()", () => {
           },
         },
       };
-      axios.post.mockImplementationOnce(() => Promise.reject(mockResponse));
+      api.post.mockImplementationOnce(() => Promise.reject(mockResponse));
       expect(
         loginWithPassword({
           email: "valid@example.com",

@@ -1,6 +1,5 @@
-import axios from "axios";
-
 import Userfront from "../src/index.js";
+import api from "../src/api.js";
 import {
   createAccessToken,
   createIdToken,
@@ -11,16 +10,10 @@ import {
 import { loginWithTotp } from "../src/totp.js";
 import { exchange } from "../src/refresh.js";
 
-jest.mock("../src/refresh.js", () => {
-  return {
-    __esModule: true,
-    exchange: jest.fn(),
-  };
-});
-jest.mock("axios");
+jest.mock("../src/api.js");
+jest.mock("../src/refresh.js");
 
 const tenantId = "abcd9876";
-const customBaseUrl = "https://custom.example.com/totp/";
 
 mockWindow({
   origin: "https://example.com",
@@ -59,7 +52,7 @@ describe("loginWithTotp()", () => {
     mockResponseCopy.data.tokens.id.value = createIdToken(newAttrs);
 
     // Mock the API response
-    axios.post.mockImplementationOnce(() => mockResponseCopy);
+    api.post.mockImplementationOnce(() => mockResponseCopy);
 
     // Call loginWithTotp()
     const payload = {
@@ -69,13 +62,10 @@ describe("loginWithTotp()", () => {
     const data = await loginWithTotp(payload);
 
     // Should have sent the proper API request
-    expect(axios.post).toHaveBeenCalledWith(
-      `https://api.userfront.com/v0/auth/totp`,
-      {
-        tenantId,
-        ...payload,
-      }
-    );
+    expect(api.post).toHaveBeenCalledWith(`/auth/totp`, {
+      tenantId,
+      ...payload,
+    });
 
     // Should return the correct value
     expect(data).toEqual(mockResponseCopy.data);
@@ -89,39 +79,6 @@ describe("loginWithTotp()", () => {
 
     // Should have redirected correctly
     expect(window.location.assign).toHaveBeenCalledWith("/dashboard");
-  });
-
-  it("should login and redirect using custom baseUrl", async () => {
-    Userfront.init(tenantId, {
-      baseUrl: customBaseUrl,
-    });
-
-    // To ensure they are updated on client
-    const newAttrs = {
-      userId: 2091,
-      email: "linker@example.com",
-    };
-    const mockResponseCopy = JSON.parse(JSON.stringify(mockResponse));
-    mockResponseCopy.data.tokens.id.value = createIdToken(newAttrs);
-
-    // Mock the API response
-    axios.post.mockImplementationOnce(() => mockResponseCopy);
-
-    // Call loginWithTotp()
-    const payload = {
-      userId: 123,
-      totpCode: "345678",
-    };
-    const data = await loginWithTotp(payload);
-
-    // Should have sent the proper API request
-    expect(axios.post).toHaveBeenCalledWith(`${customBaseUrl}auth/totp`, {
-      tenantId,
-      ...payload,
-    });
-
-    // Should return the correct value
-    expect(data).toEqual(mockResponseCopy.data);
   });
 
   it("should read redirect from the URL if not present", async () => {
@@ -139,7 +96,7 @@ describe("loginWithTotp()", () => {
     window.location.href = `https://example.com/login?redirect=${redirect}`;
 
     // Mock the API response
-    axios.post.mockImplementationOnce(() => mockResponseCopy);
+    api.post.mockImplementationOnce(() => mockResponseCopy);
 
     const payload = {
       userId: 123,
@@ -150,13 +107,10 @@ describe("loginWithTotp()", () => {
     const data = await loginWithTotp(payload);
 
     // Should have sent the proper API request
-    expect(axios.post).toHaveBeenCalledWith(
-      `https://api.userfront.com/v0/auth/totp`,
-      {
-        tenantId,
-        ...payload,
-      }
-    );
+    expect(api.post).toHaveBeenCalledWith(`/auth/totp`, {
+      tenantId,
+      ...payload,
+    });
 
     // Should return the correct value
     expect(data).toEqual(mockResponseCopy.data);
@@ -176,7 +130,7 @@ describe("loginWithTotp()", () => {
   });
 
   it("should not redirect if redirect = false", async () => {
-    axios.post.mockImplementationOnce(() => mockResponse);
+    api.post.mockImplementationOnce(() => mockResponse);
 
     // Call loginWithTotp()
     const payload = {
@@ -189,13 +143,10 @@ describe("loginWithTotp()", () => {
     });
 
     // Should have sent the proper API request
-    expect(axios.post).toHaveBeenCalledWith(
-      `https://api.userfront.com/v0/auth/totp`,
-      {
-        tenantId,
-        ...payload,
-      }
-    );
+    expect(api.post).toHaveBeenCalledWith(`/auth/totp`, {
+      tenantId,
+      ...payload,
+    });
 
     // Should return the correct value
     expect(data).toEqual(mockResponse.data);

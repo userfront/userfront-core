@@ -1,7 +1,7 @@
-import axios from "axios";
+import { post } from "./api.js";
 import { setCookiesAndTokens } from "./cookies.js";
 import { store } from "./store.js";
-import { getQueryAttr, redirectToPath } from "./url.js";
+import { handleRedirect } from "./url.js";
 import { exchange } from "./refresh.js";
 import { throwFormattedError } from "./utils.js";
 
@@ -33,7 +33,7 @@ export async function loginWithTotp({
   try {
     if (!totpCode && !backupCode) return;
 
-    const { data } = await axios.post(`${store.baseUrl}auth/totp`, {
+    const { data } = await post(`/auth/totp`, {
       totpCode,
       backupCode,
       userId,
@@ -48,10 +48,7 @@ export async function loginWithTotp({
     if (data.hasOwnProperty("tokens")) {
       setCookiesAndTokens(data.tokens);
       await exchange(data);
-      if (redirect === false) return data;
-      redirectToPath(
-        redirect || getQueryAttr("redirect") || data.redirectTo || "/"
-      );
+      handleRedirect({ redirect, data });
       return data;
     }
 

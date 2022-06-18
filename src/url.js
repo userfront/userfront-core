@@ -1,5 +1,4 @@
-import axios from "axios";
-
+import { get } from "./api.js";
 import { store } from "./store.js";
 import { removeAllCookies } from "./cookies.js";
 
@@ -21,6 +20,18 @@ export function getQueryAttr(attrName) {
   );
 }
 
+/**
+ * Redirect the browser based on explicit redirect input path, or the API response
+ * @property {String|Boolean} redirect A path to redirect to, or false to not redirect
+ * @property {Object} data The response object from the API
+ * @returns
+ */
+export const handleRedirect = ({ redirect, data }) => {
+  if (redirect === false) return;
+  const path = redirect || getQueryAttr("redirect") || data.redirectTo || "/";
+  redirectToPath(path);
+};
+
 // TODO replace with direct check of the access token.
 /**
  * If the access token is valid, redirect the browser to the
@@ -40,7 +51,7 @@ export async function redirectIfLoggedIn({ redirect } = {}) {
 
   // If no path was provided, look up the path and then redirect there
   try {
-    const { data } = await axios.get(`${store.baseUrl}self`, {
+    const { data } = await get(`/self`, {
       headers: {
         authorization: `Bearer ${store.tokens.accessToken}`,
       },

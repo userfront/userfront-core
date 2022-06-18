@@ -14,16 +14,10 @@ import {
 import Userfront from "../src/index.js";
 
 jest.mock("axios");
-jest.mock("../src/refresh.js", () => {
-  return {
-    __esModule: true,
-    refresh: jest.fn(),
-  };
-});
+jest.mock("../src/refresh.js");
 console.warn = jest.fn();
 
 const tenantId = "hijk9876";
-const customBaseUrl = "https://custom.example.com/api/v1/";
 
 describe("User", () => {
   beforeAll(async () => {
@@ -104,34 +98,6 @@ describe("User", () => {
 
       // Should have made API request
       expect(axios.put).toBeCalledWith(`${apiUrl}self`, payload, {
-        headers: {
-          authorization: `Bearer ${Userfront.tokens.accessToken}`,
-        },
-      });
-
-      // Should have called `refresh` function
-      expect(refresh).toHaveBeenCalledTimes(1);
-      expect(refresh).toHaveBeenCalledWith();
-      refresh.mockClear();
-    });
-
-    it("should call update using custom baseUrl", async () => {
-      Userfront.init(tenantId, {
-        baseUrl: customBaseUrl,
-      });
-
-      const payload = {
-        username: "john-foo",
-        data: {
-          country: "Argentina",
-        },
-      };
-
-      // Call the update method
-      await Userfront.user.update(payload);
-
-      // Should have made API request
-      expect(axios.put).toBeCalledWith(`${customBaseUrl}self`, payload, {
         headers: {
           authorization: `Bearer ${Userfront.tokens.accessToken}`,
         },

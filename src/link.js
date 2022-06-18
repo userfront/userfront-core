@@ -1,7 +1,7 @@
-import axios from "axios";
+import { post, put } from "./api.js";
 import { setCookiesAndTokens } from "./cookies.js";
 import { store } from "./store.js";
-import { getQueryAttr, redirectToPath } from "./url.js";
+import { getQueryAttr, handleRedirect } from "./url.js";
 import { exchange } from "./refresh.js";
 import { throwFormattedError } from "./utils.js";
 
@@ -18,7 +18,7 @@ export async function loginWithLink({ token, uuid, redirect } = {}) {
     uuid = uuid || getQueryAttr("uuid");
     if (!token || !uuid) return;
 
-    const { data } = await axios.put(`${store.baseUrl}auth/link`, {
+    const { data } = await put("/auth/link", {
       token,
       uuid,
       tenantId: store.tenantId,
@@ -27,10 +27,7 @@ export async function loginWithLink({ token, uuid, redirect } = {}) {
     if (data.hasOwnProperty("tokens")) {
       setCookiesAndTokens(data.tokens);
       await exchange(data);
-      if (redirect === false) return data;
-      redirectToPath(
-        redirect || getQueryAttr("redirect") || data.redirectTo || "/"
-      );
+      handleRedirect({ redirect, data });
       return data;
     }
 
@@ -50,7 +47,7 @@ export async function loginWithLink({ token, uuid, redirect } = {}) {
  */
 export async function sendLoginLink(email) {
   try {
-    const { data } = await axios.post(`${store.baseUrl}auth/link`, {
+    const { data } = await post(`/auth/link`, {
       email,
       tenantId: store.tenantId,
     });
@@ -72,7 +69,7 @@ export async function sendPasswordlessLink({
   options,
 }) {
   try {
-    const { data } = await axios.post(`${store.baseUrl}auth/link`, {
+    const { data } = await post(`/auth/link`, {
       email,
       name,
       username,

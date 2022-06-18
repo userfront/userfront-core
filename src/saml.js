@@ -1,4 +1,4 @@
-import axios from "axios";
+import { get } from "./api.js";
 import { store } from "./store.js";
 import { throwFormattedError } from "./utils.js";
 
@@ -8,7 +8,7 @@ export async function completeSamlLogin() {
       return console.warn("Cannot complete SAML login without access token");
     }
 
-    const { data } = await axios.get(`${store.baseUrl}auth/saml/idp/token`, {
+    const { data } = await get(`/auth/saml/idp/token`, {
       headers: {
         authorization: `Bearer ${store.tokens.accessToken}`,
       },

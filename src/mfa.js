@@ -1,9 +1,9 @@
-import axios from "axios";
 import { setCookiesAndTokens } from "./cookies.js";
 import { store } from "./store.js";
-import { getQueryAttr, redirectToPath } from "./url.js";
+import { handleRedirect } from "./url.js";
 import { exchange } from "./refresh.js";
 import { throwFormattedError } from "./utils.js";
+import { post, put } from "./api.js";
 
 /**
  * Send an SMS to a phone number
@@ -55,7 +55,7 @@ export async function sendVerificationCode({
   }
 
   try {
-    const { data } = await axios.post(`${store.baseUrl}auth/mfa`, {
+    const { data } = await post(`/auth/mfa`, {
       tenantId: store.tenantId,
       firstFactorCode,
       strategy,
@@ -86,7 +86,7 @@ export async function loginWithVerificationCode({
   }
 
   try {
-    const { data } = await axios.put(`${store.baseUrl}auth/mfa`, {
+    const { data } = await put(`/auth/mfa`, {
       tenantId: store.tenantId,
       firstFactorCode,
       verificationCode,
@@ -94,13 +94,7 @@ export async function loginWithVerificationCode({
 
     setCookiesAndTokens(data.tokens);
     await exchange(data);
-    if (redirect === false) {
-      return data;
-    }
-
-    redirectToPath(
-      redirect || getQueryAttr("redirect") || data.redirectTo || "/"
-    );
+    handleRedirect({ redirect, data });
     return data;
   } catch (error) {
     throwFormattedError(error);

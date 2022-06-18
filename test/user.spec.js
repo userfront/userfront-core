@@ -1,5 +1,5 @@
-import axios from "axios";
-
+import Userfront from "../src/index.js";
+import api from "../src/api";
 import { apiUrl } from "../src/constants.js";
 import { setCookie } from "../src/cookies.js";
 import { setUser } from "../src/user.js";
@@ -11,9 +11,8 @@ import {
   idTokenUserDefaults,
   defaultIdTokenProperties,
 } from "./config/utils.js";
-import Userfront from "../src/index.js";
 
-jest.mock("axios");
+jest.mock("../src/api.js");
 jest.mock("../src/refresh.js");
 console.warn = jest.fn();
 
@@ -97,7 +96,7 @@ describe("User", () => {
       await Userfront.user.update(payload);
 
       // Should have made API request
-      expect(axios.put).toBeCalledWith(`${apiUrl}self`, payload, {
+      expect(api.put).toBeCalledWith(`/self`, payload, {
         headers: {
           authorization: `Bearer ${Userfront.tokens.accessToken}`,
         },
@@ -154,7 +153,7 @@ describe("User", () => {
 
       const payload = { name: "Jane Doe" };
 
-      axios.put.mockImplementationOnce(() =>
+      api.put.mockImplementationOnce(() =>
         Promise.reject(new Error("Bad Request"))
       );
 
@@ -162,7 +161,7 @@ describe("User", () => {
       expect(Userfront.user.update(payload)).rejects.toThrow("Bad Request");
 
       // Should have made "update user" API request
-      expect(axios.put).toBeCalledWith(`${apiUrl}self`, payload, {
+      expect(api.put).toBeCalledWith(`/self`, payload, {
         headers: {
           authorization: `Bearer ${originalTokens.accessToken}`,
         },

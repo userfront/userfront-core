@@ -38,7 +38,7 @@ const mockResponse = {
   },
 };
 
-describe("sendResetLink", () => {
+describe("sendResetLink()", () => {
   beforeEach(() => {
     Userfront.init(tenantId);
   });
@@ -61,20 +61,16 @@ describe("sendResetLink", () => {
   });
 });
 
-describe("resetPassword", () => {
+describe("resetPassword()", () => {
   it("should be an alias for updatePassword()", () => {
     expect(resetPassword).toEqual(updatePassword);
   });
 });
 
-describe("updatePassword", () => {
+describe("updatePassword()", () => {
   beforeEach(() => {
     Userfront.init(tenantId);
-  });
-
-  afterEach(() => {
-    window.location.assign.mockClear();
-
+    jest.resetAllMocks();
     // Remove token and uuid from the URL
     window.location.href = "https://example.com/reset";
   });

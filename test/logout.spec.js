@@ -4,13 +4,11 @@ import Userfront from "../src/index.js";
 import api from "../src/api.js";
 import { getIframe, resolvers } from "../src/iframe.js";
 import { logout } from "../src/logout.js";
-import {
-  createAccessToken,
-  createIdToken,
-  mockWindow,
-} from "./config/utils.js";
+import { handleRedirect } from "../src/url.js";
+import { createAccessToken, createIdToken } from "./config/utils.js";
 
 jest.mock("../src/api.js");
+jest.mock("../src/url.js");
 
 const tenantId = "abcd9876";
 const mockAccessToken = createAccessToken();
@@ -24,20 +22,12 @@ const mockResponse = {
   },
 };
 
-mockWindow({
-  origin: "https://example.com",
-  href: "https://example.com/login",
-});
-
 describe("logout", () => {
   beforeEach(() => {
     Cookies.set(`id.${tenantId}`, mockIdToken, {});
     Cookies.set(`access.${tenantId}`, mockAccessToken, {});
     Userfront.init(tenantId);
-  });
-
-  afterEach(() => {
-    window.location.assign.mockClear();
+    jest.resetAllMocks();
   });
 
   describe("basic logout (non-httpOnly)", () => {
@@ -72,10 +62,10 @@ describe("logout", () => {
       expect(Userfront.user.userId).toBeFalsy();
       expect(Userfront.user.update).toBeTruthy();
 
-      // Should have redirected correctly
-      expect(window.location.assign).toHaveBeenCalledWith(
-        mockResponse.data.redirectTo
-      );
+      // Should redirect correctly
+      expect(handleRedirect).toHaveBeenCalledWith({
+        data: mockResponse.data,
+      });
     });
 
     it("should send a request to logout, then redirect to custom path", async () => {
@@ -109,8 +99,11 @@ describe("logout", () => {
       expect(Userfront.user.userId).toBeFalsy();
       expect(Userfront.user.update).toBeTruthy();
 
-      // Should have redirected correctly
-      expect(window.location.assign).toHaveBeenCalledWith("/custom");
+      // Should redirect correctly
+      expect(handleRedirect).toHaveBeenCalledWith({
+        redirect: "/custom",
+        data: mockResponse.data,
+      });
     });
 
     it("should send a request to logout, then not redirect if redirect is false", async () => {
@@ -144,8 +137,11 @@ describe("logout", () => {
       expect(Userfront.user.userId).toBeFalsy();
       expect(Userfront.user.update).toBeTruthy();
 
-      // Should have redirected correctly
-      expect(window.location.assign).not.toHaveBeenCalled();
+      // Should redirect correctly
+      expect(handleRedirect).toHaveBeenCalledWith({
+        redirect: false,
+        data: mockResponse.data,
+      });
     });
   });
 

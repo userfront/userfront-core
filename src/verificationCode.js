@@ -12,6 +12,9 @@ import { throwFormattedError } from "./utils.js";
  * @property {String} email
  */
 function enforceChannel({ channel, phoneNumber, email }) {
+  if (channel !== "sms" && channel !== "email") {
+    throw new Error("Invalid channel");
+  }
   if (channel === "sms" && !phoneNumber) {
     throw new Error(`SMS verification code requires "phoneNumber"`);
   } else if (channel === "email" && !email) {
@@ -77,7 +80,7 @@ export async function loginWithVerificationCode({
       phoneNumber,
       tenantId: store.tenantId,
     });
-    console.log(data);
+
     if (data.hasOwnProperty("tokens")) {
       setCookiesAndTokens(data.tokens);
       await exchange(data);

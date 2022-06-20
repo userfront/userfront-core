@@ -1,19 +1,27 @@
 import { loginWithPassword } from "./password.js";
-import { signonWithSso } from "./sso.js";
 import { loginWithLink, sendPasswordlessLink } from "./link.js";
+import { signonWithSso } from "./sso.js";
 import { loginWithTotp } from "./totp.js";
+import { loginWithVerificationCode } from "./verificationCode.js";
 import { completeSamlLogin } from "./saml.js";
 
 /**
  * Log a user in via the provided method. This method serves to call other
  * methods, depending on the "method" parameter passed in.
  * @param {String} method
+ * @param {Number} userId
+ * @param {String} userUuid
  * @param {String} email
  * @param {String} username
  * @param {String} emailOrUsername
+ * @param {String} phoneNumber
  * @param {String} password
  * @param {String} token
  * @param {String} uuid
+ * @param {String} totpCode
+ * @param {String} backupCode
+ * @param {String} channel "sms" or "email"
+ * @param {String} verificationCode
  * @param {String} redirect - do not redirect if false, or redirect to given path
  */
 export async function login({
@@ -33,8 +41,8 @@ export async function login({
   // Totp
   totpCode,
   backupCode,
-  // Mfa
-  firstFactorCode,
+  // Verification code
+  channel,
   verificationCode,
   // Other
   redirect,
@@ -72,6 +80,14 @@ export async function login({
         email,
         username,
         phoneNumber,
+        redirect,
+      });
+    case "verificationCode":
+      return loginWithVerificationCode({
+        channel,
+        email,
+        phoneNumber,
+        verificationCode,
         redirect,
       });
     case "saml":

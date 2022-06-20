@@ -1,37 +1,29 @@
 import Userfront from "../src/index.js";
-import { mockWindow } from "./config/utils.js";
-
 import { signup } from "../src/signup.js";
 import { signupWithPassword } from "../src/password.js";
 import { signonWithSso } from "../src/sso.js";
 import { sendPasswordlessLink } from "../src/link.js";
+import { handleRedirect } from "../src/url.js";
 
 // Mock all methods to be called
 jest.mock("../src/password.js");
 jest.mock("../src/link.js");
 jest.mock("../src/sso.js");
+jest.mock("../src/url.js");
 
 const tenantId = "abcd9876";
-
-mockWindow({
-  origin: "https://example.com",
-  href: "https://example.com/login",
-});
 
 describe("signup()", () => {
   beforeEach(() => {
     Userfront.init(tenantId);
-  });
-
-  afterEach(() => {
-    window.location.assign.mockClear();
+    jest.resetAllMocks();
   });
 
   it(`{ method: undefined } should throw an error`, () => {
     expect(signup()).rejects.toEqual(
       new Error(`Userfront.signup called without "method" property.`)
     );
-    expect(window.location.assign).not.toHaveBeenCalled();
+    expect(handleRedirect).not.toHaveBeenCalled();
   });
 
   describe(`{ method: "password" }`, () => {

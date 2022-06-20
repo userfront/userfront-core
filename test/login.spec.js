@@ -1,41 +1,36 @@
 import Userfront from "../src/index.js";
-import { mockWindow } from "./config/utils.js";
 
 import { login } from "../src/login.js";
 import { loginWithPassword } from "../src/password.js";
-import { loginWithTotp } from "../src/totp.js";
-import { signonWithSso } from "../src/sso.js";
 import { sendPasswordlessLink, loginWithLink } from "../src/link.js";
+import { signonWithSso } from "../src/sso.js";
+import { loginWithTotp } from "../src/totp.js";
+import { loginWithVerificationCode } from "../src/verificationCode.js";
 import { completeSamlLogin } from "../src/saml.js";
+import { handleRedirect } from "../src/url.js";
 
 // Mock all methods to be called
 jest.mock("../src/password.js");
 jest.mock("../src/link.js");
 jest.mock("../src/sso.js");
 jest.mock("../src/totp.js");
+jest.mock("../src/verificationCode.js");
 jest.mock("../src/saml.js");
+jest.mock("../src/url.js");
 
 const tenantId = "abcd9876";
-
-mockWindow({
-  origin: "https://example.com",
-  href: "https://example.com/login",
-});
 
 describe("login()", () => {
   beforeEach(() => {
     Userfront.init(tenantId);
-  });
-
-  afterEach(() => {
-    window.location.assign.mockClear();
+    jest.resetAllMocks();
   });
 
   it(`{ method: undefined } should throw an error`, () => {
     expect(login()).rejects.toEqual(
       new Error(`Userfront.login called without "method" property.`)
     );
-    expect(window.location.assign).not.toHaveBeenCalled();
+    expect(handleRedirect).not.toHaveBeenCalled();
   });
 
   describe(`{ method: "password" }`, () => {
@@ -158,6 +153,43 @@ describe("login()", () => {
             ...identifierAttr,
           });
         });
+      });
+    });
+  });
+
+  describe(`{ method: "verificationCode" }`, () => {
+    const combos = [
+      {
+        channel: "sms",
+        phoneNumber: "+15552223344",
+        verificationCode: "456123",
+      },
+      {
+        channel: "email",
+        email: "user@example.com",
+        verificationCode: "456123",
+      },
+      {
+        channel: "sms",
+        phoneNumber: "+15552223344",
+        verificationCode: "456123",
+        redirect: false,
+      },
+      {
+        channel: "email",
+        email: "user@example.com",
+        verificationCode: "456123",
+        redirect: "/custom",
+      },
+    ];
+    // Loop over all input combos and ensure that loginWithTotp is called correctly for each
+    combos.map((combo) => {
+      it(`should call loginWithVerificationCode() with channel=${combo.channel}`, () => {
+        // Call login for the combo
+        Userfront.login({ method: "verificationCode", ...combo });
+
+        // Assert that loginWithTotp was called correctly
+        expect(loginWithVerificationCode).toHaveBeenCalledWith(combo);
       });
     });
   });

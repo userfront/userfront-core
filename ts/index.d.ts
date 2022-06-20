@@ -138,15 +138,25 @@ export declare function signup({
 // login()
 export declare function login({
   method,
+  // User identifiers
   userId,
   userUuid,
   email,
   username,
   emailOrUsername,
   phoneNumber,
+  // Password
   password,
+  // Link
   token,
   uuid,
+  // Totp
+  totpCode,
+  backupCode,
+  // Verification code
+  channel,
+  verificationCode,
+  // Other
   redirect,
 }: {
   method: string;
@@ -159,6 +169,10 @@ export declare function login({
   password?: string;
   token?: string;
   uuid?: string;
+  totpCode?: string;
+  backupCode?: string;
+  channel?: "sms" | "email";
+  verificationCode?: string;
   redirect?: string | boolean;
 }): Promise<LoginResponse>;
 

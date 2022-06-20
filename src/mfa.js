@@ -76,13 +76,13 @@ export async function sendVerificationCode({
  * @param {String|Boolean} redirect Redirect to given path unless specified as `false`
  * @returns {Object}
  */
-export async function loginWithVerificationCode({
+export async function loginWithMfa({
   firstFactorCode,
   verificationCode,
   redirect,
 } = {}) {
   if (!firstFactorCode || !verificationCode) {
-    throw new Error("Userfront.loginWithVerificationCode missing parameters.");
+    throw new Error("Userfront.loginWithMfa missing parameters.");
   }
 
   try {

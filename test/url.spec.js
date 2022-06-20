@@ -2,9 +2,9 @@ import Cookies from "js-cookie";
 
 import Userfront from "../src/index.js";
 import api from "../src/api.js";
-import { apiUrl } from "../src/constants.js";
 import { removeAllCookies } from "../src/cookies.js";
 import { store } from "../src/store.js";
+import { handleRedirect } from "../src/url.js";
 import { mockWindow } from "./config/utils.js";
 
 jest.mock("../src/api.js");
@@ -18,7 +18,48 @@ mockWindow({
   href: "https://example.com/login",
 });
 
-describe("redirectIfLoggedIn", () => {
+describe("handleRedirect()", () => {
+  beforeEach(() => {
+    window.location.href = "https://example.com/login";
+    jest.resetAllMocks();
+  });
+
+  it("should redirect to a given path", () => {
+    // Add querystring and data.redirectTo to ensure they are not used
+    window.location.href = "https://example.com/login?redirect=/manual";
+    const data = { redirectTo: "/api-response" };
+    // Call handleRedirect() with manual path
+    const path = "/manual-redirect";
+    handleRedirect({ redirect: path, data });
+    expect(window.location.assign).toHaveBeenCalledWith(path);
+  });
+
+  it("should redirect based on URL querystring ?redirect", () => {
+    // Add data.redirectTo to ensure it is not used
+    const data = { redirectTo: "/api-response" };
+    // Call handleRedirect()
+    window.location.href = "https://example.com/login?redirect=/url-redirect";
+    handleRedirect({ data });
+    expect(window.location.assign).toHaveBeenCalledWith("/url-redirect");
+  });
+
+  it("should redirect based on data.redirectTo", () => {
+    const data = { redirectTo: "/api-redirect" };
+    handleRedirect({ redirect: undefined, data });
+    expect(window.location.assign).toHaveBeenCalledWith(data.redirectTo);
+  });
+
+  it("should not redirect if redirect=false", () => {
+    // Add querystring and data.redirectTo to ensure they are not used
+    window.location.href = "https://example.com/login?redirect=/url-redirect";
+    const data = { redirectTo: "/api-redirect" };
+    // Call handleRedirect() with redirect=false
+    handleRedirect({ redirect: false, data });
+    expect(window.location.assign).not.toHaveBeenCalled();
+  });
+});
+
+describe("redirectIfLoggedIn()", () => {
   const mockAccessToken = "mockAccessToken";
 
   beforeAll(() => {
@@ -26,10 +67,13 @@ describe("redirectIfLoggedIn", () => {
     window.location.href = "https://example.com/login";
   });
 
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
   afterEach(() => {
     Cookies.remove(`access.${tenantId}`);
     removeAllCookies.mockReset();
-    window.location.assign.mockClear();
   });
 
   it("should call removeAllCookies if store.tokens.accessToken isn't defined", async () => {

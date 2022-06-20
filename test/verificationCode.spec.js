@@ -4,24 +4,19 @@ import {
   createAccessToken,
   createIdToken,
   createRefreshToken,
-  idTokenUserDefaults,
-  mockWindow,
 } from "./config/utils.js";
 import {
   sendVerificationCode,
   loginWithVerificationCode,
 } from "../src/verificationCode.js";
 import { exchange } from "../src/refresh.js";
+import { handleRedirect } from "../src/url.js";
 
 jest.mock("../src/refresh.js");
 jest.mock("../src/api.js");
+jest.mock("../src/url.js");
 
 const tenantId = "abcd9876";
-
-mockWindow({
-  origin: "https://example.com",
-  href: "https://example.com/login",
-});
 
 describe("sendVerificationCode()", () => {
   // Mock API response
@@ -85,9 +80,15 @@ describe("sendVerificationCode()", () => {
       },
     };
     api.post.mockImplementationOnce(() => Promise.reject(mockResponse));
-    expect(() =>
-      sendVerificationCode({ channel: "email", email: "email@example.com" })
-    ).rejects.toEqual(new Error(mockResponse.data.message));
+    try {
+      await sendVerificationCode({
+        channel: "email",
+        email: "email@example.com",
+      });
+      expect("This line should not run").toEqual(true);
+    } catch (error) {
+      expect(error.data).toEqual(mockResponse.data);
+    }
   });
 
   it("should error if channel and identifier do not match", async () => {
@@ -124,10 +125,10 @@ describe("loginWithVerificationCode()", () => {
   });
 
   afterEach(() => {
-    window.location.assign.mockClear();
+    jest.resetAllMocks();
   });
 
-  it("should login and redirect", async () => {
+  it("should login", async () => {
     // Update the userId to ensure it is overwritten
     const userAttrs = {
       userId: 2091,
@@ -154,97 +155,141 @@ describe("loginWithVerificationCode()", () => {
     });
 
     // Should return the correct value
-    expect(data).toEqual(mockResponseCopy.res);
+    expect(data).toEqual(mockResponseCopy.data);
 
     // Should have called exchange() with the API's response
-    expect(exchange).toHaveBeenCalledWith(mockResponseCopy.res);
+    expect(exchange).toHaveBeenCalledWith(mockResponseCopy.data);
 
     // Should have set the user object
     expect(Userfront.user.email).toEqual(userAttrs.email);
     expect(Userfront.user.userId).toEqual(userAttrs.userId);
 
     // Should have redirected correctly
-    expect(window.location.assign).toHaveBeenCalledWith("/dashboard");
+    expect(handleRedirect).toHaveBeenCalledWith({
+      data: mockResponseCopy.data,
+    });
   });
 
-  it("should read token, uuid, and redirect from the URL if not present", async () => {
+  it("should login with custom redirect", async () => {
     // Update the userId to ensure it is overwritten
     const userAttrs = {
-      userId: 98100,
-      email: "verified-2@example.com",
+      userId: 2091,
+      email: "verified@example.com",
     };
     const mockResponseCopy = JSON.parse(JSON.stringify(mockResponse));
     mockResponseCopy.data.tokens.id.value = createIdToken(userAttrs);
-
-    const query = {
-      token: "some-token",
-      uuid: "some-uuid",
-    };
-
-    const redirect = "/post-login";
-
-    // Visit a URL with ?token=&uuid=&redirect=
-    window.location.href = `https://example.com/login?token=${query.token}&uuid=${query.uuid}&redirect=${redirect}`;
 
     // Mock the API response
     api.put.mockImplementationOnce(() => mockResponseCopy);
 
     // Call loginWithVerificationCode()
-    const data = await loginWithVerificationCode();
+    const payload = {
+      channel: "email",
+      email: userAttrs.email,
+      verificationCode: "123467",
+      redirect: "/custom",
+    };
+    const data = await loginWithVerificationCode(payload);
 
     // Should have sent the proper API request
     expect(api.put).toHaveBeenCalledWith(`/auth/code`, {
       tenantId,
-      ...query,
+      channel: payload.channel,
+      email: payload.email,
+      verificationCode: payload.verificationCode,
     });
 
     // Should return the correct value
-    expect(data).toEqual(mockResponseCopy.res);
+    expect(data).toEqual(mockResponseCopy.data);
 
     // Should have called exchange() with the API's response
-    expect(exchange).toHaveBeenCalledWith(mockResponseCopy.res);
+    expect(exchange).toHaveBeenCalledWith(mockResponseCopy.data);
 
     // Should have set the user object
     expect(Userfront.user.email).toEqual(userAttrs.email);
     expect(Userfront.user.userId).toEqual(userAttrs.userId);
 
-    // Should have redirected correctly
-    expect(window.location.assign).toHaveBeenCalledWith(redirect);
-
-    // Reset the URL
-    window.location.href = `https://example.com/login`;
+    // Should redirect correctly
+    expect(handleRedirect).toHaveBeenCalledWith({
+      redirect: payload.redirect,
+      data: mockResponseCopy.data,
+    });
   });
 
-  it("should not redirect if redirect = false", async () => {
-    api.put.mockImplementationOnce(() => mockResponse);
+  it("should login without redirect if redirect=false", async () => {
+    // Update the userId to ensure it is overwritten
+    const userAttrs = {
+      userId: 992,
+      phoneNumber: "+15558769912",
+    };
+    const mockResponseCopy = JSON.parse(JSON.stringify(mockResponse));
+    mockResponseCopy.data.tokens.id.value = createIdToken(userAttrs);
+
+    // Mock the API response
+    api.put.mockImplementationOnce(() => mockResponseCopy);
 
     // Call loginWithVerificationCode()
     const payload = {
-      token: "some-token",
-      uuid: "some-uuid",
-    };
-    const data = await loginWithVerificationCode({
+      channel: "sms",
+      phoneNumber: userAttrs.phoneNumber,
+      verificationCode: "123467",
       redirect: false,
-      ...payload,
-    });
+    };
+    const data = await loginWithVerificationCode(payload);
 
     // Should have sent the proper API request
     expect(api.put).toHaveBeenCalledWith(`/auth/code`, {
       tenantId,
-      ...payload,
+      channel: payload.channel,
+      phoneNumber: payload.phoneNumber,
+      verificationCode: payload.verificationCode,
     });
 
     // Should return the correct value
-    expect(data).toEqual(mockResponse.data);
+    expect(data).toEqual(mockResponseCopy.data);
 
     // Should have called exchange() with the API's response
-    expect(exchange).toHaveBeenCalledWith(mockResponse.data);
+    expect(exchange).toHaveBeenCalledWith(mockResponseCopy.data);
 
     // Should have set the user object
-    expect(Userfront.user.email).toEqual(idTokenUserDefaults.email);
-    expect(Userfront.user.userId).toEqual(idTokenUserDefaults.userId);
+    expect(Userfront.user.phoneNumber).toEqual(userAttrs.phoneNumber);
+    expect(Userfront.user.userId).toEqual(userAttrs.userId);
 
-    // Should not have redirected
-    expect(window.location.assign).not.toHaveBeenCalled();
+    // Should redirect correctly
+    expect(handleRedirect).toHaveBeenCalledWith({
+      redirect: false,
+      data: mockResponseCopy.data,
+    });
+  });
+
+  it("should throw an error for incorrect channel", async () => {
+    // Invalid channel
+    expect(() =>
+      loginWithVerificationCode({
+        channel: "usps",
+        email: "john@example.com",
+        verificationCode: "123467",
+      })
+    ).rejects.toEqual(new Error(`Invalid channel`));
+
+    // SMS channel without phoneNumber
+    expect(() =>
+      loginWithVerificationCode({
+        channel: "sms",
+        email: "john@example.com",
+        verificationCode: "123467",
+      })
+    ).rejects.toEqual(
+      new Error(`SMS verification code requires "phoneNumber"`)
+    );
+
+    // Email channel without email address
+    expect(() =>
+      loginWithVerificationCode({
+        channel: "email",
+        phoneNumber: "+15558769912",
+        verificationCode: "123467",
+      })
+    ).rejects.toEqual(new Error(`Email verification code requires "email"`));
   });
 });

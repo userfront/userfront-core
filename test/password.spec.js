@@ -5,20 +5,16 @@ import {
   createIdToken,
   createRefreshToken,
   idTokenUserDefaults,
-  mockWindow,
 } from "./config/utils.js";
 import { exchange } from "../src/refresh.js";
 import { signupWithPassword, loginWithPassword } from "../src/password.js";
+import { handleRedirect } from "../src/url.js";
 
 jest.mock("../src/api.js");
 jest.mock("../src/refresh.js");
+jest.mock("../src/url.js");
 
 const tenantId = "abcd9876";
-
-mockWindow({
-  origin: "https://example.com",
-  href: "https://example.com/login",
-});
 
 // Mock API response
 const mockResponse = {
@@ -36,10 +32,7 @@ const mockResponse = {
 describe("signupWithPassword()", () => {
   beforeEach(() => {
     Userfront.init(tenantId);
-  });
-
-  afterEach(() => {
-    window.location.assign.mockClear();
+    jest.resetAllMocks();
   });
 
   it("should send a request, set access and ID cookies, and initiate nonce exchange", async () => {
@@ -74,10 +67,11 @@ describe("signupWithPassword()", () => {
     expect(Userfront.user.email).toEqual(payload.email);
     expect(Userfront.user.userId).toEqual(idTokenUserDefaults.userId);
 
-    // Should have redirected correctly
-    expect(window.location.assign).toHaveBeenCalledWith(
-      mockResponse.data.redirectTo
-    );
+    // Should call handleRedirect correctly
+    expect(handleRedirect).toHaveBeenCalledWith({
+      redirect: payload.redirect,
+      data: mockResponse.data,
+    });
   });
 
   it("should sign up and redirect to provided path", async () => {
@@ -109,8 +103,11 @@ describe("signupWithPassword()", () => {
     expect(Userfront.user.email).toEqual(payload.email);
     expect(Userfront.user.userId).toEqual(idTokenUserDefaults.userId);
 
-    // Should have redirected correctly
-    expect(window.location.assign).toHaveBeenCalledWith("/custom");
+    // Should call handleRedirect correctly
+    expect(handleRedirect).toHaveBeenCalledWith({
+      redirect: payload.redirect,
+      data: mockResponse.data,
+    });
   });
 
   it("should sign up and not redirect if redirect = false", async () => {
@@ -142,14 +139,17 @@ describe("signupWithPassword()", () => {
     });
 
     // Should have called exchange() with the API's response
-    expect(exchange).toHaveBeenCalledWith(mockResponse.data);
+    expect(exchange).toHaveBeenCalledWith(mockResponseCopy.data);
 
     // Should have set the user object
     expect(Userfront.user.email).toEqual(payload.email);
     expect(Userfront.user.userId).toEqual(newAttrs.userId);
 
-    // Should not have redirected
-    expect(window.location.assign).not.toHaveBeenCalled();
+    // Should call handleRedirect correctly
+    expect(handleRedirect).toHaveBeenCalledWith({
+      redirect: false,
+      data: mockResponseCopy.data,
+    });
   });
 
   it("should respond with whatever error the server sends", async () => {
@@ -176,10 +176,7 @@ describe("signupWithPassword()", () => {
 describe("loginWithPassword()", () => {
   beforeEach(() => {
     Userfront.init(tenantId);
-  });
-
-  afterEach(() => {
-    window.location.assign.mockClear();
+    jest.resetAllMocks();
   });
 
   describe("with username & password", () => {
@@ -210,10 +207,11 @@ describe("loginWithPassword()", () => {
       expect(Userfront.user.email).toEqual(payload.emailOrUsername);
       expect(Userfront.user.userId).toEqual(idTokenUserDefaults.userId);
 
-      // Should have redirected correctly
-      expect(window.location.assign).toHaveBeenCalledWith(
-        mockResponse.data.redirectTo
-      );
+      // Should call handleRedirect correctly
+      expect(handleRedirect).toHaveBeenCalledWith({
+        redirect: payload.redirect,
+        data: mockResponse.data,
+      });
     });
 
     it("should login and not redirect if redirect = false", async () => {
@@ -255,8 +253,11 @@ describe("loginWithPassword()", () => {
       expect(Userfront.user.email).toEqual(payload.email);
       expect(Userfront.user.userId).toEqual(newAttrs.userId);
 
-      // Should have redirected correctly
-      expect(window.location.assign).not.toHaveBeenCalled();
+      // Should call handleRedirect correctly
+      expect(handleRedirect).toHaveBeenCalledWith({
+        redirect: false,
+        data: mockResponseCopy.data,
+      });
     });
 
     it("should login and redirect to a provided path", async () => {
@@ -285,8 +286,11 @@ describe("loginWithPassword()", () => {
       expect(Userfront.user.email).toEqual(payload.emailOrUsername);
       expect(Userfront.user.userId).toEqual(idTokenUserDefaults.userId);
 
-      // Should have redirected correctly
-      expect(window.location.assign).not.toHaveBeenCalled();
+      // Should call handleRedirect correctly
+      expect(handleRedirect).toHaveBeenCalledWith({
+        redirect: false,
+        data: mockResponse.data,
+      });
     });
 
     it("should respond with whatever error the server sends", async () => {

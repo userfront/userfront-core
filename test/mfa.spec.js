@@ -7,11 +7,7 @@ import {
   idTokenUserDefaults,
   mockWindow,
 } from "./config/utils.js";
-import {
-  sendVerificationCode,
-  sendSms,
-  loginWithVerificationCode,
-} from "../src/mfa.js";
+import { sendVerificationCode, sendSms, loginWithMfa } from "../src/mfa.js";
 import { exchange } from "../src/refresh.js";
 
 jest.mock("../src/api.js");
@@ -196,7 +192,7 @@ describe("sendSms", () => {
   });
 });
 
-describe("loginWithVerificationCode", () => {
+describe("loginWithMfa", () => {
   beforeEach(() => {
     Userfront.init(tenantId);
   });
@@ -207,21 +203,21 @@ describe("loginWithVerificationCode", () => {
 
   it(`should throw if missing parameters`, async () => {
     const missingParamsError = new Error(
-      "Userfront.loginWithVerificationCode missing parameters."
+      "Userfront.loginWithMfa missing parameters."
     );
 
-    expect(loginWithVerificationCode()).rejects.toEqual(missingParamsError);
+    expect(loginWithMfa()).rejects.toEqual(missingParamsError);
 
     // Missing firstFactorCode
     expect(
-      loginWithVerificationCode({
+      loginWithMfa({
         verificationCode,
       })
     ).rejects.toEqual(missingParamsError);
 
     // Missing verificationCode
     expect(
-      loginWithVerificationCode({
+      loginWithMfa({
         firstFactorCode,
       })
     ).rejects.toEqual(missingParamsError);
@@ -238,7 +234,7 @@ describe("loginWithVerificationCode", () => {
       firstFactorCode,
       verificationCode,
     };
-    const data = await loginWithVerificationCode(payload);
+    const data = await loginWithMfa(payload);
 
     // Should have sent the proper API request
     expect(api.put).toHaveBeenCalledWith(`/auth/mfa`, {
@@ -273,7 +269,7 @@ describe("loginWithVerificationCode", () => {
       firstFactorCode,
       verificationCode,
     };
-    const data = await loginWithVerificationCode({
+    const data = await loginWithMfa({
       ...payload,
       redirect,
     });
@@ -300,7 +296,7 @@ describe("loginWithVerificationCode", () => {
       firstFactorCode,
       verificationCode,
     };
-    const data = await loginWithVerificationCode({
+    const data = await loginWithMfa({
       ...payload,
       redirect: false,
     });

@@ -5,7 +5,6 @@ import {
   createIdToken,
   createRefreshToken,
   idTokenUserDefaults,
-  mockWindow,
 } from "./config/utils.js";
 import {
   sendLoginLink,
@@ -20,11 +19,6 @@ jest.mock("../src/api.js");
 jest.mock("../src/utils.js");
 
 const tenantId = "abcd9876";
-
-mockWindow({
-  origin: "https://example.com",
-  href: "https://example.com/login",
-});
 
 // Mock API response
 const mockResponse = {

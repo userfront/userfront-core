@@ -4,9 +4,11 @@
  * and Userfront.user.update() [which requires refresh()].
  */
 import { put } from "./api.js";
-import { refresh } from "./refresh.js";
 import { store } from "./store.js";
+import { refresh } from "./refresh.js";
+import { getTotp } from "./totp.js";
 import { getJWTPayload } from "./utils.js";
+import { updatePassword } from "./password.js";
 
 /**
  * Update the user record on Userfront
@@ -60,3 +62,5 @@ export function hasRole(roleName, { tenantId } = {}) {
  */
 store.user.update = update;
 store.user.hasRole = hasRole;
+store.user.updatePassword = updatePassword;
+store.user.getTotp = getTotp;

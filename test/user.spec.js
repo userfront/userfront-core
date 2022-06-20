@@ -1,10 +1,11 @@
 import Userfront from "../src/index.js";
 import api from "../src/api";
-import { apiUrl } from "../src/constants.js";
 import { setCookie } from "../src/cookies.js";
 import { setUser } from "../src/user.js";
 import { refresh } from "../src/refresh.js";
 import { setTokensFromCookies } from "../src/tokens.js";
+import { getTotp } from "../src/totp.js";
+import { updatePassword } from "../src/password.js";
 import {
   createAccessToken,
   createIdToken,
@@ -228,6 +229,18 @@ describe("User", () => {
       expect(Userfront.user.hasRole("admin", { tenantId: "foobar" })).toEqual(
         false
       );
+    });
+  });
+
+  describe("user.updatePassword()", () => {
+    it("should be the updatePassword() method", () => {
+      expect(Userfront.user.updatePassword).toEqual(updatePassword);
+    });
+  });
+
+  describe("user.getTotp()", () => {
+    it("should be the getTotp() method", () => {
+      expect(Userfront.user.getTotp).toEqual(getTotp);
     });
   });
 });

@@ -1,4 +1,4 @@
-import { post } from "./api.js";
+import { get, post } from "./api.js";
 import { setCookiesAndTokens } from "./cookies.js";
 import { store } from "./store.js";
 import { handleRedirect } from "./url.js";
@@ -57,6 +57,24 @@ export async function loginWithTotp({
     }
 
     throw new Error("Problem logging in.");
+  } catch (error) {
+    throwFormattedError(error);
+  }
+}
+
+export async function getTotp() {
+  try {
+    if (!store.tokens.accessToken) {
+      throw new Error(`getTotp() was called without a JWT access token.`);
+    }
+
+    const { data } = await get(`/auth/totp`, {
+      headers: {
+        Authorization: `Bearer ${store.tokens.accessToken}`,
+      },
+    });
+
+    return data;
   } catch (error) {
     throwFormattedError(error);
   }

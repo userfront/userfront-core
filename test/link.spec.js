@@ -5,18 +5,22 @@ import {
   createIdToken,
   createRefreshToken,
   idTokenUserDefaults,
+  mockWindow,
 } from "./config/utils.js";
 import {
   sendLoginLink,
   loginWithLink,
   sendPasswordlessLink,
 } from "../src/link.js";
-import { throwFormattedError } from "../src/utils.js";
 import { exchange } from "../src/refresh.js";
 
 jest.mock("../src/refresh.js");
 jest.mock("../src/api.js");
-jest.mock("../src/utils.js");
+
+mockWindow({
+  origin: "https://example.com",
+  href: "https://example.com/login",
+});
 
 const tenantId = "abcd9876";
 
@@ -52,7 +56,7 @@ describe("sendLoginLink", () => {
     api.post.mockImplementationOnce(() => mockResponse);
 
     // Call sendLoginLink()
-    const res = await sendLoginLink(mockResponse.data.result.email);
+    const data = await sendLoginLink(mockResponse.data.result.email);
 
     // Should have sent the proper API request
     expect(api.post).toHaveBeenCalledWith(`/auth/link`, {
@@ -64,7 +68,7 @@ describe("sendLoginLink", () => {
     expect(data).toEqual(mockResponse.data);
   });
 
-  it.only(`error should respond with whatever the server sends`, async () => {
+  it(`error should respond with whatever the server sends`, async () => {
     // Mock the API response
     const mockResponse = {
       data: {
@@ -74,8 +78,9 @@ describe("sendLoginLink", () => {
       },
     };
     api.post.mockImplementationOnce(() => Promise.reject(mockResponse));
-    await sendLoginLink({ email: "email@example.com" });
-    expect(throwFormattedError).toHaveBeenCalledWith(mockResponse);
+    expect(() => sendLoginLink({ email: "email@example.com" })).rejects.toEqual(
+      mockResponse
+    );
   });
 });
 
@@ -107,7 +112,7 @@ describe("sendPasswordlessLink", () => {
         custom: "option",
       },
     };
-    const res = await sendPasswordlessLink({
+    const data = await sendPasswordlessLink({
       email: payload.email,
       name: payload.name,
       username: payload.username,
@@ -139,16 +144,13 @@ describe("sendPasswordlessLink", () => {
       sendPasswordlessLink({
         email: "valid@example.com",
       })
-    ).rejects.toEqual(new Error(mockResponseErr.data.message));
+    ).rejects.toEqual(mockResponseErr);
   });
 });
 
 describe("loginWithLink", () => {
   beforeEach(() => {
     Userfront.init(tenantId);
-  });
-
-  afterEach(() => {
     window.location.assign.mockClear();
   });
 
@@ -169,7 +171,7 @@ describe("loginWithLink", () => {
       token: "some-token",
       uuid: "some-uuid",
     };
-    const res = await loginWithLink(payload);
+    const data = await loginWithLink(payload);
 
     // Should have sent the proper API request
     expect(api.put).toHaveBeenCalledWith(`/auth/link`, {
@@ -178,10 +180,10 @@ describe("loginWithLink", () => {
     });
 
     // Should return the correct value
-    expect(data).toEqual(mockResponseCopy.res);
+    expect(data).toEqual(mockResponseCopy.data);
 
     // Should have called exchange() with the API's response
-    expect(exchange).toHaveBeenCalledWith(mockResponseCopy.res);
+    expect(exchange).toHaveBeenCalledWith(mockResponseCopy.data);
 
     // Should have set the user object
     expect(Userfront.user.email).toEqual(newAttrs.email);
@@ -214,7 +216,7 @@ describe("loginWithLink", () => {
     api.put.mockImplementationOnce(() => mockResponseCopy);
 
     // Call loginWithLink()
-    const res = await loginWithLink();
+    const data = await loginWithLink();
 
     // Should have sent the proper API request
     expect(api.put).toHaveBeenCalledWith(`/auth/link`, {
@@ -223,10 +225,10 @@ describe("loginWithLink", () => {
     });
 
     // Should return the correct value
-    expect(data).toEqual(mockResponseCopy.res);
+    expect(data).toEqual(mockResponseCopy.data);
 
     // Should have called exchange() with the API's response
-    expect(exchange).toHaveBeenCalledWith(mockResponseCopy.res);
+    expect(exchange).toHaveBeenCalledWith(mockResponseCopy.data);
 
     // Should have set the user object
     expect(Userfront.user.email).toEqual(newAttrs.email);
@@ -247,7 +249,7 @@ describe("loginWithLink", () => {
       token: "some-token",
       uuid: "some-uuid",
     };
-    const res = await loginWithLink({
+    const data = await loginWithLink({
       redirect: false,
       ...payload,
     });
@@ -290,7 +292,7 @@ describe("loginWithLink", () => {
       token: "some-token",
       uuid: "some-uuid",
     };
-    const res = await loginWithLink(payload);
+    const data = await loginWithLink(payload);
 
     // Should have sent the proper API request
     expect(api.put).toHaveBeenCalledWith(`/auth/link`, {

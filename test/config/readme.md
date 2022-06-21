@@ -3,7 +3,7 @@
 [Using Rewire](https://github.com/speedskater/babel-plugin-rewire#example-2), we can get an unexported function from our Userfront module:
 
 ```js
-const signupWithSSO = Userfront.__get__("signupWithSSO");
+const signonWithSso = Userfront.__get__("signonWithSso");
 ```
 
 We can also set a function like so:

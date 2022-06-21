@@ -1,8 +1,85 @@
-import axios from "axios";
+import { post, put } from "./api.js";
 import { setCookiesAndTokens } from "./cookies.js";
 import { store } from "./store.js";
-import { getQueryAttr, redirectToPath } from "./url.js";
+import { getQueryAttr, handleRedirect } from "./url.js";
 import { throwFormattedError } from "./utils.js";
+import { exchange } from "./refresh.js";
+
+/**
+ * Register a new user with username, name, email, and password.
+ * Redirect the browser after successful signup based on the redirectTo value returned.
+ * @param {String} username
+ * @param {String} name
+ * @param {String} email
+ * @param {String} password
+ * @param {Object} userData - alias for the user.data object, since "data" is used in the response
+ * @param {String} redirect - do not redirect if false, or redirect to a specific path
+ */
+export async function signupWithPassword({
+  username,
+  name,
+  email,
+  password,
+  userData,
+  redirect,
+} = {}) {
+  try {
+    const { data } = await post(`/auth/create`, {
+      tenantId: store.tenantId,
+      username,
+      name,
+      email,
+      password,
+      data: userData,
+    });
+    if (data.tokens) {
+      setCookiesAndTokens(data.tokens);
+      await exchange(data);
+      handleRedirect({ redirect, data });
+      return data;
+    } else {
+      throw new Error("Please try again.");
+    }
+  } catch (error) {
+    throwFormattedError(error);
+  }
+}
+
+/**
+ * Log a user in with email/username and password.
+ * Redirect the browser after successful login based on the redirectTo value returned.
+ * @param {Object} options
+ */
+export async function loginWithPassword({
+  email,
+  username,
+  emailOrUsername,
+  password,
+  redirect,
+}) {
+  try {
+    const { data } = await post(`/auth/basic`, {
+      tenantId: store.tenantId,
+      emailOrUsername: email || username || emailOrUsername,
+      password,
+    });
+
+    if (data.hasOwnProperty("tokens")) {
+      setCookiesAndTokens(data.tokens);
+      await exchange(data);
+      handleRedirect({ redirect, data });
+      return data;
+    }
+
+    if (data.hasOwnProperty("firstFactorCode")) {
+      return data;
+    }
+
+    throw new Error("Please try again.");
+  } catch (error) {
+    throwFormattedError(error);
+  }
+}
 
 /**
  * Send a password reset link to the provided email.
@@ -10,7 +87,7 @@ import { throwFormattedError } from "./utils.js";
  */
 export async function sendResetLink(email) {
   try {
-    const { data } = await axios.post(`${store.baseUrl}auth/reset/link`, {
+    const { data } = await post(`/auth/reset/link`, {
       email,
       tenantId: store.tenantId,
     });
@@ -77,7 +154,7 @@ export async function updatePasswordWithLink({
     token = token || getQueryAttr("token");
     uuid = uuid || getQueryAttr("uuid");
     if (!token || !uuid) throw new Error("Missing token or uuid");
-    const { data } = await axios.put(`${store.baseUrl}auth/reset`, {
+    const { data } = await put(`/auth/reset`, {
       tenantId: store.tenantId,
       uuid,
       token,
@@ -85,14 +162,7 @@ export async function updatePasswordWithLink({
     });
     if (data.tokens) {
       setCookiesAndTokens(data.tokens);
-
-      // Return if redirect is explicitly false
-      if (redirect === false) return data;
-
-      redirectToPath(
-        redirect || getQueryAttr("redirect") || data.redirectTo || "/"
-      );
-
+      handleRedirect({ redirect, data });
       return data;
     } else {
       throw new Error(
@@ -112,8 +182,8 @@ export async function updatePasswordWithJwt({ password, existingPassword }) {
       );
     }
 
-    const { data } = await axios.put(
-      `${store.baseUrl}auth/basic`,
+    const { data } = await put(
+      `/auth/basic`,
       {
         tenantId: store.tenantId,
         password,

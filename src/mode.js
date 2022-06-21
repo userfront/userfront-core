@@ -1,4 +1,4 @@
-import axios from "axios";
+import { get } from "./api.js";
 import { privateIPRegex } from "./constants.js";
 import { store } from "./store.js";
 
@@ -39,9 +39,7 @@ export function isHttps() {
  */
 export async function setMode() {
   try {
-    const { data } = await axios.get(
-      `${store.baseUrl}tenants/${store.tenantId}/mode`
-    );
+    const { data } = await get(`/tenants/${store.tenantId}/mode`);
     mode.value = data.mode || "test";
     mode.reason = getReason(mode.value);
     store.mode = mode.value;

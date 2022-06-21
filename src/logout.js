@@ -1,10 +1,9 @@
-import axios from "axios";
-
+import { get } from "./api.js";
 import { getIframe, postMessageAsPromise } from "./iframe.js";
 import { store } from "./store.js";
 import { removeAllCookies } from "./cookies.js";
 import { setTokensFromCookies } from "./tokens.js";
-import { redirectToPath } from "./url";
+import { handleRedirect } from "./url";
 import { throwFormattedError } from "./utils.js";
 
 /**
@@ -19,14 +18,13 @@ export async function logout({ method, redirect } = {}) {
   }
 
   try {
-    const { data } = await axios.get(`${store.baseUrl}auth/logout`, {
+    const { data } = await get(`/auth/logout`, {
       headers: {
         authorization: `Bearer ${store.tokens.accessToken}`,
       },
     });
     removeAllCookies();
-    if (redirect === false) return;
-    redirectToPath(redirect || data.redirectTo);
+    handleRedirect({ redirect, data });
   } catch (err) {
     removeAllCookies();
   }
@@ -38,7 +36,7 @@ async function completeSamlLogout() {
   }
 
   try {
-    const { data } = await axios.get(`${store.baseUrl}auth/saml/idp/token`, {
+    const { data } = await get(`/auth/saml/idp/token`, {
       headers: {
         authorization: `Bearer ${store.tokens.accessToken}`,
       },
@@ -63,7 +61,7 @@ async function completeSamlLogout() {
 //   });
 //   removeAllCookies();
 //   setTokensFromCookies();
-//   redirectToPath(data.redirectTo || "/");
+//   handleRedirect({ redirect, data });
 // } catch (error) {
 //   removeAllCookies();
 //   redirectToPath("/");

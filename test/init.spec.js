@@ -3,6 +3,7 @@ import {
   createAccessToken,
   createIdToken,
   resetStore,
+  mockWindow,
 } from "./config/utils.js";
 import Userfront from "../src/index.js";
 import { setMode } from "../src/mode.js";
@@ -57,16 +58,13 @@ describe("init() method with domain option", () => {
     });
     await setMode();
 
-    const url = `https://${domain}`
+    const url = `https://${domain}`;
 
-    expect(axios.defaults.headers.common["x-application-id"]).toEqual(
-      url
-    );
-    expect(axios.defaults.headers.common["x-origin"]).toEqual(
-      url
-    );
+    expect(axios.defaults.headers.common["x-application-id"]).toEqual(url);
+    expect(axios.defaults.headers.common["x-origin"]).toEqual(url);
     expect(axios.get).toHaveBeenCalledWith(
-      `https://api.userfront.com/v0/tenants/${tenantId}/mode`
+      `https://api.userfront.com/v0/tenants/${tenantId}/mode`,
+      undefined
     );
     expect(store.mode).toEqual("live");
   });
@@ -79,14 +77,10 @@ describe("init() method with domain option", () => {
 
     await Userfront.signup({ method: "password", email, password });
 
-    const url = `https://${domain}`
+    const url = `https://${domain}`;
 
-    expect(axios.defaults.headers.common["x-application-id"]).toEqual(
-      url
-    );
-    expect(axios.defaults.headers.common["x-origin"]).toEqual(
-      url
-    );
+    expect(axios.defaults.headers.common["x-application-id"]).toEqual(url);
+    expect(axios.defaults.headers.common["x-origin"]).toEqual(url);
     expect(axios.post).toHaveBeenCalledWith(
       "https://api.userfront.com/v0/auth/create",
       {
@@ -97,6 +91,7 @@ describe("init() method with domain option", () => {
         data: undefined,
         tenantId,
       },
+      undefined
     );
   });
 
@@ -108,14 +103,10 @@ describe("init() method with domain option", () => {
 
     await Userfront.login({ method: "password", email, password });
 
-    const url = `https://${domain}`
+    const url = `https://${domain}`;
 
-    expect(axios.defaults.headers.common["x-application-id"]).toEqual(
-      url
-    );
-    expect(axios.defaults.headers.common["x-origin"]).toEqual(
-      url
-    );
+    expect(axios.defaults.headers.common["x-application-id"]).toEqual(url);
+    expect(axios.defaults.headers.common["x-origin"]).toEqual(url);
 
     expect(axios.post).toHaveBeenCalledWith(
       "https://api.userfront.com/v0/auth/basic",
@@ -123,7 +114,8 @@ describe("init() method with domain option", () => {
         emailOrUsername: email,
         password,
         tenantId,
-      }
+      },
+      undefined
     );
   });
 
@@ -141,14 +133,10 @@ describe("init() method with domain option", () => {
 
     await Userfront.logout();
 
-    const url = `https://${domain}`
+    const url = `https://${domain}`;
 
-    expect(axios.defaults.headers.common["x-application-id"]).toEqual(
-      url
-    );
-    expect(axios.defaults.headers.common["x-origin"]).toEqual(
-      url
-    );
+    expect(axios.defaults.headers.common["x-application-id"]).toEqual(url);
+    expect(axios.defaults.headers.common["x-origin"]).toEqual(url);
     expect(axios.get).toHaveBeenCalledWith(
       "https://api.userfront.com/v0/auth/logout",
       {
@@ -222,16 +210,10 @@ describe("init() method with baseUrl option", () => {
 
 describe("addInitCallback() method", () => {
   beforeAll(() => {
-    // Using `window.location.assign` rather than `window.location.href =` because
-    // JSDOM throws an error "Error: Not implemented: navigation (except hash changes)"
-    // JSDOM complains about this is because JSDOM does not implement methods like window.alert, window.location.assign, etc.
-    // https://stackoverflow.com/a/54477957
-    delete window.location;
-    window.location = {
-      assign: jest.fn(),
+    mockWindow({
       origin: "https://example.com",
       href: "https://example.com/login",
-    };
+    });
   });
 
   it("should add callbacks that are fired when Userfront.init(tenantId) is called", () => {

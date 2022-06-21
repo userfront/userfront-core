@@ -121,38 +121,62 @@ export declare function signup({
   method,
   email,
   username,
+  phoneNumber,
   name,
   data,
   password,
+  channel,
   redirect,
 }: {
   method: string;
   email?: string;
   username?: string;
+  phoneNumber?: string;
   name?: string;
   data?: object;
   password?: string;
+  channel?: "sms" | "email";
   redirect?: string | boolean;
 }): Promise<SignupResponse>;
 
 // login()
 export declare function login({
   method,
+  // User identifiers
+  userId,
+  userUuid,
   email,
   username,
   emailOrUsername,
+  phoneNumber,
+  // Password
   password,
+  // Link
   token,
   uuid,
+  // Totp
+  totpCode,
+  backupCode,
+  // Verification code
+  verificationCode,
+  channel,
+  // Other
   redirect,
 }: {
   method: string;
+  userId?: number;
+  userUuid?: string;
   email?: string;
   username?: string;
   emailOrUsername?: string;
+  phoneNumber?: string;
   password?: string;
   token?: string;
   uuid?: string;
+  totpCode?: string;
+  backupCode?: string;
+  verificationCode?: string;
+  channel?: "sms" | "email";
   redirect?: string | boolean;
 }): Promise<LoginResponse>;
 
@@ -184,7 +208,7 @@ export declare function updatePassword({
   token?: string;
   uuid?: string;
   redirect?: string | boolean;
-  method?: 'link' | 'jwt';
+  method?: "link" | "jwt";
 }): Promise<LoginResponse | UpdatePasswordResponse>;
 
 // resetPassword()
@@ -201,7 +225,7 @@ export declare function resetPassword({
   token?: string;
   uuid?: string;
   redirect?: string | boolean;
-  method?: 'link' | 'jwt';
+  method?: "link" | "jwt";
 }): Promise<LoginResponse | UpdatePasswordResponse>;
 
 // sendLoginLink()

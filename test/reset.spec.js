@@ -1,11 +1,11 @@
-import axios from "axios";
-
 import Userfront from "../src/index.js";
+import api from "../src/api.js";
 import {
   createAccessToken,
   createIdToken,
   createRefreshToken,
   idTokenUserDefaults,
+  mockWindow,
 } from "./config/utils.js";
 import { setCookiesAndTokens, removeAllCookies } from "../src/cookies.js";
 import {
@@ -14,23 +14,16 @@ import {
   resetPassword,
   updatePasswordWithLink,
   updatePasswordWithJwt,
-} from "../src/reset.js";
+} from "../src/password.js";
+
+jest.mock("../src/api.js");
 
 const tenantId = "abcd9876";
-const customBaseUrl = "https://custom.example.com/api/v1/";
 
-jest.mock("axios");
-
-// Using `window.location.assign` rather than `window.location.href =` because
-// JSDOM throws an error "Error: Not implemented: navigation (except hash changes)"
-// JSDOM complains about this is because JSDOM does not implement methods like window.alert, window.location.assign, etc.
-// https://stackoverflow.com/a/54477957
-delete window.location;
-window.location = {
-  assign: jest.fn(),
+mockWindow({
   origin: "https://example.com",
   href: "https://example.com/login",
-};
+});
 
 // Mock API response
 const mockResponse = {
@@ -45,7 +38,7 @@ const mockResponse = {
   },
 };
 
-describe("sendResetLink", () => {
+describe("sendResetLink()", () => {
   beforeEach(() => {
     Userfront.init(tenantId);
   });
@@ -61,56 +54,23 @@ describe("sendResetLink", () => {
         },
       },
     };
-    axios.post.mockImplementationOnce(() => Promise.reject(mockResponse));
+    api.post.mockImplementationOnce(() => Promise.reject(mockResponse));
     expect(sendResetLink("email@example.com")).rejects.toEqual(
       new Error(mockResponse.response.data.message)
     );
   });
-
-  it(`should respond with whatever the server sends when using custom baseUrl`, async () => {
-    Userfront.init(tenantId, {
-      baseUrl: customBaseUrl,
-    });
-
-    // Mock the API response
-    const mockResponse = {
-      response: {
-        data: {
-          error: "Bad Request",
-          message: `That's a silly link request.`,
-          statusCode: 400,
-        },
-      },
-    };
-    axios.post.mockImplementationOnce(() => Promise.reject(mockResponse));
-
-    const email = "email@example.com";
-    expect(sendResetLink(email)).rejects.toEqual(
-      new Error(mockResponse.response.data.message)
-    );
-
-    // Should have sent the proper API request
-    expect(axios.post).toHaveBeenCalledWith(`${customBaseUrl}auth/reset/link`, {
-      email,
-      tenantId,
-    });
-  });
 });
 
-describe("resetPassword", () => {
+describe("resetPassword()", () => {
   it("should be an alias for updatePassword()", () => {
     expect(resetPassword).toEqual(updatePassword);
   });
 });
 
-describe("updatePassword", () => {
+describe("updatePassword()", () => {
   beforeEach(() => {
     Userfront.init(tenantId);
-  });
-
-  afterEach(() => {
-    window.location.assign.mockClear();
-
+    jest.resetAllMocks();
     // Remove token and uuid from the URL
     window.location.href = "https://example.com/reset";
   });
@@ -118,7 +78,7 @@ describe("updatePassword", () => {
   describe("No method set (method is inferred)", () => {
     it("should call updatePasswordWithLink() if token and uuid are present in the method inputs", async () => {
       // Mock the API response
-      axios.put.mockImplementationOnce(() => Promise.resolve(mockResponse));
+      api.put.mockImplementationOnce(() => Promise.resolve(mockResponse));
 
       const options = { token: "token", uuid: "uuid", password: "password" };
 
@@ -126,13 +86,10 @@ describe("updatePassword", () => {
       await updatePassword(options);
 
       // Should have sent the proper API request
-      expect(axios.put).toHaveBeenCalledWith(
-        `https://api.userfront.com/v0/auth/reset`,
-        {
-          tenantId,
-          ...options,
-        }
-      );
+      expect(api.put).toHaveBeenCalledWith(`/auth/reset`, {
+        tenantId,
+        ...options,
+      });
 
       // Should have redirected the page
       expect(window.location.assign).toHaveBeenCalledWith(
@@ -148,7 +105,7 @@ describe("updatePassword", () => {
       setCookiesAndTokens(mockResponse.data.tokens);
 
       // Mock the API response
-      axios.put.mockImplementationOnce(() => Promise.resolve(mockResponse));
+      api.put.mockImplementationOnce(() => Promise.resolve(mockResponse));
 
       const options = { password: "password" };
 
@@ -156,15 +113,12 @@ describe("updatePassword", () => {
       await updatePassword(options);
 
       // Should have sent the proper API request
-      expect(axios.put).toHaveBeenCalledWith(
-        `https://api.userfront.com/v0/auth/reset`,
-        {
-          tenantId,
-          token: "aaaaa",
-          uuid: "bbbbb",
-          ...options,
-        }
-      );
+      expect(api.put).toHaveBeenCalledWith(`/auth/reset`, {
+        tenantId,
+        token: "aaaaa",
+        uuid: "bbbbb",
+        ...options,
+      });
 
       // Should have redirected the page
       expect(window.location.assign).toHaveBeenCalledWith(
@@ -177,7 +131,7 @@ describe("updatePassword", () => {
       setCookiesAndTokens(mockResponse.data.tokens);
 
       // Mock the API response
-      axios.put.mockImplementationOnce(() => Promise.resolve(mockResponse));
+      api.put.mockImplementationOnce(() => Promise.resolve(mockResponse));
 
       // Call updatePassword()
       const options = {
@@ -187,8 +141,8 @@ describe("updatePassword", () => {
       await updatePassword(options);
 
       // Should have sent the proper API request
-      expect(axios.put).toHaveBeenCalledWith(
-        `https://api.userfront.com/v0/auth/basic`,
+      expect(api.put).toHaveBeenCalledWith(
+        `/auth/basic`,
         {
           tenantId,
           ...options,
@@ -208,7 +162,7 @@ describe("updatePassword", () => {
   describe("updatePasswordWithLink()", () => {
     it("should send a password reset request and then redirect the page", async () => {
       // Mock the API response
-      axios.put.mockImplementationOnce(() => Promise.resolve(mockResponse));
+      api.put.mockImplementationOnce(() => Promise.resolve(mockResponse));
 
       const options = { token: "token", uuid: "uuid", password: "password" };
 
@@ -216,35 +170,7 @@ describe("updatePassword", () => {
       await updatePasswordWithLink(options);
 
       // Should have sent the proper API request
-      expect(axios.put).toHaveBeenCalledWith(
-        `https://api.userfront.com/v0/auth/reset`,
-        {
-          tenantId,
-          ...options,
-        }
-      );
-
-      // Should have redirected the page
-      expect(window.location.assign).toHaveBeenCalledWith(
-        mockResponse.data.redirectTo
-      );
-    });
-
-    it("should send a password reset request with custom baseUrl", async () => {
-      Userfront.init(tenantId, {
-        baseUrl: customBaseUrl,
-      });
-
-      // Mock the API response
-      axios.put.mockImplementationOnce(() => Promise.resolve(mockResponse));
-
-      const options = { token: "token", uuid: "uuid", password: "password" };
-
-      // Call updatePasswordWithLink
-      await updatePasswordWithLink(options);
-
-      // Should have sent the proper API request
-      expect(axios.put).toHaveBeenCalledWith(`${customBaseUrl}auth/reset`, {
+      expect(api.put).toHaveBeenCalledWith(`/auth/reset`, {
         tenantId,
         ...options,
       });
@@ -265,7 +191,7 @@ describe("updatePassword", () => {
       mockResponseCopy.data.tokens.id.value = createIdToken(newUserAttrs);
 
       // Mock the API response
-      axios.put.mockImplementationOnce(() => mockResponseCopy);
+      api.put.mockImplementationOnce(() => mockResponseCopy);
 
       const targetPath = "/custom/page";
 
@@ -279,13 +205,10 @@ describe("updatePassword", () => {
       await updatePasswordWithLink({ ...options, redirect: targetPath });
 
       // Should have sent the proper API request
-      expect(axios.put).toHaveBeenCalledWith(
-        `https://api.userfront.com/v0/auth/reset`,
-        {
-          tenantId,
-          ...options,
-        }
-      );
+      expect(api.put).toHaveBeenCalledWith(`/auth/reset`, {
+        tenantId,
+        ...options,
+      });
 
       // Should have set the user object
       expect(Userfront.user.email).toEqual(newUserAttrs.email);
@@ -297,7 +220,7 @@ describe("updatePassword", () => {
 
     it("should send a password reset request and not redirect if redirect is false", async () => {
       // Mock the API response
-      axios.put.mockImplementationOnce(() => Promise.resolve(mockResponse));
+      api.put.mockImplementationOnce(() => Promise.resolve(mockResponse));
 
       const options = {
         token: "token",
@@ -309,13 +232,10 @@ describe("updatePassword", () => {
       await updatePasswordWithLink({ ...options, redirect: false });
 
       // Should have sent the proper API request
-      expect(axios.put).toHaveBeenCalledWith(
-        `https://api.userfront.com/v0/auth/reset`,
-        {
-          tenantId,
-          ...options,
-        }
-      );
+      expect(api.put).toHaveBeenCalledWith(`/auth/reset`, {
+        tenantId,
+        ...options,
+      });
 
       // Should have set the user object
       expect(Userfront.user.email).toEqual(idTokenUserDefaults.email);
@@ -336,7 +256,7 @@ describe("updatePassword", () => {
           },
         },
       };
-      axios.put.mockImplementationOnce(() => Promise.reject(mockResponse));
+      api.put.mockImplementationOnce(() => Promise.reject(mockResponse));
       expect(
         updatePasswordWithLink({ token: "token", uuid: "uuid" })
       ).rejects.toEqual(new Error(mockResponse.response.data.message));
@@ -356,7 +276,7 @@ describe("updatePassword", () => {
 
     it("should send a password update request", async () => {
       // Mock the API response
-      axios.put.mockImplementationOnce(() => Promise.resolve(mockResponse));
+      api.put.mockImplementationOnce(() => Promise.resolve(mockResponse));
 
       // Call updatePassword()
       const options = {
@@ -367,8 +287,8 @@ describe("updatePassword", () => {
       const data = await updatePassword(options);
 
       // Should have sent the proper API request
-      expect(axios.put).toHaveBeenCalledWith(
-        `https://api.userfront.com/v0/auth/basic`,
+      expect(api.put).toHaveBeenCalledWith(
+        `/auth/basic`,
         {
           tenantId,
           ...options,
@@ -395,7 +315,7 @@ describe("updatePassword", () => {
           },
         },
       };
-      axios.put.mockImplementationOnce(() => Promise.reject(mockResponse));
+      api.put.mockImplementationOnce(() => Promise.reject(mockResponse));
       expect(
         updatePasswordWithJwt({ password: "new-password" })
       ).rejects.toEqual(new Error(mockResponse.response.data.message));

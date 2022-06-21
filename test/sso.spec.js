@@ -1,7 +1,7 @@
 import Userfront from "../src/index.js";
-import Signon from "../src/signon.js";
-
+import { signonWithSso } from "../src/sso.js";
 import { getQueryAttr } from "../src/url.js";
+import { mockWindow } from "./config/utils.js";
 
 const providers = [
   "apple",
@@ -12,214 +12,33 @@ const providers = [
   "linkedin",
 ];
 
-// Using `window.location.assign` rather than `window.location.href =` because
-// JSDOM throws an error "Error: Not implemented: navigation (except hash changes)"
-// JSDOM complains about this is because JSDOM does not implement methods like window.alert, window.location.assign, etc.
-// https://stackoverflow.com/a/54477957
-delete window.location;
-const assignMock = jest.fn();
-window.location = {
-  assign: assignMock,
+mockWindow({
   origin: "https://example.com",
   href: "https://example.com/login?redirect=%2Fdashboard",
-};
+});
 
 const tenantId = "abcdefg";
-const customBaseUrl = "https://custom.example.com/api/v1/";
-let revertGetProviderLink;
 
 describe("SSO", () => {
-  beforeAll(() => {
-    Userfront.__set__("setUser", jest.fn());
-  });
-
-  describe("Signup", () => {
-    let signupWithSSOSpy;
-
-    beforeAll(() => {
-      // Signon.signupWithSSO is originally undefined because it's not exported.
-      // Using Rewire, we can get the function and set it to our Signon instance
-      Signon.signupWithSSO = Signon.__get__("signupWithSSO");
-      // Now we can spy on the defined Signon.signupWithSSO
-      signupWithSSOSpy = jest.spyOn(Signon, "signupWithSSO");
-      // and inject the spy into the module
-      Signon.__set__("signupWithSSO", signupWithSSOSpy);
-    });
-
+  describe("signonWithSso()", () => {
     beforeEach(() => {
       Userfront.init(tenantId);
     });
 
     afterEach(() => {
-      signupWithSSOSpy.mockClear();
-      assignMock.mockClear();
+      window.location.assign.mockClear();
     });
 
-    it("should throw if provider is not supported", () => {
-      expect(Userfront.signup({ method: "foobar" })).rejects.toEqual(
-        new Error(`Userfront.signup called with invalid "method" property.`)
-      );
-      expect(assignMock).not.toHaveBeenCalled();
-    });
+    it.each(providers)("with each provider", (provider) => {
+      signonWithSso({ provider });
 
-    it.each(providers)("calls signupWithSSO with each provider", (provider) => {
-      Userfront.signup({ method: provider });
-      expect(signupWithSSOSpy).toHaveBeenCalledWith({ provider });
-      expect(assignMock).toHaveBeenCalledWith(
+      expect(window.location.assign).toHaveBeenCalledTimes(1);
+      expect(window.location.assign).toHaveBeenCalledWith(
         `https://api.userfront.com/v0/auth/${provider}/login?` +
           `tenant_id=${tenantId}&` +
           `origin=${window.location.origin}&` +
           `redirect=${encodeURIComponent(getQueryAttr("redirect"))}`
       );
-    });
-
-    it.each(providers)(
-      "calls signupWithSSO with each provider to custom baseUrl",
-      (provider) => {
-        Userfront.init(tenantId, {
-          baseUrl: customBaseUrl,
-        });
-
-        Userfront.signup({ method: provider });
-
-        expect(signupWithSSOSpy).toHaveBeenCalledWith({ provider });
-        expect(assignMock).toHaveBeenCalledWith(
-          `${customBaseUrl}auth/${provider}/login?` +
-            `tenant_id=${tenantId}&` +
-            `origin=${window.location.origin}&` +
-            `redirect=${encodeURIComponent(getQueryAttr("redirect"))}`
-        );
-      }
-    );
-
-    it("should return to current path if redirect = false", async () => {
-      // Navigate to /signup
-      window.history.pushState({}, "", "/signup");
-
-      Userfront.signup({ method: "google", redirect: false });
-      expect(signupWithSSOSpy).toHaveBeenCalledWith({
-        provider: "google",
-        redirect: false,
-      });
-      expect(assignMock).toHaveBeenCalledWith(
-        `https://api.userfront.com/v0/auth/google/login?` +
-          `tenant_id=${tenantId}&` +
-          `origin=${window.location.origin}&` +
-          `redirect=${encodeURIComponent("/signup")}`
-      );
-    });
-
-    it("should throw if problem getting link", async () => {
-      const mock = jest.fn();
-      mock.mockImplementation(() => {
-        throw new Error("Missing tenant ID");
-      });
-
-      // Mock this function with option to revert later
-      revertGetProviderLink = Signon.__set__("getProviderLink", mock);
-
-      try {
-        await Userfront.signup({ method: "google" });
-      } catch (error) {}
-
-      expect(signupWithSSOSpy).toHaveBeenCalledWith({ provider: "google" });
-      expect(assignMock).not.toHaveBeenCalled();
-    });
-  });
-
-  describe("Login", () => {
-    let loginWithSSOSpy;
-
-    beforeAll(() => {
-      revertGetProviderLink(); // Revert from mock to original function
-      // Signon.loginWithSSO is originally undefined because it's not exported.
-      // Using Rewire, we can get the function and set it to our Signon instance
-      Signon.loginWithSSO = Signon.__get__("loginWithSSO");
-
-      // Now we can spy on the defined Signon.loginWithSSO
-      loginWithSSOSpy = jest.spyOn(Signon, "loginWithSSO");
-
-      // and inject the spy into the module
-      Signon.__set__("loginWithSSO", loginWithSSOSpy);
-    });
-
-    beforeEach(() => {
-      Userfront.init(tenantId);
-    });
-
-    afterEach(() => {
-      loginWithSSOSpy.mockClear();
-      assignMock.mockClear();
-    });
-
-    it("should throw if provider is not supported", () => {
-      expect(Userfront.login({ method: "foobar" })).rejects.toEqual(
-        new Error(`Userfront.login called with invalid "method" property.`)
-      );
-      expect(assignMock).not.toHaveBeenCalled();
-    });
-
-    it.each(providers)("calls loginWithSSO with each provider", (provider) => {
-      Userfront.login({ method: provider });
-      expect(loginWithSSOSpy).toHaveBeenCalledWith({ provider });
-      expect(assignMock).toHaveBeenCalledWith(
-        `https://api.userfront.com/v0/auth/${provider}/login?` +
-          `tenant_id=${tenantId}&` +
-          `origin=${window.location.origin}&` +
-          `redirect=${encodeURIComponent(getQueryAttr("redirect"))}`
-      );
-    });
-
-    it.each(providers)(
-      "calls loginWithSSO with each provider to custom baseUrl",
-      (provider) => {
-        Userfront.init(tenantId, {
-          baseUrl: customBaseUrl,
-        });
-
-        Userfront.login({ method: provider });
-
-        expect(loginWithSSOSpy).toHaveBeenCalledWith({ provider });
-        expect(assignMock).toHaveBeenCalledWith(
-          `${customBaseUrl}auth/${provider}/login?` +
-            `tenant_id=${tenantId}&` +
-            `origin=${window.location.origin}&` +
-            `redirect=${encodeURIComponent(getQueryAttr("redirect"))}`
-        );
-      }
-    );
-
-    it("should return to current path if redirect = false", async () => {
-      // Navigate to /login/special
-      window.history.pushState({}, "", "/login/special");
-
-      Userfront.login({ method: "azure", redirect: false });
-      expect(loginWithSSOSpy).toHaveBeenCalledWith({
-        provider: "azure",
-        redirect: false,
-      });
-      expect(assignMock).toHaveBeenCalledWith(
-        `https://api.userfront.com/v0/auth/azure/login?` +
-          `tenant_id=${tenantId}&` +
-          `origin=${window.location.origin}&` +
-          `redirect=${encodeURIComponent("/login/special")}`
-      );
-    });
-
-    it("should throw if problem getting link", async () => {
-      const mock = jest.fn();
-      mock.mockImplementation(() => {
-        throw new Error("Missing tenant ID");
-      });
-
-      revertGetProviderLink = Signon.__set__("getProviderLink", mock);
-
-      try {
-        await Userfront.login({ method: "google" });
-      } catch (error) {}
-
-      expect(loginWithSSOSpy).toHaveBeenCalledWith({ provider: "google" });
-      expect(assignMock).not.toHaveBeenCalled();
     });
   });
 });

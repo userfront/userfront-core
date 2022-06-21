@@ -1,33 +1,33 @@
-import axios from "axios";
 import { setCookiesAndTokens } from "./cookies.js";
 import { store } from "./store.js";
-import { getQueryAttr, redirectToPath } from "./url.js";
+import { handleRedirect } from "./url.js";
 import { exchange } from "./refresh.js";
 import { throwFormattedError } from "./utils.js";
+import { post, put } from "./api.js";
 
 /**
  * Send an SMS to a phone number
  * @param {String} type Type of SMS to send
- * @param {String} to Phone number in E.164 format
+ * @param {String} phoneNumber Phone number in E.164 format
  * @param {String} firstFactorCode Identifier obtained from login() response
  * @returns {Object}
  */
-export async function sendSms({ type, to, firstFactorCode } = {}) {
+export async function sendSms({ type, phoneNumber, firstFactorCode } = {}) {
   if (!type) {
     throw new Error('Userfront.sendSms called without "type" property.');
   }
 
   switch (type) {
     case "verificationCode":
-      if (!to || !firstFactorCode) {
+      if (!phoneNumber || !firstFactorCode) {
         throw new Error(
-          'Userfront.sendSms type "verificationCode" requires "to" and "firstFactorCode".'
+          'Userfront.sendSms type "verificationCode" requires "phoneNumber" and "firstFactorCode".'
         );
       }
 
       return sendVerificationCode({
         firstFactorCode,
-        to,
+        phoneNumber,
         strategy: "verificationCode",
         channel: "sms",
       });
@@ -41,26 +41,26 @@ export async function sendSms({ type, to, firstFactorCode } = {}) {
  * @param {String} firstFactorCode Identifier obtained from login() response
  * @param {String} strategy Type of MFA strategy
  * @param {String} channel Method of sending the verification code
- * @param {String} to Phone number in E.164 format
+ * @param {String} phoneNumber Phone number in E.164 format
  * @returns {Object}
  */
 export async function sendVerificationCode({
   firstFactorCode,
   strategy,
   channel,
-  to,
+  phoneNumber,
 } = {}) {
-  if (!firstFactorCode || !strategy || !channel || !to) {
+  if (!firstFactorCode || !strategy || !channel || !phoneNumber) {
     throw new Error("Userfront.sendVerificationCode missing parameters.");
   }
 
   try {
-    const { data } = await axios.post(`${store.baseUrl}auth/mfa`, {
+    const { data } = await post(`/auth/mfa`, {
       tenantId: store.tenantId,
       firstFactorCode,
       strategy,
       channel,
-      to,
+      phoneNumber,
     });
 
     return data;
@@ -76,17 +76,17 @@ export async function sendVerificationCode({
  * @param {String|Boolean} redirect Redirect to given path unless specified as `false`
  * @returns {Object}
  */
-export async function loginWithVerificationCode({
+export async function loginWithMfa({
   firstFactorCode,
   verificationCode,
   redirect,
 } = {}) {
   if (!firstFactorCode || !verificationCode) {
-    throw new Error("Userfront.loginWithVerificationCode missing parameters.");
+    throw new Error("Userfront.loginWithMfa missing parameters.");
   }
 
   try {
-    const { data } = await axios.put(`${store.baseUrl}auth/mfa`, {
+    const { data } = await put(`/auth/mfa`, {
       tenantId: store.tenantId,
       firstFactorCode,
       verificationCode,
@@ -94,13 +94,7 @@ export async function loginWithVerificationCode({
 
     setCookiesAndTokens(data.tokens);
     await exchange(data);
-    if (redirect === false) {
-      return data;
-    }
-
-    redirectToPath(
-      redirect || getQueryAttr("redirect") || data.redirectTo || "/"
-    );
+    handleRedirect({ redirect, data });
     return data;
   } catch (error) {
     throwFormattedError(error);

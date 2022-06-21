@@ -1,17 +1,18 @@
-import axios from "axios";
 import Cookies from "js-cookie";
 
 import Userfront from "../src/index.js";
+import api from "../src/api.js";
 import { getIframe, resolvers } from "../src/iframe.js";
 import { logout } from "../src/logout.js";
+import { handleRedirect } from "../src/url.js";
 import { createAccessToken, createIdToken } from "./config/utils.js";
 
-jest.mock("axios");
+jest.mock("../src/api.js");
+jest.mock("../src/url.js");
 
 const tenantId = "abcd9876";
 const mockAccessToken = createAccessToken();
 const mockIdToken = createIdToken();
-const customBaseUrl = "https://custom.example.com/api/v1/";
 
 // Mock API response
 const mockResponse = {
@@ -21,32 +22,18 @@ const mockResponse = {
   },
 };
 
-// Using `window.location.assign` rather than `window.location.href =` because
-// JSDOM throws an error "Error: Not implemented: navigation (except hash changes)"
-// JSDOM complains about this is because JSDOM does not implement methods like window.alert, window.location.assign, etc.
-// https://stackoverflow.com/a/54477957
-delete window.location;
-window.location = {
-  assign: jest.fn(),
-  origin: "https://example.com",
-  href: "https://example.com/login",
-};
-
 describe("logout", () => {
   beforeEach(() => {
     Cookies.set(`id.${tenantId}`, mockIdToken, {});
     Cookies.set(`access.${tenantId}`, mockAccessToken, {});
     Userfront.init(tenantId);
-  });
-
-  afterEach(() => {
-    window.location.assign.mockClear();
+    jest.resetAllMocks();
   });
 
   describe("basic logout (non-httpOnly)", () => {
     it("should send a request to logout for basic refresh", async () => {
       // Mock the API response
-      axios.get.mockImplementationOnce(() => mockResponse);
+      api.get.mockImplementationOnce(() => mockResponse);
 
       // Access and ID token cookies should both exist before logout
       expect(Cookies.get(`access.${tenantId}`)).toBeTruthy();
@@ -57,6 +44,13 @@ describe("logout", () => {
       // Call logout()
       await logout();
 
+      // Should have made a request to /auth/logout
+      expect(api.get).toHaveBeenCalledWith(`/auth/logout`, {
+        headers: {
+          authorization: `Bearer ${mockAccessToken}`,
+        },
+      });
+
       // Should have cleared the access and ID tokens
       expect(Cookies.get(`access.${tenantId}`)).toBeFalsy();
       expect(Cookies.get(`id.${tenantId}`)).toBeFalsy();
@@ -68,15 +62,15 @@ describe("logout", () => {
       expect(Userfront.user.userId).toBeFalsy();
       expect(Userfront.user.update).toBeTruthy();
 
-      // Should have redirected correctly
-      expect(window.location.assign).toHaveBeenCalledWith(
-        mockResponse.data.redirectTo
-      );
+      // Should redirect correctly
+      expect(handleRedirect).toHaveBeenCalledWith({
+        data: mockResponse.data,
+      });
     });
 
     it("should send a request to logout, then redirect to custom path", async () => {
       // Mock the API response
-      axios.get.mockImplementationOnce(() => mockResponse);
+      api.get.mockImplementationOnce(() => mockResponse);
 
       // Access and ID token cookies should both exist before logout
       expect(Cookies.get(`access.${tenantId}`)).toBeTruthy();
@@ -87,6 +81,13 @@ describe("logout", () => {
       // Call logout() with custom redirect
       await logout({ redirect: "/custom" });
 
+      // Should have made a request to /auth/logout
+      expect(api.get).toHaveBeenCalledWith(`/auth/logout`, {
+        headers: {
+          authorization: `Bearer ${mockAccessToken}`,
+        },
+      });
+
       // Should have cleared the access and ID tokens
       expect(Cookies.get(`access.${tenantId}`)).toBeFalsy();
       expect(Cookies.get(`id.${tenantId}`)).toBeFalsy();
@@ -98,13 +99,16 @@ describe("logout", () => {
       expect(Userfront.user.userId).toBeFalsy();
       expect(Userfront.user.update).toBeTruthy();
 
-      // Should have redirected correctly
-      expect(window.location.assign).toHaveBeenCalledWith("/custom");
+      // Should redirect correctly
+      expect(handleRedirect).toHaveBeenCalledWith({
+        redirect: "/custom",
+        data: mockResponse.data,
+      });
     });
 
     it("should send a request to logout, then not redirect if redirect is false", async () => {
       // Mock the API response
-      axios.get.mockImplementationOnce(() => mockResponse);
+      api.get.mockImplementationOnce(() => mockResponse);
 
       // Access and ID token cookies should both exist before logout
       expect(Cookies.get(`access.${tenantId}`)).toBeTruthy();
@@ -115,6 +119,13 @@ describe("logout", () => {
       // Call logout() with custom redirect
       await logout({ redirect: false });
 
+      // Should have made a request to /auth/logout
+      expect(api.get).toHaveBeenCalledWith(`/auth/logout`, {
+        headers: {
+          authorization: `Bearer ${mockAccessToken}`,
+        },
+      });
+
       // Should have cleared the access and ID tokens
       expect(Cookies.get(`access.${tenantId}`)).toBeFalsy();
       expect(Cookies.get(`id.${tenantId}`)).toBeFalsy();
@@ -126,24 +137,10 @@ describe("logout", () => {
       expect(Userfront.user.userId).toBeFalsy();
       expect(Userfront.user.update).toBeTruthy();
 
-      // Should have redirected correctly
-      expect(window.location.assign).not.toHaveBeenCalled();
-    });
-
-    it("should use custom baseUrl when logout is called", async () => {
-      Userfront.init(tenantId, {
-        baseUrl: customBaseUrl,
-      });
-
-      // Mock the API response
-      axios.get.mockImplementationOnce(() => mockResponse);
-
-      await logout();
-
-      expect(axios.get).toHaveBeenCalledWith(`${customBaseUrl}auth/logout`, {
-        headers: {
-          authorization: `Bearer ${mockAccessToken}`,
-        },
+      // Should redirect correctly
+      expect(handleRedirect).toHaveBeenCalledWith({
+        redirect: false,
+        data: mockResponse.data,
       });
     });
   });

@@ -1,4 +1,3 @@
-import axios from "axios";
 import jwt from "jsonwebtoken";
 // import { JwksClient } from "jwks-rsa";
 
@@ -6,7 +5,6 @@ import { createAccessToken, createIdToken } from "./config/utils.js";
 import Userfront from "../src/index.js";
 import { apiUrl } from "../src/constants.js";
 
-jest.mock("axios");
 // jest.mock("jwks-rsa", () => {
 //   return {
 //     __esModule: true,
@@ -40,7 +38,7 @@ xdescribe("verifyToken", () => {
     });
 
     // Mock request of /jwks/{mode}
-    axios.get.mockImplementationOnce(() =>
+    api.get.mockImplementationOnce(() =>
       Promise.resolve({
         keys: [
           {

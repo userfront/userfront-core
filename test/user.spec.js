@@ -1,29 +1,23 @@
-import axios from "axios";
-
-import { apiUrl } from "../src/constants.js";
+import Userfront from "../src/index.js";
+import api from "../src/api";
 import { setCookie } from "../src/cookies.js";
 import { setUser } from "../src/user.js";
 import { refresh } from "../src/refresh.js";
 import { setTokensFromCookies } from "../src/tokens.js";
+import { getTotp } from "../src/totp.js";
+import { updatePassword } from "../src/password.js";
 import {
   createAccessToken,
   createIdToken,
   idTokenUserDefaults,
   defaultIdTokenProperties,
 } from "./config/utils.js";
-import Userfront from "../src/index.js";
 
-jest.mock("axios");
-jest.mock("../src/refresh.js", () => {
-  return {
-    __esModule: true,
-    refresh: jest.fn(),
-  };
-});
+jest.mock("../src/api.js");
+jest.mock("../src/refresh.js");
 console.warn = jest.fn();
 
 const tenantId = "hijk9876";
-const customBaseUrl = "https://custom.example.com/api/v1/";
 
 describe("User", () => {
   beforeAll(async () => {
@@ -103,35 +97,7 @@ describe("User", () => {
       await Userfront.user.update(payload);
 
       // Should have made API request
-      expect(axios.put).toBeCalledWith(`${apiUrl}self`, payload, {
-        headers: {
-          authorization: `Bearer ${Userfront.tokens.accessToken}`,
-        },
-      });
-
-      // Should have called `refresh` function
-      expect(refresh).toHaveBeenCalledTimes(1);
-      expect(refresh).toHaveBeenCalledWith();
-      refresh.mockClear();
-    });
-
-    it("should call update using custom baseUrl", async () => {
-      Userfront.init(tenantId, {
-        baseUrl: customBaseUrl,
-      });
-
-      const payload = {
-        username: "john-foo",
-        data: {
-          country: "Argentina",
-        },
-      };
-
-      // Call the update method
-      await Userfront.user.update(payload);
-
-      // Should have made API request
-      expect(axios.put).toBeCalledWith(`${customBaseUrl}self`, payload, {
+      expect(api.put).toBeCalledWith(`/self`, payload, {
         headers: {
           authorization: `Bearer ${Userfront.tokens.accessToken}`,
         },
@@ -188,7 +154,7 @@ describe("User", () => {
 
       const payload = { name: "Jane Doe" };
 
-      axios.put.mockImplementationOnce(() =>
+      api.put.mockImplementationOnce(() =>
         Promise.reject(new Error("Bad Request"))
       );
 
@@ -196,7 +162,7 @@ describe("User", () => {
       expect(Userfront.user.update(payload)).rejects.toThrow("Bad Request");
 
       // Should have made "update user" API request
-      expect(axios.put).toBeCalledWith(`${apiUrl}self`, payload, {
+      expect(api.put).toBeCalledWith(`/self`, payload, {
         headers: {
           authorization: `Bearer ${originalTokens.accessToken}`,
         },
@@ -263,6 +229,18 @@ describe("User", () => {
       expect(Userfront.user.hasRole("admin", { tenantId: "foobar" })).toEqual(
         false
       );
+    });
+  });
+
+  describe("user.updatePassword()", () => {
+    it("should be the updatePassword() method", () => {
+      expect(Userfront.user.updatePassword).toEqual(updatePassword);
+    });
+  });
+
+  describe("user.getTotp()", () => {
+    it("should be the getTotp() method", () => {
+      expect(Userfront.user.getTotp).toEqual(getTotp);
     });
   });
 });

@@ -3,12 +3,14 @@ import { signup } from "../src/signup.js";
 import { signupWithPassword } from "../src/password.js";
 import { signonWithSso } from "../src/sso.js";
 import { sendPasswordlessLink } from "../src/link.js";
+import { sendVerificationCode } from "../src/verificationCode.js";
 import { handleRedirect } from "../src/url.js";
 
 // Mock all methods to be called
 jest.mock("../src/password.js");
 jest.mock("../src/link.js");
 jest.mock("../src/sso.js");
+jest.mock("../src/verificationCode.js");
 jest.mock("../src/url.js");
 
 const tenantId = "abcd9876";
@@ -107,6 +109,37 @@ describe("signup()", () => {
         combo.userData = combo.data;
         delete combo.data;
         expect(sendPasswordlessLink).toHaveBeenCalledWith(combo);
+      });
+    });
+  });
+
+  describe(`{ method: "verificationCode" }`, () => {
+    it(`should call sendVerificationCode()`, () => {
+      const email = "user@example.com";
+      const phoneNumber = "+15558884433";
+      const combos = [
+        { channel: "email", email },
+        { channel: "sms", email, phoneNumber },
+        {
+          channel: "email",
+          email,
+          name: "First Last",
+          username: "user-name",
+          data: {
+            custom: "data",
+          },
+        },
+      ];
+
+      // Test login for each combo
+      combos.forEach((combo) => {
+        // Call login for the combo
+        Userfront.signup({ method: "verificationCode", ...combo });
+
+        // Assert that sendVerificationCode was called
+        combo.userData = combo.data;
+        delete combo.data;
+        expect(sendVerificationCode).toHaveBeenCalledWith(combo);
       });
     });
   });

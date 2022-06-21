@@ -121,17 +121,21 @@ export declare function signup({
   method,
   email,
   username,
+  phoneNumber,
   name,
   data,
   password,
+  channel,
   redirect,
 }: {
   method: string;
   email?: string;
   username?: string;
+  phoneNumber?: string;
   name?: string;
   data?: object;
   password?: string;
+  channel?: "sms" | "email";
   redirect?: string | boolean;
 }): Promise<SignupResponse>;
 
@@ -154,8 +158,8 @@ export declare function login({
   totpCode,
   backupCode,
   // Verification code
-  channel,
   verificationCode,
+  channel,
   // Other
   redirect,
 }: {
@@ -171,8 +175,8 @@ export declare function login({
   uuid?: string;
   totpCode?: string;
   backupCode?: string;
-  channel?: "sms" | "email";
   verificationCode?: string;
+  channel?: "sms" | "email";
   redirect?: string | boolean;
 }): Promise<LoginResponse>;
 

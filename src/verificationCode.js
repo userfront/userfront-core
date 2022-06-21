@@ -27,11 +27,17 @@ function enforceChannel({ channel, phoneNumber, email }) {
  * @property {String} channel "sms" (default) or "email"
  * @property {String} phoneNumber
  * @property {String} email
+ * @property {String} name
+ * @property {String} username
+ * @property {Object} data
  */
 export async function sendVerificationCode({
   channel = "sms",
   phoneNumber,
   email,
+  name,
+  username,
+  userData,
 }) {
   try {
     enforceChannel({
@@ -44,6 +50,9 @@ export async function sendVerificationCode({
       channel,
       email,
       phoneNumber,
+      name,
+      username,
+      data: userData,
       tenantId: store.tenantId,
     });
     return data;

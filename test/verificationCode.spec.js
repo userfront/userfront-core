@@ -36,15 +36,27 @@ describe("sendVerificationCode()", () => {
     // Mock the API response
     api.post.mockImplementationOnce(() => mockResponse);
 
-    const payload = { channel: "sms", phoneNumber: "+15558769098" };
+    const payload = {
+      channel: "sms",
+      phoneNumber: "+15558769098",
+      email: "user@example.com",
+      username: "new-by-sms",
+      name: "New User",
+      userData: { attr: "custom-data" },
+    };
 
     // Call sendVerificationCode()
     const data = await sendVerificationCode(payload);
 
     // Should have sent the proper API request
     expect(api.post).toHaveBeenCalledWith(`/auth/code`, {
+      channel: payload.channel,
+      phoneNumber: payload.phoneNumber,
+      email: payload.email,
+      username: payload.username,
+      name: payload.name,
+      data: payload.userData,
       tenantId,
-      ...payload,
     });
 
     // Should have returned the proper value

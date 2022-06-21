@@ -1,25 +1,30 @@
 import { signupWithPassword } from "./password.js";
 import { signonWithSso } from "./sso.js";
 import { sendPasswordlessLink } from "./link.js";
+import { sendVerificationCode } from "./verificationCode.js";
 
 /**
  * Register a user via the provided method. This method serves to call other
  * methods, depending on the "method" parameter passed in.
  * @param {String} method
- * @param {String} username
- * @param {String} name
  * @param {String} email
- * @param {String} password
+ * @param {String} username
+ * @param {String} phoneNumber
+ * @param {String} name
  * @param {Object} data - Object for custom user fields
- * @param {String} redirect - path to redirect to, or if false, do not redirect
+ * @param {String} password
+ * @param {String} channel "sms" or "email"
+ * @param {String} redirect - do not redirect if false, or redirect to given path
  */
 export async function signup({
   method,
-  username,
-  name,
   email,
-  password,
+  username,
+  phoneNumber,
+  name,
   data,
+  password,
+  channel,
   redirect,
 } = {}) {
   if (!method) {
@@ -44,6 +49,15 @@ export async function signup({
       });
     case "passwordless":
       return sendPasswordlessLink({ email, name, username, userData: data });
+    case "verificationCode":
+      return sendVerificationCode({
+        channel,
+        email,
+        phoneNumber,
+        name,
+        username,
+        userData: data,
+      });
     default:
       throw new Error(
         'Userfront.signup called with invalid "method" property.'

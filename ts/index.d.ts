@@ -20,7 +20,10 @@ interface User {
   tenantId?: string;
   userId?: number;
   userUuid?: string;
+  // methods
   update?: Function;
+  updatePassword?: Function;
+  getTotp?: Function;
   hasRole?: Function;
 }
 export declare const user: User;
@@ -114,6 +117,20 @@ interface LinkResult {
 interface LinkResponse {
   message: string;
   result?: LinkResult;
+}
+
+interface VerificationCodeResult {
+  channel?: string;
+  phoneNumber?: string;
+  email?: string;
+  submittedAt?: string;
+  messageId?: string;
+  verificationCode?: string;
+}
+
+interface VerificationCodeResponse {
+  message: string;
+  result?: VerificationCodeResult;
 }
 
 // signup()
@@ -233,3 +250,20 @@ export declare function sendLoginLink(email: string): Promise<LinkResponse>;
 
 // sendResetLink()
 export declare function sendResetLink(email: string): Promise<LinkResponse>;
+
+// sendVerificationCode()
+export declare function sendVerificationCode({
+  channel,
+  phoneNumber,
+  email,
+  name,
+  username,
+  data,
+}: {
+  channel: "sms" | "email";
+  phoneNumber?: string;
+  email?: string;
+  name?: string;
+  username?: string;
+  data?: object;
+}): Promise<VerificationCodeResponse>;

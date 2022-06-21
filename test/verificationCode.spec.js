@@ -42,25 +42,20 @@ describe("sendVerificationCode()", () => {
       email: "user@example.com",
       username: "new-by-sms",
       name: "New User",
-      userData: { attr: "custom-data" },
+      data: { attr: "custom-data" },
     };
 
     // Call sendVerificationCode()
-    const data = await sendVerificationCode(payload);
+    const res = await sendVerificationCode(payload);
 
     // Should have sent the proper API request
     expect(api.post).toHaveBeenCalledWith(`/auth/code`, {
-      channel: payload.channel,
-      phoneNumber: payload.phoneNumber,
-      email: payload.email,
-      username: payload.username,
-      name: payload.name,
-      data: payload.userData,
       tenantId,
+      ...payload,
     });
 
     // Should have returned the proper value
-    expect(data).toEqual(mockResponse.data);
+    expect(res).toEqual(mockResponse.data);
   });
 
   it(`email send should respond with API response information`, async () => {

@@ -11,8 +11,9 @@ import { redirectIfLoggedIn } from "./url.js";
 import { sendSms } from "./mfa.js";
 import { signup } from "./signup.js";
 import { login } from "./login.js";
-import { sendLoginLink } from "./link.js";
 import { updatePassword, resetPassword, sendResetLink } from "./password.js";
+import { sendLoginLink } from "./link.js";
+import { sendVerificationCode } from "./verificationCode";
 import { logout } from "./logout.js";
 import { mode, setMode, setModeSync } from "./mode.js";
 // import { setIframe } from "./iframe.js";
@@ -134,6 +135,7 @@ export default {
   updatePassword,
   sendLoginLink,
   sendResetLink,
+  sendVerificationCode,
   signup,
 
   // store

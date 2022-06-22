@@ -137,8 +137,6 @@ describe("signup()", () => {
         Userfront.signup({ method: "verificationCode", ...combo });
 
         // Assert that sendVerificationCode was called
-        combo.userData = combo.data;
-        delete combo.data;
         expect(sendVerificationCode).toHaveBeenCalledWith(combo);
       });
     });

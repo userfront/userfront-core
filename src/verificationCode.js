@@ -37,7 +37,7 @@ export async function sendVerificationCode({
   email,
   name,
   username,
-  userData,
+  data,
 }) {
   try {
     enforceChannel({
@@ -46,16 +46,16 @@ export async function sendVerificationCode({
       email,
     });
 
-    const { data } = await post(`/auth/code`, {
+    const { data: res } = await post(`/auth/code`, {
       channel,
       email,
       phoneNumber,
       name,
       username,
-      data: userData,
+      data,
       tenantId: store.tenantId,
     });
-    return data;
+    return res;
   } catch (error) {
     throwFormattedError(error);
   }

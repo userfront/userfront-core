@@ -7,7 +7,7 @@ import {
   idTokenUserDefaults,
   mockWindow,
 } from "./config/utils.js";
-import { sendVerificationCode, sendSms, loginWithMfa } from "../src/mfa.js";
+import { sendMfaCode, sendSms, loginWithMfa } from "../src/mfa.js";
 import { exchange } from "../src/refresh.js";
 
 jest.mock("../src/api.js");
@@ -49,21 +49,21 @@ const mockLoginResponse = {
   },
 };
 
-describe("sendVerificationCode", () => {
+describe("sendMfaCode", () => {
   beforeEach(() => {
     Userfront.init(tenantId);
   });
 
   it(`should throw if missing parameters`, async () => {
     const missingParamsError = new Error(
-      "Userfront.sendVerificationCode missing parameters."
+      "Userfront.sendMfaCode missing parameters."
     );
 
-    expect(sendVerificationCode()).rejects.toEqual(missingParamsError);
+    expect(sendMfaCode()).rejects.toEqual(missingParamsError);
 
     // Missing firstFactorCode
     expect(
-      sendVerificationCode({
+      sendMfaCode({
         strategy: "verificationCode",
         channel: "sms",
         phoneNumber,
@@ -72,7 +72,7 @@ describe("sendVerificationCode", () => {
 
     // Missing strategy
     expect(
-      sendVerificationCode({
+      sendMfaCode({
         firstFactorCode,
         channel: "sms",
         phoneNumber,
@@ -81,7 +81,7 @@ describe("sendVerificationCode", () => {
 
     // Missing channel
     expect(
-      sendVerificationCode({
+      sendMfaCode({
         firstFactorCode,
         strategy: "verificationCode",
         phoneNumber,
@@ -90,7 +90,7 @@ describe("sendVerificationCode", () => {
 
     // Missing to
     expect(
-      sendVerificationCode({
+      sendMfaCode({
         firstFactorCode,
         strategy: "verificationCode",
         channel: "sms",
@@ -110,7 +110,7 @@ describe("sendVerificationCode", () => {
       channel: "sms",
       phoneNumber,
     };
-    const data = await sendVerificationCode(payload);
+    const data = await sendMfaCode(payload);
 
     // Should have sent the proper API request
     expect(api.post).toHaveBeenCalledWith(`/auth/mfa`, {

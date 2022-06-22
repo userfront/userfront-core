@@ -56,7 +56,7 @@ export async function signup({
         phoneNumber,
         name,
         username,
-        userData: data,
+        data,
       });
     default:
       throw new Error(

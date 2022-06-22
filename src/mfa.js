@@ -25,7 +25,7 @@ export async function sendSms({ type, phoneNumber, firstFactorCode } = {}) {
         );
       }
 
-      return sendVerificationCode({
+      return sendMfaCode({
         firstFactorCode,
         phoneNumber,
         strategy: "verificationCode",
@@ -44,14 +44,14 @@ export async function sendSms({ type, phoneNumber, firstFactorCode } = {}) {
  * @param {String} phoneNumber Phone number in E.164 format
  * @returns {Object}
  */
-export async function sendVerificationCode({
+export async function sendMfaCode({
   firstFactorCode,
   strategy,
   channel,
   phoneNumber,
 } = {}) {
   if (!firstFactorCode || !strategy || !channel || !phoneNumber) {
-    throw new Error("Userfront.sendVerificationCode missing parameters.");
+    throw new Error("Userfront.sendMfaCode missing parameters.");
   }
 
   try {

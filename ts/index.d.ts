@@ -200,7 +200,7 @@ export declare function login({
 // logout()
 export declare function logout({
   redirect,
-}: {
+}?: {
   redirect?: string | boolean;
 }): Promise<LogoutResponse>;
 
@@ -210,14 +210,14 @@ export declare function isLoggedIn(): Promise<Boolean>;
 // redirectIfLoggedIn()
 export declare function redirectIfLoggedIn({
   redirect,
-}: {
+}?: {
   redirect?: string;
 }): Promise<void>;
 
-// redirectIfLoggedIn()
+// redirectIfLoggedOut()
 export declare function redirectIfLoggedOut({
   redirect,
-}: {
+}?: {
   redirect?: string;
 }): Promise<void>;
 

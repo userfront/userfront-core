@@ -204,8 +204,18 @@ export declare function logout({
   redirect?: string | boolean;
 }): Promise<LogoutResponse>;
 
+// isLoggedIn()
+export declare function isLoggedIn(): Promise<Boolean>;
+
 // redirectIfLoggedIn()
 export declare function redirectIfLoggedIn({
+  redirect,
+}: {
+  redirect?: string;
+}): Promise<void>;
+
+// redirectIfLoggedIn()
+export declare function redirectIfLoggedOut({
   redirect,
 }: {
   redirect?: string;

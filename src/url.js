@@ -1,6 +1,7 @@
 import { get } from "./api.js";
 import { store } from "./store.js";
 import { removeAllCookies } from "./cookies.js";
+import { isLoggedIn } from "./tokens.js";
 
 /**
  * Get the value of a query attribute, e.g. ?attr=value
@@ -32,13 +33,13 @@ export const handleRedirect = ({ redirect, data }) => {
   redirectToPath(path);
 };
 
-// TODO replace with direct check of the access token.
 /**
  * If the access token is valid, redirect the browser to the
- * tenant's login redirection path (path after login).
+ * tenant's After-login path.
  */
 export async function redirectIfLoggedIn({ redirect } = {}) {
-  if (!store.tokens.accessToken) {
+  const isUserLoggedIn = await isLoggedIn();
+  if (!isUserLoggedIn) {
     return removeAllCookies();
   }
 
@@ -62,6 +63,31 @@ export async function redirectIfLoggedIn({ redirect } = {}) {
   } catch (err) {
     removeAllCookies();
   }
+}
+
+/**
+ * If the access token is invalid, redirect the browser to the
+ * provided path.
+ */
+export async function redirectIfLoggedOut({ redirect } = {}) {
+  // If the user is logged in, return without doing anything
+  const isUserLoggedIn = await isLoggedIn();
+  if (isUserLoggedIn) {
+    return;
+  }
+
+  // Remove all cookies
+  removeAllCookies();
+
+  // Redirect to a provided path (check options first, then url querystring)
+  if (redirect) {
+    return redirectToPath(redirect);
+  } else if (getQueryAttr("redirect")) {
+    return redirectToPath(getQueryAttr("redirect"));
+  }
+
+  // If no redirect path was provided, do not redirect
+  return;
 }
 
 /**

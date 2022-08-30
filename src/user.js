@@ -1,5 +1,5 @@
 import { store } from "./store.js";
-import { getJWTPayload } from "./utils.js";
+import { getJwtPayload } from "./utils.js";
 
 /**
  * Define the store.user object based on the ID token
@@ -10,7 +10,7 @@ export function setUser() {
   }
 
   store.user = store.user || {};
-  const idTokenPayload = getJWTPayload(store.tokens.idToken);
+  const idTokenPayload = getJwtPayload(store.tokens.idToken);
 
   // Set basic user information properties from ID token
   const propsToDefine = [

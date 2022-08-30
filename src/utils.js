@@ -10,7 +10,7 @@
  * @param {String} token - JSON Web Token
  * @returns {Object}
  */
-export function getJWTPayload(token) {
+export function getJwtPayload(token) {
   try {
     const encodedPayload = token
       .split(".")[1]
@@ -19,6 +19,28 @@ export function getJWTPayload(token) {
     return JSON.parse(atob(encodedPayload));
   } catch (error) {
     console.error("Problem decoding JWT payload", error);
+  }
+}
+
+/**
+ * Client-side check:
+ * Determine whether the given JWT is present and unexpired
+ *
+ * @param {String} token JSON Web Token
+ * @returns {Boolean}
+ */
+export function isJwtLocallyValid(token) {
+  try {
+    // Must be present
+    if (!token) {
+      return false;
+    }
+
+    // Must not be expired
+    const payload = getJwtPayload(token);
+    return new Date(payload.exp) > new Date();
+  } catch (error) {
+    return false;
   }
 }
 

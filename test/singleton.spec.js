@@ -18,6 +18,7 @@ describe(`Userfront object`, () => {
       "refresh",
       // signon
       "login",
+      "isLoggedIn",
       "resetPassword",
       "updatePassword",
       "sendLoginLink",
@@ -26,6 +27,7 @@ describe(`Userfront object`, () => {
       "signup",
       // url
       "redirectIfLoggedIn",
+      "redirectIfLoggedOut",
     ];
     methods.forEach((method) => {
       it(`should have Userfront.${method}()`, () => {

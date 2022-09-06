@@ -33,9 +33,7 @@ async function getIsLoggedIn() {
 }
 
 /**
- * Determine whether a user is logged in by checking their
- * JWT access token and, if invalid, refreshing it and checking
- * again.
+ * Return detailed information about the current session.
  * @returns {Promise<Boolean>}
  */
 export async function getSession() {

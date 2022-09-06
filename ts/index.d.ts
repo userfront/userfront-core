@@ -106,6 +106,10 @@ interface LogoutResponse {
   redirectTo?: string;
 }
 
+interface SessionResponse {
+  isLoggedIn: boolean;
+}
+
 interface LinkResult {
   email?: string;
   submittedAt?: string;
@@ -204,8 +208,8 @@ export declare function logout({
   redirect?: string | boolean;
 }): Promise<LogoutResponse>;
 
-// isLoggedIn()
-export declare function isLoggedIn(): Promise<Boolean>;
+// getSession()
+export declare function getSession(): Promise<SessionResponse>;
 
 // redirectIfLoggedIn()
 export declare function redirectIfLoggedIn({

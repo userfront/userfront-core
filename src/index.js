@@ -6,10 +6,9 @@ import {
   idToken,
   setTokensFromCookies,
   setTokenNames,
-  isLoggedIn,
 } from "./tokens";
+import { getSession } from "./session";
 import { redirectIfLoggedIn, redirectIfLoggedOut } from "./url.js";
-import { sendSms } from "./mfa.js";
 import { signup } from "./signup.js";
 import { login } from "./login.js";
 import { updatePassword, resetPassword, sendResetLink } from "./password.js";
@@ -146,7 +145,9 @@ export default {
   tokens,
   accessToken,
   idToken,
-  isLoggedIn,
+
+  // session
+  getSession,
 
   // url
   redirectIfLoggedIn,
@@ -154,9 +155,6 @@ export default {
 
   // user
   user,
-
-  // mfa
-  sendSms,
 
   // utils
 };

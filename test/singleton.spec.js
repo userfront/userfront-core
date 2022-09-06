@@ -18,7 +18,7 @@ describe(`Userfront object`, () => {
       "refresh",
       // signon
       "login",
-      "isLoggedIn",
+      "getSession",
       "resetPassword",
       "updatePassword",
       "sendLoginLink",

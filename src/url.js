@@ -1,7 +1,7 @@
 import { get } from "./api.js";
 import { store } from "./store.js";
 import { removeAllCookies } from "./cookies.js";
-import { isLoggedIn } from "./tokens.js";
+import { getSession } from "./session.js";
 
 /**
  * Get the value of a query attribute, e.g. ?attr=value
@@ -38,8 +38,8 @@ export const handleRedirect = ({ redirect, data }) => {
  * tenant's After-login path.
  */
 export async function redirectIfLoggedIn({ redirect } = {}) {
-  const isUserLoggedIn = await isLoggedIn();
-  if (!isUserLoggedIn) {
+  const { isLoggedIn } = await getSession();
+  if (!isLoggedIn) {
     return removeAllCookies();
   }
 
@@ -71,8 +71,8 @@ export async function redirectIfLoggedIn({ redirect } = {}) {
  */
 export async function redirectIfLoggedOut({ redirect } = {}) {
   // If the user is logged in, return without doing anything
-  const isUserLoggedIn = await isLoggedIn();
-  if (isUserLoggedIn) {
+  const { isLoggedIn } = await getSession();
+  if (isLoggedIn) {
     return;
   }
 

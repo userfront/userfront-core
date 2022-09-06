@@ -1,9 +1,9 @@
-import { setCookiesAndTokens } from "./cookies.js";
-import { store } from "./store.js";
-import { handleRedirect } from "./url.js";
-import { exchange } from "./refresh.js";
-import { throwFormattedError } from "./utils.js";
-import { post, put } from "./api.js";
+import { setCookiesAndTokens } from "../src/cookies.js";
+import { store } from "../src/store.js";
+import { handleRedirect } from "../src/url.js";
+import { exchange } from "../src/refresh.js";
+import { throwFormattedError } from "../src/utils.js";
+import { post, put } from "../src/api.js";
 
 /**
  * Send an SMS to a phone number

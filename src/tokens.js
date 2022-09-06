@@ -79,34 +79,6 @@ export function isRefreshTokenLocallyValid() {
 }
 
 /**
- * Determine whether a user is logged in by checking their
- * JWT access token and, if invalid, refreshing it and checking
- * again.
- * @returns {Boolean}
- */
-export async function isLoggedIn() {
-  try {
-    // If the access token is locally valid, return true
-    if (isAccessTokenLocallyValid()) {
-      return true;
-    }
-
-    // If the refresh token is locally invalid, return false
-    if (!isRefreshTokenLocallyValid()) {
-      return false;
-    }
-
-    // Attempt to refresh the access token
-    await refresh();
-
-    // The access token should now be valid
-    return isAccessTokenLocallyValid();
-  } catch (error) {
-    return false;
-  }
-}
-
-/**
  * Export the store.tokens object
  */
 export const tokens = store.tokens;

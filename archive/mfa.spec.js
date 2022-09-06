@@ -6,8 +6,8 @@ import {
   createRefreshToken,
   idTokenUserDefaults,
   mockWindow,
-} from "./config/utils.js";
-import { sendMfaCode, sendSms, loginWithMfa } from "../src/mfa.js";
+} from "../test/config/utils.js";
+import { sendMfaCode, sendSms, loginWithMfa } from "./mfa.js";
 import { exchange } from "../src/refresh.js";
 
 jest.mock("../src/api.js");

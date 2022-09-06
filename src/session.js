@@ -34,7 +34,7 @@ async function getIsLoggedIn() {
 
 /**
  * Return detailed information about the current session.
- * @returns {Promise<Boolean>}
+ * @returns {Promise<Object>}
  */
 export async function getSession() {
   const isLoggedIn = await getIsLoggedIn();

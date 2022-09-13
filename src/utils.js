@@ -38,7 +38,7 @@ export function isJwtLocallyValid(token) {
 
     // Must not be expired
     const payload = getJwtPayload(token);
-    return new Date(payload.exp) > new Date();
+    return new Date(payload.exp * 1000) > new Date();
   } catch (error) {
     return false;
   }

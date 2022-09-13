@@ -35,8 +35,8 @@ const sharedTokenProperties = {
   },
   token: {
     sessionId: "7b794d68-dc94-4829-bd68-596c5d2693b5",
-    iat: new Date().getTime(),
-    exp: new Date().getTime() + 86400000, // 1 day
+    iat: parseInt(new Date().getTime() / 1000),
+    exp: parseInt(new Date().getTime() / 1000) + 86400, // 1 day
   },
 };
 

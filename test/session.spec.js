@@ -38,19 +38,19 @@ describe("Userfront session helpers", () => {
     it("should return true (after refresh) if the access token is expired but the refresh token is valid", async () => {
       // Set unexpired refresh token
       store.tokens.refreshToken = createRefreshToken({
-        exp: addMinutes(new Date(), 60).getTime(),
+        exp: parseInt(addMinutes(new Date(), 60).getTime() / 1000),
       });
 
       // Set expired access token
       store.tokens.accessToken = createAccessToken({
-        exp: new Date() - 1000,
+        exp: parseInt(new Date() / 1000) - 1,
       });
 
       // Mock the refresh method to update the access token
       Refresh.refresh.mockImplementationOnce(() => {
         return new Promise((resolve) => {
           store.tokens.accessToken = createAccessToken({
-            exp: addMinutes(new Date(), 60).getTime(),
+            exp: parseInt(addMinutes(new Date(), 60).getTime() / 1000),
           });
           resolve({});
         });
@@ -69,7 +69,7 @@ describe("Userfront session helpers", () => {
     it("should return true (after refresh) if the access token is missing but the refresh token is valid", async () => {
       // Set unexpired refresh token
       store.tokens.refreshToken = createRefreshToken({
-        exp: addMinutes(new Date(), 60).getTime(),
+        exp: parseInt(addMinutes(new Date(), 60).getTime() / 1000),
       });
 
       // Delete the access token
@@ -79,7 +79,7 @@ describe("Userfront session helpers", () => {
       Refresh.refresh.mockImplementationOnce(() => {
         return new Promise((resolve) => {
           store.tokens.accessToken = createAccessToken({
-            exp: addMinutes(new Date(), 60).getTime(),
+            exp: parseInt(addMinutes(new Date(), 60).getTime() / 1000),
           });
           resolve({});
         });
@@ -110,10 +110,10 @@ describe("Userfront session helpers", () => {
     it("should return false if both the access token and refresh token are expired", async () => {
       // Set access token and refresh token to be expired
       store.tokens.accessToken = createAccessToken({
-        exp: new Date() - 1000,
+        exp: parseInt(new Date() / 1000) - 1,
       });
       store.tokens.refreshToken = createRefreshToken({
-        exp: new Date() - 1000,
+        exp: parseInt(new Date() / 1000) - 1,
       });
 
       // Call getSession
@@ -127,7 +127,7 @@ describe("Userfront session helpers", () => {
       // Remove access token and set refresh token to be expired
       store.tokens.accessToken = null;
       store.tokens.refreshToken = createRefreshToken({
-        exp: new Date() - 1000,
+        exp: parseInt(new Date() - 1000) / 1000,
       });
 
       // Call getSession
@@ -141,7 +141,7 @@ describe("Userfront session helpers", () => {
       // Remove access token and set refresh token to be unexpired
       store.tokens.accessToken = null;
       store.tokens.refreshToken = createRefreshToken({
-        exp: addMinutes(new Date(), 60).getTime(),
+        exp: parseInt(addMinutes(new Date(), 60).getTime() / 1000),
       });
 
       // Mock the refresh method to update the access token
@@ -163,7 +163,7 @@ describe("Userfront session helpers", () => {
       // Remove access token and set refresh token to be expired
       store.tokens.accessToken = null;
       store.tokens.refreshToken = createRefreshToken({
-        exp: addMinutes(new Date(), 60).getTime(),
+        exp: parseInt(addMinutes(new Date(), 60).getTime() / 1000),
       });
 
       // Mock the refresh method to fail

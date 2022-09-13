@@ -46,7 +46,7 @@ describe("refresh with basic method", () => {
     const initialUser = JSON.parse(JSON.stringify(Userfront.user));
 
     // Mock with updated name and with authorization level removed
-    const newIat = new Date().getTime();
+    const newIat = parseInt(new Date().getTime() / 1000);
     const newName = "John Doe Updated";
     const newAccessToken = createAccessToken({
       authorization: {},

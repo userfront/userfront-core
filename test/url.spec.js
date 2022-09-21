@@ -5,7 +5,7 @@ import api from "../src/api.js";
 import { removeAllCookies } from "../src/cookies.js";
 import { store } from "../src/store.js";
 import { handleRedirect } from "../src/url.js";
-import { mockWindow } from "./config/utils.js";
+import { createAccessToken, mockWindow } from "./config/utils.js";
 
 jest.mock("../src/api.js");
 jest.mock("../src/cookies.js");
@@ -60,7 +60,7 @@ describe("handleRedirect()", () => {
 });
 
 describe("redirectIfLoggedIn()", () => {
-  const mockAccessToken = "mockAccessToken";
+  const mockAccessToken = createAccessToken();
 
   beforeAll(() => {
     // Set default href
@@ -186,6 +186,89 @@ describe("redirectIfLoggedIn()", () => {
     // Was redirected to tenant's loginRedirectPath
     expect(window.location.assign).toHaveBeenCalledTimes(1);
     expect(window.location.assign).toHaveBeenCalledWith(loginRedirectPath);
+
+    // Revert href
+    window.location.href = originalHref;
+
+    // Clear mock
+    api.get.mockReset();
+  });
+});
+
+describe("redirectIfLoggedOut()", () => {
+  beforeAll(() => {
+    // Set default href
+    window.location.href = "https://example.com/dashboard";
+  });
+
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
+  afterEach(() => {
+    Cookies.remove(`access.${tenantId}`);
+    removeAllCookies.mockReset();
+  });
+
+  it("should call removeAllCookies if store.tokens.accessToken isn't defined", async () => {
+    store.tokens.accessToken = undefined;
+    await Userfront.redirectIfLoggedOut();
+    expect(removeAllCookies).toHaveBeenCalledTimes(1);
+
+    // Should not have made request to Userfront API or redirected the user
+    expect(api.get).not.toHaveBeenCalled();
+    expect(window.location.assign).not.toHaveBeenCalled();
+  });
+
+  it("should not make request to Userfront API and should immediately redirect to path defined in `redirect` url param", async () => {
+    const originalHref = window.location.href;
+
+    // Append ?redirect= override path
+    const targetPath = "/target/path";
+    window.location.href = `https://example.com/dashboard?redirect=${targetPath}`;
+
+    await Userfront.redirectIfLoggedOut();
+
+    // Should redirected immediately without calling Userfront API
+    expect(removeAllCookies).toHaveBeenCalled();
+    expect(api.get).not.toHaveBeenCalled();
+    expect(window.location.assign).toHaveBeenCalledTimes(1);
+    expect(window.location.assign).toHaveBeenCalledWith(targetPath);
+
+    // Revert href
+    window.location.href = originalHref;
+  });
+
+  it("should not make request to Userfront API and should immediately redirect to path provided in options", async () => {
+    const originalHref = window.location.href;
+
+    // Append ?redirect= override path
+    const targetPath = "/custom/path";
+    window.location.href = `https://example.com/dashboard`;
+
+    await Userfront.redirectIfLoggedOut({ redirect: targetPath });
+
+    // Should redirected immediately without calling Userfront API
+    expect(removeAllCookies).toHaveBeenCalled();
+    expect(api.get).not.toHaveBeenCalled();
+    expect(window.location.assign).toHaveBeenCalledTimes(1);
+    expect(window.location.assign).toHaveBeenCalledWith(targetPath);
+
+    // Revert href and clear mock
+    window.location.href = originalHref;
+  });
+
+  it("should do nothing when logged out and redirect path is not specified", async () => {
+    const originalHref = window.location.href;
+    window.location.href = `https://example.com/dashboard`;
+
+    await Userfront.redirectIfLoggedOut();
+
+    // Should have removed any remaining cookies
+    expect(removeAllCookies).toHaveBeenCalled();
+
+    // Should not have redirected
+    expect(window.location.assign).not.toHaveBeenCalled();
 
     // Revert href
     window.location.href = originalHref;

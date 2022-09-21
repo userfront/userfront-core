@@ -2,6 +2,7 @@ import Cookies from "js-cookie";
 import { store } from "./store.js";
 import { setUser, unsetUser } from "./user.js";
 import { refresh } from "./refresh.js";
+import { isJwtLocallyValid } from "./utils.js";
 
 store.tokens = store.tokens || {};
 store.tokens.refresh = refresh;
@@ -57,6 +58,24 @@ export function unsetTokens() {
   store.tokens.idToken = undefined;
   store.tokens.refreshToken = undefined;
   unsetUser();
+}
+
+/**
+ * Client-side check:
+ * Determine whether the access token is present and unexpired
+ * @returns {Boolean}
+ */
+export function isAccessTokenLocallyValid() {
+  return isJwtLocallyValid(store.tokens.accessToken);
+}
+
+/**
+ * Client-side check:
+ * Determine whether the refresh token is present and unexpired
+ * @returns {Boolean}
+ */
+export function isRefreshTokenLocallyValid() {
+  return isJwtLocallyValid(store.tokens.refreshToken);
 }
 
 /**

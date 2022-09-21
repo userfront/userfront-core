@@ -7,8 +7,8 @@ import {
   setTokensFromCookies,
   setTokenNames,
 } from "./tokens";
-import { redirectIfLoggedIn } from "./url.js";
-import { sendSms } from "./mfa.js";
+import { getSession } from "./session";
+import { redirectIfLoggedIn, redirectIfLoggedOut } from "./url.js";
 import { signup } from "./signup.js";
 import { login } from "./login.js";
 import { updatePassword, resetPassword, sendResetLink } from "./password.js";
@@ -146,14 +146,15 @@ export default {
   accessToken,
   idToken,
 
+  // session
+  getSession,
+
   // url
   redirectIfLoggedIn,
+  redirectIfLoggedOut,
 
   // user
   user,
-
-  // mfa
-  sendSms,
 
   // utils
 };

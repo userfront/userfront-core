@@ -7,7 +7,7 @@ import { put } from "./api.js";
 import { store } from "./store.js";
 import { refresh } from "./refresh.js";
 import { getTotp } from "./totp.js";
-import { getJWTPayload } from "./utils.js";
+import { getJwtPayload } from "./utils.js";
 import { updatePassword } from "./password.js";
 
 /**
@@ -43,7 +43,7 @@ export function hasRole(roleName, { tenantId } = {}) {
     if (!store.tokens.accessToken || !store.tenantId) {
       return false;
     }
-    const { authorization } = getJWTPayload(store.tokens.accessToken);
+    const { authorization } = getJwtPayload(store.tokens.accessToken);
     if (!authorization) {
       return false;
     }

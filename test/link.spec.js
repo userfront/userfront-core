@@ -4,6 +4,8 @@ import {
   createAccessToken,
   createIdToken,
   createRefreshToken,
+  createMfaRequiredResponse,
+  setMfaRequired,
   idTokenUserDefaults,
   mockWindow,
 } from "./config/utils.js";
@@ -12,7 +14,14 @@ import {
   loginWithLink,
   sendPasswordlessLink,
 } from "../src/link.js";
+import {
+  mfaData
+} from "../src/mfa.js";
 import { exchange } from "../src/refresh.js";
+import {
+  assertMfaStateMatches,
+  assertMfaHeadersPresent
+} from "./config/assertions.js";
 
 jest.mock("../src/refresh.js");
 jest.mock("../src/api.js");
@@ -36,6 +45,14 @@ const mockResponse = {
     redirectTo: "/dashboard",
   },
 };
+
+// Mock "MFA Required" API response
+const mockMfaRequiredResponse = createMfaRequiredResponse({
+  firstFactor: {
+    strategy: "link",
+    channel: "email"
+  }
+});
 
 describe("sendLoginLink", () => {
   beforeEach(() => {
@@ -274,19 +291,10 @@ describe("loginWithLink", () => {
     expect(window.location.assign).not.toHaveBeenCalled();
   });
 
-  it("should return MFA options if tenant requires", async () => {
+  it("should handle an MFA Required response", async () => {
     exchange.mockClear();
 
-    const mockMfaOptionsResponse = {
-      data: {
-        mode: "live",
-        allowedStrategies: ["verificationCode"],
-        allowedChannels: ["sms"],
-        firstFactorCode: "204a8def-651c-4ab2-9ca0-1e3fca9e280a",
-      },
-    };
-
-    api.put.mockImplementationOnce(() => mockMfaOptionsResponse);
+    api.put.mockImplementationOnce(() => mockMfaRequiredResponse);
 
     const payload = {
       token: "some-token",
@@ -300,6 +308,9 @@ describe("loginWithLink", () => {
       ...payload,
     });
 
+    // Should have updated the MFA service state
+    assertMfaStateMatches(mockMfaRequiredResponse);
+
     // Should not have set the user object, called exchange, or redirected
     expect(Userfront.user).toBeUndefined;
     expect(exchange).not.toHaveBeenCalled();
@@ -308,4 +319,16 @@ describe("loginWithLink", () => {
     // Should have returned MFA options & firstFactorCode
     expect(data).toEqual(mockMfaOptionsResponse.data);
   });
+
+  it("should attach the firstFactorToken if this is the second factor", async () => {
+    setMfaRequired();
+    exchange.mockClear();
+    api.put.mockImplementationOnce(() => mockResponse);
+    const payload = {
+      token: "some-token",
+      uuid: "some-uuid"
+    };
+    await loginWithLink(payload);
+    assertMfaHeadersPresent(api.put);
+  })
 });

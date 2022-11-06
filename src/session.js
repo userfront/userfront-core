@@ -1,7 +1,13 @@
 import {
   isAccessTokenLocallyValid,
-  isRefreshTokenLocallyValid,
+  isRefreshTokenLocallyValid
 } from "./tokens.js";
+import {
+  mfaData,
+  updateFirstFactors,
+  isMfaRequired,
+  clearMfa
+} from "./mfa.js";
 import { refresh } from "./refresh.js";
 
 /**
@@ -38,5 +44,14 @@ async function getIsLoggedIn() {
  */
 export async function getSession() {
   const isLoggedIn = await getIsLoggedIn();
-  return { isLoggedIn };
+  if (!isLoggedIn) {
+    await updateFirstFactors();
+  }
+  return {
+    isLoggedIn,
+    needsSecondFactor: isMfaRequired(),
+    firstFactors: mfaData.firstFactors,
+    secondFactors: mfaData.secondFactors,
+    resetMfaState: clearMfa
+  };
 }

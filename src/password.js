@@ -4,6 +4,7 @@ import { store } from "./store.js";
 import { getQueryAttr, handleRedirect } from "./url.js";
 import { throwFormattedError } from "./utils.js";
 import { exchange } from "./refresh.js";
+import { getMfaHeaders, handleMfaRequired, clearMfa } from "./mfa.js";
 
 /**
  * Register a new user with username, name, email, and password.
@@ -31,11 +32,17 @@ export async function signupWithPassword({
       email,
       password,
       data: userData,
+    }, {
+      headers: getMfaHeaders()
     });
     if (data.tokens) {
+      clearMfa();
       setCookiesAndTokens(data.tokens);
       await exchange(data);
       handleRedirect({ redirect, data });
+      return data;
+    } else if (data.firstFactorToken) {
+      handleMfaRequired(data);
       return data;
     } else {
       throw new Error("Please try again.");
@@ -62,6 +69,8 @@ export async function loginWithPassword({
       tenantId: store.tenantId,
       emailOrUsername: email || username || emailOrUsername,
       password,
+    }, {
+      headers: getMfaHeaders()
     });
 
     if (data.hasOwnProperty("tokens")) {
@@ -72,6 +81,7 @@ export async function loginWithPassword({
     }
 
     if (data.hasOwnProperty("firstFactorCode")) {
+      handleMfaRequired(data);
       return data;
     }
 

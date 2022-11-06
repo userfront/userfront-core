@@ -21,6 +21,7 @@ import { user } from "./user.js";
 import "./user.methods.js";
 import { refresh } from "./refresh.js";
 import { apiUrl } from "./constants.js";
+import { resetMfa } from "./mfa.js";
 
 let initCallbacks = [];
 
@@ -49,6 +50,7 @@ function init(tenantId, opts = {}) {
   // setIframe(); // TODO re-enable when iframe is needed
   setTokensFromCookies();
   setModeSync();
+  resetMfa();
 
   try {
     if (initCallbacks.length > 0) {

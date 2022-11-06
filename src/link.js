@@ -4,6 +4,7 @@ import { store } from "./store.js";
 import { getQueryAttr, handleRedirect } from "./url.js";
 import { exchange } from "./refresh.js";
 import { throwFormattedError } from "./utils.js";
+import { getMfaHeaders, handleMfaRequired, clearMfa } from "./mfa.js";
 
 /**
  * Log a user in with a token/uuid combo passed into the function or
@@ -22,9 +23,12 @@ export async function loginWithLink({ token, uuid, redirect } = {}) {
       token,
       uuid,
       tenantId: store.tenantId,
+    }, {
+      headers: getMfaHeaders()
     });
 
     if (data.hasOwnProperty("tokens")) {
+      clearMfa();
       setCookiesAndTokens(data.tokens);
       await exchange(data);
       handleRedirect({ redirect, data });
@@ -32,6 +36,7 @@ export async function loginWithLink({ token, uuid, redirect } = {}) {
     }
 
     if (data.hasOwnProperty("firstFactorCode")) {
+      handleMfaRequired(data);
       return data;
     }
 

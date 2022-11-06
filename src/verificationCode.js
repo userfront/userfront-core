@@ -4,6 +4,7 @@ import { store } from "./store.js";
 import { handleRedirect } from "./url.js";
 import { exchange } from "./refresh.js";
 import { throwFormattedError } from "./utils.js";
+import { getMfaHeaders, handleMfaRequired, clearMfa } from "./mfa.js";
 
 /**
  * Verify that proper identifier is available for the channel
@@ -88,9 +89,12 @@ export async function loginWithVerificationCode({
       email,
       phoneNumber,
       tenantId: store.tenantId,
+    }, {
+      headers: getMfaHeaders()
     });
 
     if (data.hasOwnProperty("tokens")) {
+      clearMfa();
       setCookiesAndTokens(data.tokens);
       await exchange(data);
       handleRedirect({ redirect, data });
@@ -98,6 +102,7 @@ export async function loginWithVerificationCode({
     }
 
     if (data.hasOwnProperty("firstFactorCode")) {
+      handleMfaRequired(data);
       return data;
     }
 

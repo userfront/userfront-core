@@ -1,25 +1,28 @@
-import { mfaData, getMfaHeaders } from "../../src/mfa.js";
+import { mfaData, factorToString } from "../../src/mfa.js";
 
 export function assertMfaStateMatches(mfaRequiredResponse) {
-  expect(mfaData.secondFactors).toEqual(mfaRequiredResponse.authorization.secondFactors)
-  expect(mfaData.firstFactorToken).toEqual(mfaRequiredResponse.firstFactorToken)
+  expect(mfaData.secondFactors).toEqual(mfaRequiredResponse.data.authentication.secondFactors.map(factorToString))
+  expect(mfaData.firstFactorToken).toEqual(mfaRequiredResponse.data.firstFactorToken)
 }
 
-export function assertMfaHeadersPresent(mockApiFn) {
-  expect(mfaData.firstFactorToken).not.toBeNull();
-  expect(mockApiFn.mock.lastCall[2]).toEqual({
-    headers: {
-      authorization: `Bearer ${mfaData.firstFactorToken}`
-    }
-  })
+export function assertNoUser(user) {
+  const userFields = Object.values(user).filter(val => typeof val !== "function");
+  expect(userFields).toEqual([]);
 }
 
-export function assertMfaHeadersAbsent(mockApiFn) {
-  const options = mockApiFn.mock.lastcall[2]
-  const mfaHeaders = getMfaHeaders();
-  if (mfaHeaders.authorization) {
-    if (options.headers && options.headers.authorization) {
-      expect(options.headers.authorization).not.toEqual(mfaHeaders.authorization)
-    }
+export const mfaHeaders = expect.objectContaining({ headers: { authorization: expect.stringMatching(/^Bearer uf_test_first_factor/) } })
+export const noMfaHeaders = expect.not.objectContaining({ headers: { authorization: expect.stringMatching(/^Bearer uf_test_first_factor/) } })
+
+export const withMfaHeaders = (options = {}) => {
+  return {
+    ...options,
+    headers: getMfaHeaders()
   }
+}
+
+export const withoutMfaHeaders = (options) => {
+  if (!options) {
+    return noMfaHeaders;
+  }
+  return options
 }

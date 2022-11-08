@@ -7,7 +7,7 @@ export const mfaData = {
   firstFactorToken: null
 }
 
-function factorToString({ strategy, channel }) {
+export function factorToString({ strategy, channel }) {
   return `${channel}:${strategy}`;
 }
 
@@ -15,11 +15,15 @@ export async function updateFirstFactors() {
   if (!store.tenantId) {
     return mfaData.firstFactors = [];
   }
-  const authFlow = await get(`/tenants/${store.tenantId}/flows/default`);
-  if (!authFlow) {
-    return null;
+  try {
+    const authFlow = await get(`/tenants/${store.tenantId}/flows/default`);
+    if (!authFlow || !authFlow.firstFactors) {
+      return mfaData.firstFactors = [];
+    }
+    return mfaData.firstFactors = authFlow.firstFactors.map(factor => factorToString(factor));
+  } catch (err) {
+    return mfaData.firstFactors;
   }
-  return mfaData.firstFactors = authFlow.firstFactors.map(factor => factorToString(factor));
 }
 
 export function isMfaRequired() {

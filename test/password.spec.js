@@ -1,11 +1,20 @@
 import Userfront from "../src/index.js";
 import api from "../src/api.js";
+import { unsetUser } from "../src/user.js";
 import {
   createAccessToken,
   createIdToken,
   createRefreshToken,
   idTokenUserDefaults,
+  createMfaRequiredResponse,
+  setMfaRequired,
 } from "./config/utils.js";
+import {
+  assertMfaStateMatches,
+  assertNoUser,
+  mfaHeaders,
+  noMfaHeaders
+} from "./config/assertions.js";
 import { exchange } from "../src/refresh.js";
 import { signupWithPassword, loginWithPassword } from "../src/password.js";
 import { handleRedirect } from "../src/url.js";
@@ -29,10 +38,19 @@ const mockResponse = {
   },
 };
 
+// Mock "MFA Required" API response
+const mockMfaRequiredResponse = createMfaRequiredResponse({
+  firstFactor: {
+    strategy: "password",
+    channel: "email"
+  }
+});
+
 describe("signupWithPassword()", () => {
   beforeEach(() => {
     Userfront.init(tenantId);
     jest.resetAllMocks();
+    unsetUser();
   });
 
   it("should send a request, set access and ID cookies, and initiate nonce exchange", async () => {
@@ -55,7 +73,7 @@ describe("signupWithPassword()", () => {
       name: payload.name,
       data: payload.userData,
       password: payload.password,
-    });
+    }, noMfaHeaders);
 
     // Should have called exchange() with the API's response
     expect(exchange).toHaveBeenCalledWith(mockResponse.data);
@@ -91,7 +109,7 @@ describe("signupWithPassword()", () => {
       tenantId,
       email: payload.email,
       password: payload.password,
-    });
+    }, noMfaHeaders);
 
     // Should have called exchange() with the API's response
     expect(exchange).toHaveBeenCalledWith(mockResponse.data);
@@ -136,7 +154,7 @@ describe("signupWithPassword()", () => {
     expect(api.post).toHaveBeenCalledWith(`/auth/create`, {
       tenantId,
       ...payload,
-    });
+    }, noMfaHeaders);
 
     // Should have called exchange() with the API's response
     expect(exchange).toHaveBeenCalledWith(mockResponseCopy.data);
@@ -171,12 +189,59 @@ describe("signupWithPassword()", () => {
       })
     ).rejects.toEqual(new Error(mockResponse.response.data.message));
   });
+
+  it("should handle an MFA Required response", async () => {
+    // Return an MFA Required response
+    api.post.mockImplementationOnce(() => mockMfaRequiredResponse);
+
+    const payload = {
+      email: "email@example.com",
+      password: "something",
+    };
+    const data = await signupWithPassword(payload);
+
+    // Should have sent the correct API request
+    expect(api.post).toHaveBeenCalledWith(`/auth/create`, {
+      tenantId,
+      email: payload.email,
+      password: payload.password,
+    }, noMfaHeaders);
+
+    // Should have updated the MFA service state
+    assertMfaStateMatches(mockMfaRequiredResponse);
+
+    // Should not have set the user object or redirected
+    assertNoUser(Userfront.user);
+    expect(handleRedirect).not.toHaveBeenCalled();
+
+    // Should have returned MFA options & firstFactorToken
+    expect(data).toEqual(mockMfaRequiredResponse.data);
+  });
+
+  it("should include the firstFactorToken if this is the second factor", async () => {
+    // Set up the MFA service
+    setMfaRequired();
+    api.post.mockImplementationOnce(() => mockResponse);
+    const payload = {
+      email: "email@example.com",
+      password: "something",
+    };
+    await signupWithPassword(payload);
+
+    // Should have sent the correct API request, with MFA headers
+    expect(api.post).toHaveBeenCalledWith(`/auth/create`, {
+      tenantId,
+      email: payload.email,
+      password: payload.password,
+    }, mfaHeaders);
+  });
 });
 
 describe("loginWithPassword()", () => {
   beforeEach(() => {
     Userfront.init(tenantId);
     jest.resetAllMocks();
+    unsetUser();
   });
 
   describe("with username & password", () => {
@@ -195,7 +260,7 @@ describe("loginWithPassword()", () => {
       expect(api.post).toHaveBeenCalledWith(`/auth/basic`, {
         tenantId,
         ...payload,
-      });
+      }, noMfaHeaders);
 
       // Should have returned the proper value
       expect(data).toEqual(mockResponse.data);
@@ -241,7 +306,7 @@ describe("loginWithPassword()", () => {
         tenantId,
         emailOrUsername: payload.email,
         password: payload.password,
-      });
+      }, noMfaHeaders);
 
       // Should have called exchange() with the API's response
       expect(exchange).toHaveBeenCalledWith(mockResponseCopy.data);
@@ -277,7 +342,7 @@ describe("loginWithPassword()", () => {
       expect(api.post).toHaveBeenCalledWith(`/auth/basic`, {
         tenantId,
         ...payload,
-      });
+      }, noMfaHeaders);
 
       // Should have called exchange() with the API's response
       expect(exchange).toHaveBeenCalledWith(mockResponse.data);
@@ -311,6 +376,52 @@ describe("loginWithPassword()", () => {
           password: "somevalidpassword",
         })
       ).rejects.toEqual(new Error(mockResponse.response.data.message));
+    });
+
+    it("should handle an MFA Required response", async () => {
+      // Return an MFA Required response
+      api.post.mockImplementationOnce(() => mockMfaRequiredResponse);
+
+      const payload = {
+        email: "email@example.com",
+        password: "something",
+      };
+      const data = await loginWithPassword(payload);
+
+      // Should have sent the correct API request
+      expect(api.post).toHaveBeenCalledWith(`/auth/basic`, {
+        tenantId,
+        emailOrUsername: payload.email,
+        password: payload.password,
+      }, noMfaHeaders);
+
+      // Should have updated the MFA service state
+      assertMfaStateMatches(mockMfaRequiredResponse);
+
+      // Should not have set the user object or redirected
+      assertNoUser(Userfront.user);
+      expect(handleRedirect).not.toHaveBeenCalled();
+
+      // Should have returned MFA options & firstFactorToken
+      expect(data).toEqual(mockMfaRequiredResponse.data);
+    });
+
+    it("should include the firstFactorToken if this is the second factor", async () => {
+      // Set up the MFA service
+      setMfaRequired();
+      api.post.mockImplementationOnce(() => mockResponse);
+      const payload = {
+        email: "email@example.com",
+        password: "something",
+      };
+      await loginWithPassword(payload);
+
+      // Should have sent the correct API request, with MFA headers
+      expect(api.post).toHaveBeenCalledWith(`/auth/basic`, {
+        tenantId,
+        emailOrUsername: payload.email,
+        password: payload.password,
+      }, mfaHeaders);
     });
   });
 });

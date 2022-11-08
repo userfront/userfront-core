@@ -35,7 +35,7 @@ export async function loginWithLink({ token, uuid, redirect } = {}) {
       return data;
     }
 
-    if (data.hasOwnProperty("firstFactorCode")) {
+    if (data.hasOwnProperty("firstFactorToken")) {
       handleMfaRequired(data);
       return data;
     }

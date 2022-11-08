@@ -101,7 +101,7 @@ export async function loginWithVerificationCode({
       return data;
     }
 
-    if (data.hasOwnProperty("firstFactorCode")) {
+    if (data.hasOwnProperty("firstFactorToken")) {
       handleMfaRequired(data);
       return data;
     }

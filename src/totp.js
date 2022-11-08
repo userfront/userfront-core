@@ -56,7 +56,7 @@ export async function loginWithTotp({
       return data;
     }
 
-    if (data.hasOwnProperty("firstFactorCode")) {
+    if (data.hasOwnProperty("firstFactorToken")) {
       handleMfaRequired(data);
       return data;
     }

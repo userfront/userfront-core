@@ -81,7 +81,7 @@ describe("redirectIfLoggedIn()", () => {
     expect(removeAllCookies).toHaveBeenCalledTimes(1);
 
     // Should not have made request to Userfront API or redirected the user
-    expect(api.get).not.toHaveBeenCalled();
+    expect(api.get).not.toHaveBeenCalledWith('/self');
     expect(window.location.assign).not.toHaveBeenCalled();
   });
 
@@ -123,7 +123,7 @@ describe("redirectIfLoggedIn()", () => {
 
     // Should redirected immediately without calling Userfront API
     expect(removeAllCookies).not.toHaveBeenCalled();
-    expect(api.get).not.toHaveBeenCalled();
+    expect(api.get).not.toHaveBeenCalledWith('/self');
     expect(window.location.assign).toHaveBeenCalledTimes(1);
     expect(window.location.assign).toHaveBeenCalledWith(targetPath);
 
@@ -144,7 +144,7 @@ describe("redirectIfLoggedIn()", () => {
 
     // Should redirected immediately without calling Userfront API
     expect(removeAllCookies).not.toHaveBeenCalled();
-    expect(api.get).not.toHaveBeenCalled();
+    expect(api.get).not.toHaveBeenCalledWith('/self');
     expect(window.location.assign).toHaveBeenCalledTimes(1);
     expect(window.location.assign).toHaveBeenCalledWith(targetPath);
 
@@ -216,7 +216,7 @@ describe("redirectIfLoggedOut()", () => {
     expect(removeAllCookies).toHaveBeenCalledTimes(1);
 
     // Should not have made request to Userfront API or redirected the user
-    expect(api.get).not.toHaveBeenCalled();
+    expect(api.get).not.toHaveBeenCalledWith('/self');
     expect(window.location.assign).not.toHaveBeenCalled();
   });
 
@@ -231,7 +231,7 @@ describe("redirectIfLoggedOut()", () => {
 
     // Should redirected immediately without calling Userfront API
     expect(removeAllCookies).toHaveBeenCalled();
-    expect(api.get).not.toHaveBeenCalled();
+    expect(api.get).not.toHaveBeenCalledWith('/self');
     expect(window.location.assign).toHaveBeenCalledTimes(1);
     expect(window.location.assign).toHaveBeenCalledWith(targetPath);
 
@@ -250,7 +250,7 @@ describe("redirectIfLoggedOut()", () => {
 
     // Should redirected immediately without calling Userfront API
     expect(removeAllCookies).toHaveBeenCalled();
-    expect(api.get).not.toHaveBeenCalled();
+    expect(api.get).not.toHaveBeenCalledWith('/self');
     expect(window.location.assign).toHaveBeenCalledTimes(1);
     expect(window.location.assign).toHaveBeenCalledWith(targetPath);
 

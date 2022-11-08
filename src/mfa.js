@@ -14,7 +14,7 @@ export const mfaData = {
  * @returns {String} the factor as "strategy:channel"
  */
 export function factorToString({ strategy, channel }) {
-  return `${channel}:${strategy}`;
+  return `${strategy}:${channel}`;
 }
 
 /**

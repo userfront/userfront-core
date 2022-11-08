@@ -45,13 +45,13 @@ describe("mfa.js - MFA service", () => {
       expect(api.get).toHaveBeenCalledWith("/tenants/demo1234/flows/default");
       
       expect(mfaData.firstFactors).toEqual([
-        "email:password",
-        "email:link"
+        "password:email",
+        "link:email"
       ])
 
       expect(firstFactors).toEqual([
-        "email:password",
-        "email:link"
+        "password:email",
+        "link:email"
       ])
     });
     it("should clear the available first factors if the library hasn't been initialized with a tenantId", async () =>{
@@ -86,8 +86,8 @@ describe("mfa.js - MFA service", () => {
       api.get.mockImplementationOnce(() => Promise.reject(mockResponse));
       Userfront.init("demo1234");
       const existingFirstFactors = [
-        "email:password",
-        "sms:verificationCode"
+        "password:email",
+        "verificationCode:sms"
       ]
       mfaData.firstFactors = [...existingFirstFactors];
 
@@ -102,8 +102,8 @@ describe("mfa.js - MFA service", () => {
       api.get.mockImplementationOnce(() => mockResponse);
       Userfront.init("demo1234")
       mfaData.firstFactors = [
-        "email:link",
-        "email:verificationCode"
+        "link:email",
+        "verificationCode:email"
       ]
 
       const firstFactors = await updateFirstFactors();
@@ -163,8 +163,8 @@ describe("mfa.js - MFA service", () => {
       }
       handleMfaRequired(mockResponse);
       expect(mfaData.secondFactors).toEqual([
-        "authenticator:totp",
-        "sms:verificationCode"
+        "totp:authenticator",
+        "verificationCode:sms"
       ]);
     });
   });
@@ -185,29 +185,29 @@ describe("mfa.js - MFA service", () => {
 
   it("clearMfa should clear the transient MFA state", () => {
     mfaData.secondFactors = [
-      "authenticator:totp",
-      "sms:verificationCode"
+      "totp:authenticator",
+      "verificationCode:sms"
     ]
     mfaData.firstFactorToken = "uf_test_first_factor_token";
     mfaData.firstFactors = [
-      "email:password"
+      "password:email"
     ]
     clearMfa();
     expect(mfaData.secondFactors).toEqual([])
     expect(mfaData.firstFactorToken).toEqual(null);
     expect(mfaData.firstFactors).toEqual([
-      "email:password"
+      "password:email"
     ])
   })
 
   it("resetMfa should reset the MFA service to the uninitialized state", () => {
     mfaData.secondFactors = [
-      "authenticator:totp",
-      "sms:verificationCode"
+      "totp:authenticator",
+      "verificationCode:sms"
     ]
     mfaData.firstFactorToken = "uf_test_first_factor_token";
     mfaData.firstFactors = [
-      "email:password"
+      "password:email"
     ]
     resetMfa();
     expect(mfaData.secondFactors).toEqual([])

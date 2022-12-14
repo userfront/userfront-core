@@ -49,7 +49,12 @@ function init(tenantId, opts = {}) {
   setTokenNames();
   // setIframe(); // TODO re-enable when iframe is needed
   setTokensFromCookies();
+
+  // Estimate the mode synchronously with local data.
+  // Clients that require the true mode or the default
+  // auth flow should call and await setMode.
   setModeSync();
+
   resetMfa();
 
   try {

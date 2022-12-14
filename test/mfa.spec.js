@@ -2,7 +2,7 @@ import Userfront from "../src/index.js";
 import api from "../src/api.js";
 import {
   mfaData,
-  updateFirstFactors,
+  setAuthFlow,
   isMfaRequired,
   handleMfaRequired,
   getMfaHeaders,
@@ -22,10 +22,11 @@ describe("mfa.js - MFA service", () => {
     for (const key in mfaData) {
       mfaData[key] = blankMfaData[key];
     }
-  })
-  describe("updateFirstFactors()", () => {
-    it("should update the available first factors to match the tenant's default flow", async () => {
-      const mockResponse = {
+  });
+
+  describe("setAuthFlow", () => {
+    it("should update the available first factors when passed a valid auth flow", async () => {
+      const authFlow = {
         firstFactors: [
           {
             channel: "email",
@@ -36,83 +37,37 @@ describe("mfa.js - MFA service", () => {
             strategy: "link"
           }
         ]
-      }
-      api.get.mockImplementationOnce(() => mockResponse)
+      };
+      Userfront.init("demo1234");
 
-      Userfront.init("demo1234")
-      const firstFactors = await updateFirstFactors();
-
-      expect(api.get).toHaveBeenCalledWith("/tenants/demo1234/flows/default");
+      setAuthFlow(authFlow);
       
       expect(mfaData.firstFactors).toEqual([
-        "password:email",
-        "link:email"
-      ])
-
-      expect(firstFactors).toEqual([
-        "password:email",
-        "link:email"
-      ])
-    });
-    it("should clear the available first factors if the library hasn't been initialized with a tenantId", async () =>{
-      const mockResponse = {
-        response: {
-          data: {
-            error: "Bad request",
-            message: "Missing tenantId.",
-            statusCode: 400
-          }
+        {
+          channel: "email",
+          strategy: "password"
+        },
+        {
+          channel: "email",
+          strategy: "link"
         }
-      }
-      api.get.mockImplementationOnce(() => Promise.reject(mockResponse));
-      delete Userfront.store.tenantId;
-
-      const firstFactors = await updateFirstFactors();
-
-      expect(api.get).not.toHaveBeenCalled();
-      expect(mfaData.firstFactors).toEqual([]);
-      expect(firstFactors).toEqual([]);
+      ]);
     });
-    it("should leave existing first factors in place and do nothing if the update call rejects", async () => {
-      const mockResponse = {
-        response: {
-          data: {
-            error: "Internal server error",
-            message: "Try again later",
-            statusCode: 500
-          }
-        }
-      }
-      api.get.mockImplementationOnce(() => Promise.reject(mockResponse));
-      Userfront.init("demo1234");
-      const existingFirstFactors = [
-        "password:email",
-        "verificationCode:sms"
-      ]
-      mfaData.firstFactors = [...existingFirstFactors];
-
-      const firstFactors = await updateFirstFactors();
-
-      expect(api.get).toHaveBeenCalledWith("/tenants/demo1234/flows/default");
-      expect(mfaData.firstFactors).toEqual(existingFirstFactors);
-      expect(firstFactors).toEqual(existingFirstFactors);
-    });
-    it("should clear first factors if the default auth flow is empty", async () => {
-      const mockResponse = {}
-      api.get.mockImplementationOnce(() => mockResponse);
-      Userfront.init("demo1234")
-      mfaData.firstFactors = [
-        "link:email",
-        "verificationCode:email"
-      ]
-
-      const firstFactors = await updateFirstFactors();
-
-      expect(api.get).toHaveBeenCalledWith("/tenants/demo1234/flows/default");
-      expect(mfaData.firstFactors).toEqual([]);
-      expect(firstFactors).toEqual([]);
-    });
-  });
+    it("should fail gracefully for bad inputs", async () => {
+      expect(() => {
+        setAuthFlow(null)
+      }).not.toThrow();
+      expect(() => {
+        setAuthFlow("bad input")
+      }).not.toThrow();
+      expect(() => {
+        setAuthFlow({ mode: "test" })
+      }).not.toThrow();
+      expect(() => {
+        setAuthFlow({ mode: "test", firstFactors: ["corrupt", "data"] })
+      }).not.toThrow();
+    })
+  })
 
   describe("isMfaRequired()", () => {
     it("should return true if MFA is currently required", () => {
@@ -163,8 +118,14 @@ describe("mfa.js - MFA service", () => {
       }
       handleMfaRequired(mockResponse);
       expect(mfaData.secondFactors).toEqual([
-        "totp:authenticator",
-        "verificationCode:sms"
+        {
+          strategy: "totp",
+          channel: "authenticator"
+        },
+        {
+          strategy: "verificationCode",
+          channel: "sms"
+        }
       ]);
     });
   });
@@ -185,32 +146,53 @@ describe("mfa.js - MFA service", () => {
 
   it("clearMfa should clear the transient MFA state", () => {
     mfaData.secondFactors = [
-      "totp:authenticator",
-      "verificationCode:sms"
+      {
+        strategy: "totp",
+        channel: "authenticator"
+      },
+      {
+        strategy: "verificationCode",
+        channel: "sms"
+      }
     ]
     mfaData.firstFactorToken = "uf_test_first_factor_token";
     mfaData.firstFactors = [
-      "password:email"
-    ]
+      {
+        channel: "email",
+        strategy: "password"
+      }
+    ];
     clearMfa();
     expect(mfaData.secondFactors).toEqual([])
     expect(mfaData.firstFactorToken).toEqual(null);
     expect(mfaData.firstFactors).toEqual([
-      "password:email"
-    ])
-  })
+      {
+        channel: "email",
+        strategy: "password"
+      },
+    ]);
+  });
 
   it("resetMfa should reset the MFA service to the uninitialized state", () => {
     mfaData.secondFactors = [
-      "totp:authenticator",
-      "verificationCode:sms"
+      {
+        strategy: "totp",
+        channel: "authenticator"
+      },
+      {
+        strategy: "verificationCode",
+        channel: "sms"
+      }
     ]
     mfaData.firstFactorToken = "uf_test_first_factor_token";
     mfaData.firstFactors = [
-      "password:email"
-    ]
+      {
+        channel: "email",
+        strategy: "password"
+      }
+    ];
     resetMfa();
-    expect(mfaData.secondFactors).toEqual([])
+    expect(mfaData.secondFactors).toEqual([]);
     expect(mfaData.firstFactorToken).toEqual(null);
     expect(mfaData.firstFactors).toEqual([]);
   })

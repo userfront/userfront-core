@@ -57,6 +57,10 @@ describe("init() method with domain option", () => {
       status: 200,
       data: {
         mode: "live",
+        firstFactors: [],
+        secondFactors: [],
+        isMfaRequired: false,
+        isEnabled: false
       },
     });
     await setMode();

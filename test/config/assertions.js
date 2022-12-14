@@ -1,7 +1,7 @@
-import { mfaData, factorToString } from "../../src/mfa.js";
+import { mfaData, getMfaHeaders } from "../../src/mfa.js";
 
 export function assertMfaStateMatches(mfaRequiredResponse) {
-  expect(mfaData.secondFactors).toEqual(mfaRequiredResponse.data.authentication.secondFactors.map(factorToString))
+  expect(mfaData.secondFactors).toEqual(mfaRequiredResponse.data.authentication.secondFactors)
   expect(mfaData.firstFactorToken).toEqual(mfaRequiredResponse.data.firstFactorToken)
 }
 

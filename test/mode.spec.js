@@ -1,7 +1,7 @@
 import Userfront from "../src/index.js";
 import api from "../src/api.js";
 import { isTestHostname, setMode, setModeSync } from "../src/mode.js";
-import { apiUrl } from "../src/constants.js";
+import { mfaData } from "../src/mfa.js";
 
 jest.mock("../src/api.js");
 
@@ -57,6 +57,10 @@ describe("Mode tests", () => {
         status: 200,
         data: {
           mode: "live",
+          firstFactors: [{ channel: "email", strategy: "password" }],
+          secondFactors: [],
+          isMfaRequired: false,
+          isEnabled: true
         },
       });
 
@@ -66,6 +70,7 @@ describe("Mode tests", () => {
       expect(Userfront.store.mode).toEqual("live");
       expect(Userfront.mode.value).toEqual("live");
       expect(Userfront.mode.reason).toEqual("domain");
+      expect(mfaData.firstFactors).toEqual([{ channel: "email", strategy: "password" }]);
     });
 
     it("Should set reason to 'http' when setMode() returns 'test'", async () => {
@@ -77,6 +82,10 @@ describe("Mode tests", () => {
         status: 200,
         data: {
           mode: "test",
+          firstFactors: [{ channel: "email", strategy: "password" }],
+          secondFactors: [],
+          isMfaRequired: false,
+          isEnabled: true
         },
       });
 
@@ -86,6 +95,7 @@ describe("Mode tests", () => {
       expect(Userfront.store.mode).toEqual("test");
       expect(Userfront.mode.value).toEqual("test");
       expect(Userfront.mode.reason).toEqual("http");
+      expect(mfaData.firstFactors).toEqual([{ channel: "email", strategy: "password" }]);
     });
 
     it("Should set reason to 'domain' when setMode() returns 'test'", async () => {
@@ -97,6 +107,10 @@ describe("Mode tests", () => {
         status: 200,
         data: {
           mode: "test",
+          firstFactors: [{ channel: "email", strategy: "password" }],
+          secondFactors: [],
+          isMfaRequired: false,
+          isEnabled: true
         },
       });
 
@@ -106,6 +120,7 @@ describe("Mode tests", () => {
       expect(Userfront.store.mode).toEqual("test");
       expect(Userfront.mode.value).toEqual("test");
       expect(Userfront.mode.reason).toEqual("domain");
+      expect(mfaData.firstFactors).toEqual([{ channel: "email", strategy: "password" }]);
     });
 
     it("Should set reason to 'protocol' when setMode() returns 'test'", async () => {
@@ -117,6 +132,10 @@ describe("Mode tests", () => {
         status: 200,
         data: {
           mode: "test",
+          firstFactors: [{ channel: "email", strategy: "password" }],
+          secondFactors: [],
+          isMfaRequired: false,
+          isEnabled: true
         },
       });
 
@@ -126,7 +145,29 @@ describe("Mode tests", () => {
       expect(Userfront.store.mode).toEqual("test");
       expect(Userfront.mode.value).toEqual("test");
       expect(Userfront.mode.reason).toEqual("protocol");
+      expect(mfaData.firstFactors).toEqual([{ channel: "email", strategy: "password" }]);
     });
+    
+    it("Should not fail if a default auth flow is not present", async () => {
+      window.location = new URL("https://example.com/login");
+
+      Userfront.init(tenantId);
+
+      api.get.mockResolvedValue({
+        status: 200,
+        data: {
+          mode: "live"
+        },
+      });
+
+      await setMode();
+      expect(api.get).toHaveBeenCalledWith(`/tenants/${tenantId}/mode`);
+
+      expect(Userfront.store.mode).toEqual("live");
+      expect(Userfront.mode.value).toEqual("live");
+      expect(Userfront.mode.reason).toEqual("domain");
+      expect(mfaData.firstFactors).toEqual([]);
+    })
   });
 });
 

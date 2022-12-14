@@ -8,39 +8,22 @@ export const mfaData = {
   firstFactorToken: null
 }
 
-/**
- * Convert a factor object to its corresponding string.
- * @param {Object} factor a factor as { strategy, channel } 
- * @returns {String} the factor as "strategy:channel"
- */
-export function factorToString({ strategy, channel }) {
-  return `${strategy}:${channel}`;
-}
-
-/**
- * If initialized with a tenant ID, try to fetch the allowed first factors from the server
- * and update the MFA service accordingly.
- * @returns {[String]} list of acceptable first factors
- */
-export async function updateFirstFactors() {
+export function setAuthFlow(authFlow) {
   // If we're not initialized, there are no first factors.
   if (!store.tenantId) {
-    return mfaData.firstFactors = [];
+    console.warn("mfa/setAuthFlow: tried to set auth flow without a tenantId set.")
+    return;
+  }
+  // If we're passed an invalid argument, keep the auth flow as is.
+  if (!authFlow || !typeof authFlow === "object" || !authFlow.firstFactors) {
+    console.warn("mfa/setAuthFlow: invalid auth flow passed.")
+    return;
   }
   try {
-    // Update the first factors from the tenant's default auth flow
-    const authFlow = await get(`/tenants/${store.tenantId}/flows/default`);
-    if (!authFlow || !authFlow.firstFactors) {
-      // If the default auth flow is empty, there are no first factors.
-      return mfaData.firstFactors = [];
-    }
-    return mfaData.firstFactors = authFlow.firstFactors.map(factor => factorToString(factor));
+    mfaData.firstFactors = authFlow.firstFactors;
+    return;
   } catch (err) {
-    // If we get an error, leave the existing factors unchanged.
-    // (This implies that if we get an Unauthorized error, the first factors
-    //  would still be empty. The first factors will only have content if we
-    //  previously got them for this tenant.)
-    return mfaData.firstFactors;
+    console.warn(`mfa/setAuthFlow: error when building factors list - ${err.message}`)
   }
 }
 
@@ -68,7 +51,7 @@ export function handleMfaRequired(response) {
     }
     return;
   }
-  mfaData.secondFactors = response.authentication.secondFactors.map(factor => factorToString(factor));
+  mfaData.secondFactors = response.authentication.secondFactors;
   mfaData.firstFactorToken = response.firstFactorToken;
 }
 

@@ -4,7 +4,6 @@ import {
 } from "./tokens.js";
 import {
   mfaData,
-  updateFirstFactors,
   isMfaRequired,
   clearMfa
 } from "./mfa.js";
@@ -44,9 +43,6 @@ async function getIsLoggedIn() {
  */
 export async function getSession() {
   const isLoggedIn = await getIsLoggedIn();
-  if (!isLoggedIn) {
-    await updateFirstFactors();
-  }
   return {
     isLoggedIn,
     needsSecondFactor: isMfaRequired(),

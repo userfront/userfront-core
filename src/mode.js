@@ -1,7 +1,7 @@
 import { get } from "./api.js";
 import { privateIPRegex } from "./constants.js";
 import { store } from "./store.js";
-import { setAuthFlow } from "./mfa.js";
+import { setFirstFactors } from "./authentication.js";
 
 /**
  * Global mode object
@@ -45,7 +45,7 @@ export async function setMode() {
     mode.value = data.mode || "test";
     mode.reason = getReason(mode.value);
     store.mode = mode.value;
-    setAuthFlow(data);
+    setFirstFactors(data.authentication);
   } catch (err) {
     mode.value = "test";
     store.mode = mode.value;

@@ -1,81 +1,74 @@
 import Userfront from "../src/index.js";
 import api from "../src/api.js";
 import {
-  mfaData,
-  setAuthFlow,
+  authenticationData,
+  setFirstFactors,
   isMfaRequired,
   handleMfaRequired,
   getMfaHeaders,
   clearMfa,
-  resetMfa
-} from "../src/mfa.js";
+  resetMfa,
+} from "../src/authentication.js";
 
 jest.mock("../src/api.js");
 
-const blankMfaData = {
-  ...mfaData
-}
+const blankAuthenticationData = {
+  ...authenticationData,
+};
 
-describe("mfa.js - MFA service", () => {
+describe("Authentication service", () => {
   beforeEach(() => {
     jest.resetAllMocks();
-    for (const key in mfaData) {
-      mfaData[key] = blankMfaData[key];
+    for (const key in authenticationData) {
+      authenticationData[key] = blankAuthenticationData[key];
     }
   });
 
-  describe("setAuthFlow", () => {
+  describe("setFirstFactors", () => {
     it("should update the available first factors when passed a valid auth flow", async () => {
-      const authFlow = {
+      const authentication = {
         firstFactors: [
           {
             channel: "email",
-            strategy: "password"
+            strategy: "password",
           },
           {
             channel: "email",
-            strategy: "link"
-          }
-        ]
+            strategy: "link",
+          },
+        ],
       };
       Userfront.init("demo1234");
 
-      setAuthFlow(authFlow);
-      
-      expect(mfaData.firstFactors).toEqual([
-        {
-          channel: "email",
-          strategy: "password"
-        },
-        {
-          channel: "email",
-          strategy: "link"
-        }
-      ]);
+      setFirstFactors(authentication);
+      expect(authenticationData.firstFactors).toEqual(
+        authentication.firstFactors
+      );
     });
+
     it("should fail gracefully for bad inputs", async () => {
       expect(() => {
-        setAuthFlow(null)
+        setFirstFactors(null);
       }).not.toThrow();
       expect(() => {
-        setAuthFlow("bad input")
+        setFirstFactors("bad input");
       }).not.toThrow();
       expect(() => {
-        setAuthFlow({ mode: "test" })
+        setFirstFactors({ mode: "test" });
       }).not.toThrow();
       expect(() => {
-        setAuthFlow({ mode: "test", firstFactors: ["corrupt", "data"] })
+        setFirstFactors({ firstFactors: ["corrupt", "data"] });
       }).not.toThrow();
-    })
-  })
+    });
+  });
 
   describe("isMfaRequired()", () => {
     it("should return true if MFA is currently required", () => {
-      mfaData.firstFactorToken = "uf_live_first_factor_sometoken";
+      authenticationData.firstFactorToken = "uf_live_first_factor_sometoken";
       expect(isMfaRequired()).toEqual(true);
     });
     it("should return false if MFA is not currently required", () => {
-      mfaData.firstFactorToken = "";
+      authenticationData.firstFactorToken = "";
       expect(isMfaRequired()).toEqual(false);
     });
   });
@@ -88,112 +81,113 @@ describe("mfa.js - MFA service", () => {
           channel: "sms",
           phoneNumber: "+15558675309",
           submittedAt: "2022-10-21T23:26:07.146Z",
-          messageId: "fe3194f6-da85-48aa-a24e-3eab4c5c19d1"
-        }
-      }
+          messageId: "fe3194f6-da85-48aa-a24e-3eab4c5c19d1",
+        },
+      };
       handleMfaRequired(mockResponse);
-      expect(mfaData).toEqual(blankMfaData);
+      expect(authenticationData).toEqual(blankAuthenticationData);
     });
     it("should set the MFA service state if it is an MFA Required response", () => {
       const mockResponse = {
         message: "MFA required",
         isMfaRequired: true,
-        firstFactorToken: "uf_test_first_factor_207a4d56ce7e40bc9dafb0918fb6599a",
+        firstFactorToken:
+          "uf_test_first_factor_207a4d56ce7e40bc9dafb0918fb6599a",
         authentication: {
           firstFactor: {
             strategy: "link",
-            channel: "email"
+            channel: "email",
           },
           secondFactors: [
             {
               strategy: "totp",
-              channel: "authenticator"
+              channel: "authenticator",
             },
             {
               strategy: "verificationCode",
-              channel: "sms"
-            }
-          ]
-        }
-      }
+              channel: "sms",
+            },
+          ],
+        },
+      };
       handleMfaRequired(mockResponse);
-      expect(mfaData.secondFactors).toEqual([
+      expect(authenticationData.secondFactors).toEqual([
         {
           strategy: "totp",
-          channel: "authenticator"
+          channel: "authenticator",
         },
         {
           strategy: "verificationCode",
-          channel: "sms"
-        }
+          channel: "sms",
+        },
       ]);
     });
   });
 
   describe("getMfaHeaders()", () => {
     it("should return an authorization header if there is a firstFactorToken set", () => {
-      mfaData.firstFactorToken = "uf_test_first_factor_token"
+      authenticationData.firstFactorToken = "uf_test_first_factor_token";
       const headers = getMfaHeaders();
       expect(headers).toEqual({
-        authorization: "Bearer uf_test_first_factor_token"
-      })
-    })
+        authorization: "Bearer uf_test_first_factor_token",
+      });
+    });
     it("should return an empty object if there is no firstFactorToken set", () => {
       const headers = getMfaHeaders();
-      expect(headers).toEqual({})
-    })
-  })
+      expect(headers).toEqual({});
+    });
+  });
 
   it("clearMfa should clear the transient MFA state", () => {
-    mfaData.secondFactors = [
+    authenticationData.secondFactors = [
       {
         strategy: "totp",
-        channel: "authenticator"
+        channel: "authenticator",
       },
       {
         strategy: "verificationCode",
-        channel: "sms"
-      }
-    ]
-    mfaData.firstFactorToken = "uf_test_first_factor_token";
-    mfaData.firstFactors = [
+        channel: "sms",
+      },
+    ];
+    authenticationData.firstFactorToken = "uf_test_first_factor_token";
+    authenticationData.firstFactors = [
       {
         channel: "email",
-        strategy: "password"
-      }
+        strategy: "password",
+      },
     ];
     clearMfa();
-    expect(mfaData.secondFactors).toEqual([])
-    expect(mfaData.firstFactorToken).toEqual(null);
-    expect(mfaData.firstFactors).toEqual([
+    expect(authenticationData.secondFactors).toEqual([]);
+    expect(authenticationData.firstFactorToken).toEqual(null);
+    expect(authenticationData.firstFactors).toEqual([
       {
         channel: "email",
-        strategy: "password"
+        strategy: "password",
       },
     ]);
   });
 
   it("resetMfa should reset the MFA service to the uninitialized state", () => {
-    mfaData.secondFactors = [
+    authenticationData.secondFactors = [
       {
         strategy: "totp",
-        channel: "authenticator"
+        channel: "authenticator",
       },
       {
         strategy: "verificationCode",
-        channel: "sms"
-      }
-    ]
-    mfaData.firstFactorToken = "uf_test_first_factor_token";
-    mfaData.firstFactors = [
+        channel: "sms",
+      },
+    ];
+    authenticationData.firstFactorToken = "uf_test_first_factor_token";
+    authenticationData.firstFactors = [
       {
         channel: "email",
-        strategy: "password"
-      }
+        strategy: "password",
+      },
     ];
     resetMfa();
-    expect(mfaData.secondFactors).toEqual([]);
-    expect(mfaData.firstFactorToken).toEqual(null);
-    expect(mfaData.firstFactors).toEqual([]);
-  })
-})
+    expect(authenticationData.secondFactors).toEqual([]);
+    expect(authenticationData.firstFactorToken).toEqual(null);
+    expect(authenticationData.firstFactors).toEqual([]);
+  });
+});

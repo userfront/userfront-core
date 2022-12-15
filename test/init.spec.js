@@ -5,9 +5,7 @@ import {
   resetStore,
   mockWindow,
 } from "./config/utils.js";
-import {
-  noMfaHeaders
-} from "./config/assertions.js";
+import { noMfaHeaders } from "./config/assertions.js";
 import Userfront from "../src/index.js";
 import { setMode } from "../src/mode.js";
 import { store } from "../src/store.js";
@@ -57,10 +55,12 @@ describe("init() method with domain option", () => {
       status: 200,
       data: {
         mode: "live",
-        firstFactors: [],
-        secondFactors: [],
-        isMfaRequired: false,
-        isEnabled: false
+        authentication: {
+          firstFactors: [],
+          secondFactors: [],
+          isMfaRequired: false,
+          isEnabled: false,
+        },
       },
     });
     await setMode();

@@ -4,7 +4,12 @@ import { store } from "./store.js";
 import { handleRedirect } from "./url.js";
 import { exchange } from "./refresh.js";
 import { throwFormattedError } from "./utils.js";
-import { isMfaRequired, getMfaHeaders, handleMfaRequired, clearMfa } from "./mfa.js";
+import {
+  isMfaRequired,
+  getMfaHeaders,
+  handleMfaRequired,
+  clearMfa,
+} from "./authentication.js";
 
 /**
  * Log a user in with a TOTP authenticator code or a TOTP backup code,
@@ -34,19 +39,23 @@ export async function loginWithTotp({
   try {
     if (!totpCode && !backupCode) return;
 
-    const { data } = await post(`/auth/totp`, {
-      totpCode,
-      backupCode,
-      userId,
-      userUuid,
-      emailOrUsername,
-      email,
-      username,
-      phoneNumber,
-      tenantId: store.tenantId,
-    }, {
-      headers: getMfaHeaders()
-    });
+    const { data } = await post(
+      `/auth/totp`,
+      {
+        totpCode,
+        backupCode,
+        userId,
+        userUuid,
+        emailOrUsername,
+        email,
+        username,
+        phoneNumber,
+        tenantId: store.tenantId,
+      },
+      {
+        headers: getMfaHeaders(),
+      }
+    );
 
     if (data.hasOwnProperty("tokens")) {
       clearMfa();

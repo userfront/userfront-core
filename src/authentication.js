@@ -1,29 +1,45 @@
 import { store } from "./store.js";
-import { get } from "./api.js";
 
 // Data specific to the MFA service
-export const mfaData = {
+export const authenticationData = {
   firstFactors: [],
   secondFactors: [],
-  firstFactorToken: null
-}
+  firstFactorToken: null,
+};
 
-export function setAuthFlow(authFlow) {
+/**
+ * Set authenticationData.firstFactors from the authentication object
+ * @param {Object} authentication
+ * {
+ *   firstFactors,
+ *   secondFactors
+ * }
+ * @returns
+ */
+export function setFirstFactors(authentication) {
   // If we're not initialized, there are no first factors.
   if (!store.tenantId) {
-    console.warn("mfa/setAuthFlow: tried to set auth flow without a tenantId set.")
+    console.warn(
+      "setFirstFactors: tried to set factors without a tenantId set."
+    );
     return;
   }
   // If we're passed an invalid argument, keep the auth flow as is.
-  if (!authFlow || !typeof authFlow === "object" || !authFlow.firstFactors) {
-    console.warn("mfa/setAuthFlow: invalid auth flow passed.")
+  if (
+    !authentication ||
+    typeof authentication !== "object" ||
+    !authentication.firstFactors
+  ) {
+    console.warn("setFirstFactors: invalid factors passed.");
     return;
   }
   try {
-    mfaData.firstFactors = authFlow.firstFactors;
+    authenticationData.firstFactors = authentication.firstFactors;
     return;
   } catch (err) {
-    console.warn(`mfa/setAuthFlow: error when building factors list - ${err.message}`)
+    console.warn(
+      `setFirstFactors: error when building factors list - ${err.message}`
+    );
   }
 }
 
@@ -32,7 +48,7 @@ export function setAuthFlow(authFlow) {
  * @returns {Boolean} true if MFA is currently required
  */
 export function isMfaRequired() {
-  return !!mfaData.firstFactorToken;
+  return !!authenticationData.firstFactorToken;
 }
 
 /**
@@ -40,7 +56,7 @@ export function isMfaRequired() {
  * Adds secondFactors and firstFactorToken if it is a MFA Required response,
  * removes them if it is a successful signup or login,
  * leaves the service unchanged otherwise.
- * @param {Object} response 
+ * @param {Object} response
  */
 export function handleMfaRequired(response) {
   if (!response.isMfaRequired) {
@@ -51,8 +67,8 @@ export function handleMfaRequired(response) {
     }
     return;
   }
-  mfaData.secondFactors = response.authentication.secondFactors;
-  mfaData.firstFactorToken = response.firstFactorToken;
+  authenticationData.secondFactors = response.authentication.secondFactors;
+  authenticationData.firstFactorToken = response.firstFactorToken;
 }
 
 /**
@@ -61,12 +77,12 @@ export function handleMfaRequired(response) {
  * @returns {Object} a headers object with MFA authorization header set, or empty if MFA is not required
  */
 export function getMfaHeaders() {
-  if (mfaData.firstFactorToken) {
+  if (authenticationData.firstFactorToken) {
     return {
-      authorization: `Bearer ${mfaData.firstFactorToken}`
-    }
+      authorization: `Bearer ${authenticationData.firstFactorToken}`,
+    };
   }
-  return {}
+  return {};
 }
 
 /**
@@ -74,8 +90,8 @@ export function getMfaHeaders() {
  * leaving the tenant's persistent state in place.
  */
 export function clearMfa() {
-  mfaData.secondFactors = [];
-  mfaData.firstFactorToken = null;
+  authenticationData.secondFactors = [];
+  authenticationData.firstFactorToken = null;
 }
 
 /**
@@ -84,5 +100,5 @@ export function clearMfa() {
  */
 export function resetMfa() {
   clearMfa();
-  mfaData.firstFactors = [];
+  authenticationData.firstFactors = [];
 }

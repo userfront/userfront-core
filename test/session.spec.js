@@ -17,28 +17,28 @@ const tenantId = "abcd4321";
 const mockAccessToken = createAccessToken();
 const mockIdToken = createIdToken();
 
-const mockAuthFlow = {
+const mockAuthenticationObject = {
   firstFactors: [
     {
       channel: "email",
-      strategy: "password"
+      strategy: "password",
     },
     {
       channel: "email",
-      strategy: "link"
-    }
+      strategy: "link",
+    },
   ],
   secondFactors: [
     {
       channel: "authenticator",
-      strategy: "totp"
+      strategy: "totp",
     },
     {
       channel: "sms",
-      strategy: "verificationCode"
-    }
-  ]
-}
+      strategy: "verificationCode",
+    },
+  ],
+};
 
 describe("Userfront session helpers", () => {
   beforeAll(() => {
@@ -48,10 +48,10 @@ describe("Userfront session helpers", () => {
     // Initialize Userfront
     Userfront.init(tenantId);
   });
-  
+
   beforeEach(() => {
-    api.get.mockImplementationOnce(() => mockAuthFlow);
-  })
+    api.get.mockImplementationOnce(() => mockAuthenticationObject);
+  });
 
   describe("getSession()", () => {
     afterEach(() => {

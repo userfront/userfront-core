@@ -25,7 +25,7 @@ describe("Authentication service", () => {
   });
 
   describe("setFirstFactors", () => {
-    it("should update the available first factors when passed a valid auth flow", async () => {
+    it("should update the available first factors when passed a valid authentication object", async () => {
       const authentication = {
         firstFactors: [
           {

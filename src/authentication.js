@@ -24,7 +24,7 @@ export function setFirstFactors(authentication) {
     );
     return;
   }
-  // If we're passed an invalid argument, keep the auth flow as is.
+  // If we're passed an invalid argument, keep the authentication data as is.
   if (
     !authentication ||
     typeof authentication !== "object" ||

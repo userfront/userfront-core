@@ -37,7 +37,7 @@ export function isHttps() {
 
 /**
  * Define the mode of operation (live or test)
- * and the tenant's default auth flow
+ * and the tenant's authentication factors
  */
 export async function setMode() {
   try {

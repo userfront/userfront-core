@@ -1,11 +1,18 @@
 import { authenticationData, getMfaHeaders } from "../../src/authentication.js";
 
-export function assertMfaStateMatches(mfaRequiredResponse) {
+/**
+ * Assert that authenticationData matches the secondFactors
+ * and the firstFactorToken
+ * @param {Object} response
+ */
+export function assertAuthenticationDataMatches(response) {
+  // secondFactors
   expect(authenticationData.secondFactors).toEqual(
-    mfaRequiredResponse.data.authentication.secondFactors
+    response.data.authentication.secondFactors
   );
+  // firstFactorToken
   expect(authenticationData.firstFactorToken).toEqual(
-    mfaRequiredResponse.data.firstFactorToken
+    response.data.firstFactorToken
   );
 }
 

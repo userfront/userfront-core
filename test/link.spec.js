@@ -11,10 +11,10 @@ import {
   mockWindow,
 } from "./config/utils.js";
 import {
-  assertMfaStateMatches,
+  assertAuthenticationDataMatches,
   assertNoUser,
   mfaHeaders,
-  noMfaHeaders
+  noMfaHeaders,
 } from "./config/assertions.js";
 import {
   sendLoginLink,
@@ -50,8 +50,8 @@ const mockResponse = {
 const mockMfaRequiredResponse = createMfaRequiredResponse({
   firstFactor: {
     strategy: "link",
-    channel: "email"
-  }
+    channel: "email",
+  },
 });
 
 describe("sendLoginLink", () => {
@@ -192,10 +192,14 @@ describe("loginWithLink", () => {
     const data = await loginWithLink(payload);
 
     // Should have sent the proper API request
-    expect(api.put).toHaveBeenCalledWith(`/auth/link`, {
-      tenantId,
-      ...payload,
-    }, noMfaHeaders);
+    expect(api.put).toHaveBeenCalledWith(
+      `/auth/link`,
+      {
+        tenantId,
+        ...payload,
+      },
+      noMfaHeaders
+    );
 
     // Should return the correct value
     expect(data).toEqual(mockResponseCopy.data);
@@ -237,10 +241,14 @@ describe("loginWithLink", () => {
     const data = await loginWithLink();
 
     // Should have sent the proper API request
-    expect(api.put).toHaveBeenCalledWith(`/auth/link`, {
-      tenantId,
-      ...query,
-    }, noMfaHeaders);
+    expect(api.put).toHaveBeenCalledWith(
+      `/auth/link`,
+      {
+        tenantId,
+        ...query,
+      },
+      noMfaHeaders
+    );
 
     // Should return the correct value
     expect(data).toEqual(mockResponseCopy.data);
@@ -273,10 +281,14 @@ describe("loginWithLink", () => {
     });
 
     // Should have sent the proper API request
-    expect(api.put).toHaveBeenCalledWith(`/auth/link`, {
-      tenantId,
-      ...payload,
-    }, noMfaHeaders);
+    expect(api.put).toHaveBeenCalledWith(
+      `/auth/link`,
+      {
+        tenantId,
+        ...payload,
+      },
+      noMfaHeaders
+    );
 
     // Should return the correct value
     expect(data).toEqual(mockResponse.data);
@@ -304,13 +316,17 @@ describe("loginWithLink", () => {
     const data = await loginWithLink(payload);
 
     // Should have sent the proper API request
-    expect(api.put).toHaveBeenCalledWith(`/auth/link`, {
-      tenantId,
-      ...payload,
-    }, noMfaHeaders);
+    expect(api.put).toHaveBeenCalledWith(
+      `/auth/link`,
+      {
+        tenantId,
+        ...payload,
+      },
+      noMfaHeaders
+    );
 
     // Should have updated the MFA service state
-    assertMfaStateMatches(mockMfaRequiredResponse);
+    assertAuthenticationDataMatches(mockMfaRequiredResponse);
 
     // Should not have set the user object, called exchange, or redirected
     assertNoUser(Userfront.user);
@@ -321,21 +337,25 @@ describe("loginWithLink", () => {
     expect(data).toEqual(mockMfaRequiredResponse.data);
   });
 
-  it("should include the firstFactorToken if this is the second factor", async () => {
+  it.only("should include the firstFactorToken if this is the second factor", async () => {
     // Set up the MFA service
     setMfaRequired();
     exchange.mockClear();
     api.put.mockImplementationOnce(() => mockResponse);
     const payload = {
       token: "some-token",
-      uuid: "some-uuid"
+      uuid: "some-uuid",
     };
     await loginWithLink(payload);
 
     // Should have send the correct API request, with MFA headers attached
-    expect(api.put).toHaveBeenCalledWith('/auth/link', {
-      tenantId,
-      ...payload
-    }, mfaHeaders)
-  })
+    expect(api.put).toHaveBeenCalledWith(
+      "/auth/link",
+      {
+        tenantId,
+        ...payload,
+      },
+      mfaHeaders
+    );
+  });
 });

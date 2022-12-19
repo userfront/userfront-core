@@ -9,10 +9,10 @@ import {
   setMfaRequired,
 } from "./config/utils.js";
 import {
-  assertMfaStateMatches,
+  assertAuthenticationDataMatches,
   assertNoUser,
   mfaHeaders,
-  noMfaHeaders
+  noMfaHeaders,
 } from "./config/assertions.js";
 import {
   sendVerificationCode,
@@ -141,8 +141,8 @@ describe("loginWithVerificationCode()", () => {
   const mockMfaRequiredResponse = createMfaRequiredResponse({
     firstFactor: {
       strategy: "verificationCode",
-      channel: "sms"
-    }
+      channel: "sms",
+    },
   });
 
   beforeEach(() => {
@@ -175,10 +175,14 @@ describe("loginWithVerificationCode()", () => {
     const data = await loginWithVerificationCode(payload);
 
     // Should have sent the proper API request
-    expect(api.put).toHaveBeenCalledWith(`/auth/code`, {
-      tenantId,
-      ...payload,
-    }, noMfaHeaders);
+    expect(api.put).toHaveBeenCalledWith(
+      `/auth/code`,
+      {
+        tenantId,
+        ...payload,
+      },
+      noMfaHeaders
+    );
 
     // Should return the correct value
     expect(data).toEqual(mockResponseCopy.data);
@@ -218,12 +222,16 @@ describe("loginWithVerificationCode()", () => {
     const data = await loginWithVerificationCode(payload);
 
     // Should have sent the proper API request
-    expect(api.put).toHaveBeenCalledWith(`/auth/code`, {
-      tenantId,
-      channel: payload.channel,
-      email: payload.email,
-      verificationCode: payload.verificationCode,
-    }, noMfaHeaders);
+    expect(api.put).toHaveBeenCalledWith(
+      `/auth/code`,
+      {
+        tenantId,
+        channel: payload.channel,
+        email: payload.email,
+        verificationCode: payload.verificationCode,
+      },
+      noMfaHeaders
+    );
 
     // Should return the correct value
     expect(data).toEqual(mockResponseCopy.data);
@@ -264,12 +272,16 @@ describe("loginWithVerificationCode()", () => {
     const data = await loginWithVerificationCode(payload);
 
     // Should have sent the proper API request
-    expect(api.put).toHaveBeenCalledWith(`/auth/code`, {
-      tenantId,
-      channel: payload.channel,
-      phoneNumber: payload.phoneNumber,
-      verificationCode: payload.verificationCode,
-    }, noMfaHeaders);
+    expect(api.put).toHaveBeenCalledWith(
+      `/auth/code`,
+      {
+        tenantId,
+        channel: payload.channel,
+        phoneNumber: payload.phoneNumber,
+        verificationCode: payload.verificationCode,
+      },
+      noMfaHeaders
+    );
 
     // Should return the correct value
     expect(data).toEqual(mockResponseCopy.data);
@@ -296,20 +308,24 @@ describe("loginWithVerificationCode()", () => {
     const payload = {
       channel: "sms",
       phoneNumber: "+15558769912",
-      verificationCode: "123467"
+      verificationCode: "123467",
     };
     const data = await loginWithVerificationCode(payload);
 
     // Should have sent the proper API request
-    expect(api.put).toHaveBeenCalledWith(`/auth/code`, {
-      tenantId,
-      channel: payload.channel,
-      phoneNumber: payload.phoneNumber,
-      verificationCode: payload.verificationCode,
-    }, noMfaHeaders);
+    expect(api.put).toHaveBeenCalledWith(
+      `/auth/code`,
+      {
+        tenantId,
+        channel: payload.channel,
+        phoneNumber: payload.phoneNumber,
+        verificationCode: payload.verificationCode,
+      },
+      noMfaHeaders
+    );
 
     // Should have updated the MFA service state
-    assertMfaStateMatches(mockMfaRequiredResponse);
+    assertAuthenticationDataMatches(mockMfaRequiredResponse);
 
     // Should not have set the user object or redirected
     assertNoUser(Userfront.user);
@@ -317,7 +333,7 @@ describe("loginWithVerificationCode()", () => {
 
     // Should have returned MFA options & firstFactorToken
     expect(data).toEqual(mockMfaRequiredResponse.data);
-  })
+  });
 
   it("should include the firstFactorToken if this is the second factor", async () => {
     // Set up the MFA service
@@ -330,18 +346,22 @@ describe("loginWithVerificationCode()", () => {
     const payload = {
       channel: "sms",
       phoneNumber: "+15558769912",
-      verificationCode: "123467"
+      verificationCode: "123467",
     };
     await loginWithVerificationCode(payload);
 
     // Should have sent the proper API request
-    expect(api.put).toHaveBeenCalledWith(`/auth/code`, {
-      tenantId,
-      channel: payload.channel,
-      phoneNumber: payload.phoneNumber,
-      verificationCode: payload.verificationCode,
-    }, mfaHeaders);
-  })
+    expect(api.put).toHaveBeenCalledWith(
+      `/auth/code`,
+      {
+        tenantId,
+        channel: payload.channel,
+        phoneNumber: payload.phoneNumber,
+        verificationCode: payload.verificationCode,
+      },
+      mfaHeaders
+    );
+  });
 
   it("should throw an error for incorrect channel", async () => {
     // Invalid channel

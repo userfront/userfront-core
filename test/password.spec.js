@@ -10,10 +10,10 @@ import {
   setMfaRequired,
 } from "./config/utils.js";
 import {
-  assertMfaStateMatches,
+  assertAuthenticationDataMatches,
   assertNoUser,
   mfaHeaders,
-  noMfaHeaders
+  noMfaHeaders,
 } from "./config/assertions.js";
 import { exchange } from "../src/refresh.js";
 import { signupWithPassword, loginWithPassword } from "../src/password.js";
@@ -42,8 +42,8 @@ const mockResponse = {
 const mockMfaRequiredResponse = createMfaRequiredResponse({
   firstFactor: {
     strategy: "password",
-    channel: "email"
-  }
+    channel: "email",
+  },
 });
 
 describe("signupWithPassword()", () => {
@@ -67,13 +67,17 @@ describe("signupWithPassword()", () => {
     const data = await signupWithPassword(payload);
 
     // Should have sent the proper API request
-    expect(api.post).toHaveBeenCalledWith(`/auth/create`, {
-      tenantId,
-      email: payload.email,
-      name: payload.name,
-      data: payload.userData,
-      password: payload.password,
-    }, noMfaHeaders);
+    expect(api.post).toHaveBeenCalledWith(
+      `/auth/create`,
+      {
+        tenantId,
+        email: payload.email,
+        name: payload.name,
+        data: payload.userData,
+        password: payload.password,
+      },
+      noMfaHeaders
+    );
 
     // Should have called exchange() with the API's response
     expect(exchange).toHaveBeenCalledWith(mockResponse.data);
@@ -105,11 +109,15 @@ describe("signupWithPassword()", () => {
     const data = await signupWithPassword(payload);
 
     // Should have sent the proper API request
-    expect(api.post).toHaveBeenCalledWith(`/auth/create`, {
-      tenantId,
-      email: payload.email,
-      password: payload.password,
-    }, noMfaHeaders);
+    expect(api.post).toHaveBeenCalledWith(
+      `/auth/create`,
+      {
+        tenantId,
+        email: payload.email,
+        password: payload.password,
+      },
+      noMfaHeaders
+    );
 
     // Should have called exchange() with the API's response
     expect(exchange).toHaveBeenCalledWith(mockResponse.data);
@@ -151,10 +159,14 @@ describe("signupWithPassword()", () => {
     });
 
     // Should have sent the proper API request
-    expect(api.post).toHaveBeenCalledWith(`/auth/create`, {
-      tenantId,
-      ...payload,
-    }, noMfaHeaders);
+    expect(api.post).toHaveBeenCalledWith(
+      `/auth/create`,
+      {
+        tenantId,
+        ...payload,
+      },
+      noMfaHeaders
+    );
 
     // Should have called exchange() with the API's response
     expect(exchange).toHaveBeenCalledWith(mockResponseCopy.data);
@@ -201,14 +213,18 @@ describe("signupWithPassword()", () => {
     const data = await signupWithPassword(payload);
 
     // Should have sent the correct API request
-    expect(api.post).toHaveBeenCalledWith(`/auth/create`, {
-      tenantId,
-      email: payload.email,
-      password: payload.password,
-    }, noMfaHeaders);
+    expect(api.post).toHaveBeenCalledWith(
+      `/auth/create`,
+      {
+        tenantId,
+        email: payload.email,
+        password: payload.password,
+      },
+      noMfaHeaders
+    );
 
     // Should have updated the MFA service state
-    assertMfaStateMatches(mockMfaRequiredResponse);
+    assertAuthenticationDataMatches(mockMfaRequiredResponse);
 
     // Should not have set the user object or redirected
     assertNoUser(Userfront.user);
@@ -229,11 +245,15 @@ describe("signupWithPassword()", () => {
     await signupWithPassword(payload);
 
     // Should have sent the correct API request, with MFA headers
-    expect(api.post).toHaveBeenCalledWith(`/auth/create`, {
-      tenantId,
-      email: payload.email,
-      password: payload.password,
-    }, mfaHeaders);
+    expect(api.post).toHaveBeenCalledWith(
+      `/auth/create`,
+      {
+        tenantId,
+        email: payload.email,
+        password: payload.password,
+      },
+      mfaHeaders
+    );
   });
 });
 
@@ -257,10 +277,14 @@ describe("loginWithPassword()", () => {
       const data = await loginWithPassword(payload);
 
       // Should have sent the proper API request
-      expect(api.post).toHaveBeenCalledWith(`/auth/basic`, {
-        tenantId,
-        ...payload,
-      }, noMfaHeaders);
+      expect(api.post).toHaveBeenCalledWith(
+        `/auth/basic`,
+        {
+          tenantId,
+          ...payload,
+        },
+        noMfaHeaders
+      );
 
       // Should have returned the proper value
       expect(data).toEqual(mockResponse.data);
@@ -302,11 +326,15 @@ describe("loginWithPassword()", () => {
       });
 
       // Should have sent the proper API request
-      expect(api.post).toHaveBeenCalledWith(`/auth/basic`, {
-        tenantId,
-        emailOrUsername: payload.email,
-        password: payload.password,
-      }, noMfaHeaders);
+      expect(api.post).toHaveBeenCalledWith(
+        `/auth/basic`,
+        {
+          tenantId,
+          emailOrUsername: payload.email,
+          password: payload.password,
+        },
+        noMfaHeaders
+      );
 
       // Should have called exchange() with the API's response
       expect(exchange).toHaveBeenCalledWith(mockResponseCopy.data);
@@ -339,10 +367,14 @@ describe("loginWithPassword()", () => {
       });
 
       // Should have sent the proper API request
-      expect(api.post).toHaveBeenCalledWith(`/auth/basic`, {
-        tenantId,
-        ...payload,
-      }, noMfaHeaders);
+      expect(api.post).toHaveBeenCalledWith(
+        `/auth/basic`,
+        {
+          tenantId,
+          ...payload,
+        },
+        noMfaHeaders
+      );
 
       // Should have called exchange() with the API's response
       expect(exchange).toHaveBeenCalledWith(mockResponse.data);
@@ -389,14 +421,18 @@ describe("loginWithPassword()", () => {
       const data = await loginWithPassword(payload);
 
       // Should have sent the correct API request
-      expect(api.post).toHaveBeenCalledWith(`/auth/basic`, {
-        tenantId,
-        emailOrUsername: payload.email,
-        password: payload.password,
-      }, noMfaHeaders);
+      expect(api.post).toHaveBeenCalledWith(
+        `/auth/basic`,
+        {
+          tenantId,
+          emailOrUsername: payload.email,
+          password: payload.password,
+        },
+        noMfaHeaders
+      );
 
       // Should have updated the MFA service state
-      assertMfaStateMatches(mockMfaRequiredResponse);
+      assertAuthenticationDataMatches(mockMfaRequiredResponse);
 
       // Should not have set the user object or redirected
       assertNoUser(Userfront.user);
@@ -417,11 +453,15 @@ describe("loginWithPassword()", () => {
       await loginWithPassword(payload);
 
       // Should have sent the correct API request, with MFA headers
-      expect(api.post).toHaveBeenCalledWith(`/auth/basic`, {
-        tenantId,
-        emailOrUsername: payload.email,
-        password: payload.password,
-      }, mfaHeaders);
+      expect(api.post).toHaveBeenCalledWith(
+        `/auth/basic`,
+        {
+          tenantId,
+          emailOrUsername: payload.email,
+          password: payload.password,
+        },
+        mfaHeaders
+      );
     });
   });
 });

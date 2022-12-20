@@ -10,10 +10,10 @@ import {
   setMfaRequired,
 } from "./config/utils.js";
 import {
-  assertMfaStateMatches,
+  assertAuthenticationDataMatches,
   assertNoUser,
   mfaHeaders,
-  noMfaHeaders
+  noMfaHeaders,
 } from "./config/assertions.js";
 import { setCookie, removeAllCookies } from "../src/cookies.js";
 import { handleRedirect } from "../src/url.js";
@@ -44,8 +44,8 @@ describe("loginWithTotp()", () => {
   const mockMfaRequiredResponse = createMfaRequiredResponse({
     firstFactor: {
       strategy: "totp",
-      channel: "authenticator"
-    }
+      channel: "authenticator",
+    },
   });
 
   beforeEach(() => {
@@ -74,10 +74,14 @@ describe("loginWithTotp()", () => {
     const data = await loginWithTotp(payload);
 
     // Should have sent the proper API request
-    expect(api.post).toHaveBeenCalledWith(`/auth/totp`, {
-      tenantId,
-      ...payload,
-    }, noMfaHeaders);
+    expect(api.post).toHaveBeenCalledWith(
+      `/auth/totp`,
+      {
+        tenantId,
+        ...payload,
+      },
+      noMfaHeaders
+    );
 
     // Should return the correct value
     expect(data).toEqual(mockResponseCopy.data);
@@ -116,10 +120,14 @@ describe("loginWithTotp()", () => {
     const data = await loginWithTotp(payload);
 
     // Should have sent the proper API request
-    expect(api.post).toHaveBeenCalledWith(`/auth/totp`, {
-      tenantId,
-      ...payload,
-    }, noMfaHeaders);
+    expect(api.post).toHaveBeenCalledWith(
+      `/auth/totp`,
+      {
+        tenantId,
+        ...payload,
+      },
+      noMfaHeaders
+    );
 
     // Should return the correct value
     expect(data).toEqual(mockResponseCopy.data);
@@ -154,10 +162,14 @@ describe("loginWithTotp()", () => {
     });
 
     // Should have sent the proper API request
-    expect(api.post).toHaveBeenCalledWith(`/auth/totp`, {
-      tenantId,
-      ...payload,
-    }, noMfaHeaders);
+    expect(api.post).toHaveBeenCalledWith(
+      `/auth/totp`,
+      {
+        tenantId,
+        ...payload,
+      },
+      noMfaHeaders
+    );
 
     // Should return the correct value
     expect(data).toEqual(mockResponse.data);
@@ -190,10 +202,14 @@ describe("loginWithTotp()", () => {
     });
 
     // Should have sent the proper API request
-    expect(api.post).toHaveBeenCalledWith(`/auth/totp`, {
-      tenantId,
-      ...payload,
-    }, noMfaHeaders);
+    expect(api.post).toHaveBeenCalledWith(
+      `/auth/totp`,
+      {
+        tenantId,
+        ...payload,
+      },
+      noMfaHeaders
+    );
 
     // Should return the correct value
     expect(data).toEqual(mockResponse.data);
@@ -226,13 +242,17 @@ describe("loginWithTotp()", () => {
     });
 
     // Should have sent the proper API request
-    expect(api.post).toHaveBeenCalledWith(`/auth/totp`, {
-      tenantId,
-      ...payload,
-    }, noMfaHeaders);
+    expect(api.post).toHaveBeenCalledWith(
+      `/auth/totp`,
+      {
+        tenantId,
+        ...payload,
+      },
+      noMfaHeaders
+    );
 
     // Should have updated the MFA service state
-    assertMfaStateMatches(mockMfaRequiredResponse);
+    assertAuthenticationDataMatches(mockMfaRequiredResponse);
 
     // Should not have set the user object or redirected
     assertNoUser(Userfront.user);
@@ -258,11 +278,15 @@ describe("loginWithTotp()", () => {
     });
 
     // Should have sent the proper API request
-    expect(api.post).toHaveBeenCalledWith(`/auth/totp`, {
-      tenantId,
-      ...payload,
-    }, mfaHeaders);
-  })
+    expect(api.post).toHaveBeenCalledWith(
+      `/auth/totp`,
+      {
+        tenantId,
+        ...payload,
+      },
+      mfaHeaders
+    );
+  });
 });
 
 describe("user.getTotp()", () => {
@@ -315,7 +339,7 @@ describe("user.getTotp()", () => {
     expect(api.get).toHaveBeenCalledWith(`/auth/totp`, mfaHeaders);
 
     expect(data).toEqual(mockResponse.data);
-  })
+  });
 
   it("should throw an error if the user is not logged in", async () => {
     // Log the user out

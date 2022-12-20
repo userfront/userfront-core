@@ -164,7 +164,7 @@ describe("Mode tests", () => {
       ]);
     });
 
-    it("Should not fail if a default auth flow is not present", async () => {
+    it("Should not fail if a default authentication object is not present", async () => {
       window.location = new URL("https://example.com/login");
 
       Userfront.init(tenantId);

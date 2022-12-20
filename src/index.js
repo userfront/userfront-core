@@ -52,7 +52,7 @@ function init(tenantId, opts = {}) {
 
   // Estimate the mode synchronously with local data.
   // Clients that require the true mode or the default
-  // auth flow should call and await setMode.
+  // authenticationData should call and await setMode.
   setModeSync();
 
   resetMfa();

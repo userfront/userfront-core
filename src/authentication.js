@@ -28,19 +28,12 @@ export function setFirstFactors(authentication) {
   if (
     !authentication ||
     typeof authentication !== "object" ||
-    !authentication.firstFactors
+    !Array.isArray(authentication.firstFactors)
   ) {
     console.warn("setFirstFactors: invalid factors passed.");
     return;
   }
-  try {
-    authenticationData.firstFactors = authentication.firstFactors;
-    return;
-  } catch (err) {
-    console.warn(
-      `setFirstFactors: error when building factors list - ${err.message}`
-    );
-  }
+  authenticationData.firstFactors = authentication.firstFactors;
 }
 
 /**

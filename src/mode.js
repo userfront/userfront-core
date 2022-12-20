@@ -46,6 +46,7 @@ export async function setMode() {
     mode.reason = getReason(mode.value);
     store.mode = mode.value;
     setFirstFactors(data.authentication);
+    return data;
   } catch (err) {
     mode.value = "test";
     store.mode = mode.value;

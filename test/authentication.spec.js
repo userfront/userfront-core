@@ -121,7 +121,58 @@ describe("Authentication service", () => {
           channel: "sms",
         },
       ]);
+      expect(authenticationData.firstFactorToken).toEqual("uf_test_first_factor_207a4d56ce7e40bc9dafb0918fb6599a")
     });
+    it("should overwrite the firstFactorToken on sequential successful first factor logins", () => {
+      const firstFactorToken1 = "uf_test_first_factor_207a4d56ce7e40bc9dafb0918fb6599a"
+      const mockResponse1 = {
+        message: "MFA required",
+        isMfaRequired: true,
+        firstFactorToken: firstFactorToken1,
+        authentication: {
+          firstFactor: {
+            strategy: "link",
+            channel: "email",
+          },
+          secondFactors: [
+            {
+              strategy: "totp",
+              channel: "authenticator",
+            },
+            {
+              strategy: "verificationCode",
+              channel: "sms",
+            },
+          ],
+        },
+      };
+      handleMfaRequired(mockResponse1);
+      expect(authenticationData.firstFactorToken).toEqual(firstFactorToken1);
+      const firstFactorToken2 = "uf_test_first_factor_12345d56ce7e4ae3677ea0918fbabcde"
+      const mockResponse2 = {
+        message: "MFA required",
+        isMfaRequired: true,
+        firstFactorToken: firstFactorToken2,
+        authentication: {
+          firstFactor: {
+            strategy: "link",
+            channel: "email",
+          },
+          secondFactors: [
+            {
+              strategy: "totp",
+              channel: "authenticator",
+            },
+            {
+              strategy: "verificationCode",
+              channel: "sms",
+            },
+          ],
+        },
+      };
+      handleMfaRequired(mockResponse2);
+      expect(authenticationData.firstFactorToken).toEqual(firstFactorToken2)
+    })
   });
 
   describe("getMfaHeaders()", () => {

@@ -9,7 +9,7 @@
   "scripts": {
     "test": "jest",
     "test:watch": "jest --watch",
-    "build": "npm run build:standard && npm run build:ie11 && npm run ts:copy",
+    "build": "npm version patch && npm run build:standard && npm run build:ie11 && npm run ts:copy",
     "build:standard": "microbundle && microbundle -f modern --external none",
     "build:ie11": "patch-package && COMPAT=ie11 microbundle -o build/userfront-core.ie11.umd.js --external none --no-pkg-main -f umd ; patch-package --reverse",
     "pub": "npm publish",

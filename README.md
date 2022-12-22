@@ -70,3 +70,20 @@ Userfront.user;
  * }
  */
 ```
+
+## Development
+
+### Building
+
+- `npm build`: increment patch version & build all library files
+- `npm build:beta`: increment prerelease version & build all library files
+
+The build commands are split into two parts. `build` and `build:beta` both run these commands, which do not need to be run separately:
+
+- `npm build:standard`: build the standard library files:
+  - ESM module `build/userfront-core.module.js`
+  - CJS module `build/userfront-core.js`
+  - UMD module `build/userfront-core.umd.js`
+  - Module with bundled dependencies, for import from CDN: `build/userfront-core.modern.mjs`
+- `npm build:ie11`: build the IE11-compatible library file: `userfront-core.ie11.umd.js`
+  - This script applies a patch to `microbundle` to enable Babel transformation of dependencies, so that Promises from `axios` are polyfilled without needing to touch the global `Promise` object.

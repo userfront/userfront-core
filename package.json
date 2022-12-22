@@ -13,7 +13,7 @@
     "build:standard": "microbundle && microbundle -f modern --external none",
     "build:ie11": "patch-package && COMPAT=ie11 microbundle -o build/userfront-core.ie11.umd.js --external none --no-pkg-main -f umd ; patch-package --reverse",
     "pub": "npm publish",
-    "build:beta": "npm version prerelease --preid=beta && microbundle && microbundle -f modern --external none && npm run ts:copy",
+    "build:beta": "npm version prerelease --preid=beta && npm run build:standard && npm run build:ie11 && npm run ts:copy",
     "pub:beta": "npm publish --tag beta",
     "reinstall": "rm -rf node_modules && rm package-lock.json && npm install",
     "ts:copy": "cp ts/index.d.ts build/userfront-core.d.ts; cp ts/index.d.ts build/userfront-core.modern.d.ts; cp ts/index.d.ts build/userfront-core.module.d.ts; cp ts/index.d.ts build/userfront-core.umd.d.ts",

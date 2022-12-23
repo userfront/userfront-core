@@ -4,6 +4,11 @@ import { store } from "./store.js";
 import { getQueryAttr, handleRedirect } from "./url.js";
 import { throwFormattedError } from "./utils.js";
 import { exchange } from "./refresh.js";
+import {
+  getMfaHeaders,
+  handleMfaRequired,
+  clearMfa,
+} from "./authentication.js";
 
 /**
  * Register a new user with username, name, email, and password.
@@ -24,18 +29,28 @@ export async function signupWithPassword({
   redirect,
 } = {}) {
   try {
-    const { data } = await post(`/auth/create`, {
-      tenantId: store.tenantId,
-      username,
-      name,
-      email,
-      password,
-      data: userData,
-    });
+    const { data } = await post(
+      `/auth/create`,
+      {
+        tenantId: store.tenantId,
+        username,
+        name,
+        email,
+        password,
+        data: userData,
+      },
+      {
+        headers: getMfaHeaders(),
+      }
+    );
     if (data.tokens) {
+      clearMfa();
       setCookiesAndTokens(data.tokens);
       await exchange(data);
       handleRedirect({ redirect, data });
+      return data;
+    } else if (data.firstFactorToken) {
+      handleMfaRequired(data);
       return data;
     } else {
       throw new Error("Please try again.");
@@ -58,11 +73,17 @@ export async function loginWithPassword({
   redirect,
 }) {
   try {
-    const { data } = await post(`/auth/basic`, {
-      tenantId: store.tenantId,
-      emailOrUsername: email || username || emailOrUsername,
-      password,
-    });
+    const { data } = await post(
+      `/auth/basic`,
+      {
+        tenantId: store.tenantId,
+        emailOrUsername: email || username || emailOrUsername,
+        password,
+      },
+      {
+        headers: getMfaHeaders(),
+      }
+    );
 
     if (data.hasOwnProperty("tokens")) {
       setCookiesAndTokens(data.tokens);
@@ -71,7 +92,8 @@ export async function loginWithPassword({
       return data;
     }
 
-    if (data.hasOwnProperty("firstFactorCode")) {
+    if (data.hasOwnProperty("firstFactorToken")) {
+      handleMfaRequired(data);
       return data;
     }
 

@@ -1,6 +1,7 @@
 import { get } from "./api.js";
 import { privateIPRegex } from "./constants.js";
 import { store } from "./store.js";
+import { setFirstFactors } from "./authentication.js";
 
 /**
  * Global mode object
@@ -36,6 +37,7 @@ export function isHttps() {
 
 /**
  * Define the mode of operation (live or test)
+ * and the tenant's authentication factors
  */
 export async function setMode() {
   try {
@@ -43,6 +45,8 @@ export async function setMode() {
     mode.value = data.mode || "test";
     mode.reason = getReason(mode.value);
     store.mode = mode.value;
+    setFirstFactors(data.authentication);
+    return data;
   } catch (err) {
     mode.value = "test";
     store.mode = mode.value;

@@ -1,5 +1,6 @@
 import Cookies from "js-cookie";
 import Userfront from "../src/index.js";
+import api from "../src/api.js";
 import {
   createAccessToken,
   createIdToken,
@@ -10,10 +11,34 @@ import * as Refresh from "../src/refresh.js";
 import { store } from "../src/store.js";
 
 jest.mock("../src/refresh.js");
+jest.mock("../src/api.js");
 
 const tenantId = "abcd4321";
 const mockAccessToken = createAccessToken();
 const mockIdToken = createIdToken();
+
+const mockAuthenticationObject = {
+  firstFactors: [
+    {
+      channel: "email",
+      strategy: "password",
+    },
+    {
+      channel: "email",
+      strategy: "link",
+    },
+  ],
+  secondFactors: [
+    {
+      channel: "authenticator",
+      strategy: "totp",
+    },
+    {
+      channel: "sms",
+      strategy: "verificationCode",
+    },
+  ],
+};
 
 describe("Userfront session helpers", () => {
   beforeAll(() => {
@@ -22,6 +47,10 @@ describe("Userfront session helpers", () => {
     Cookies.set(`access.${tenantId}`, mockAccessToken, {});
     // Initialize Userfront
     Userfront.init(tenantId);
+  });
+
+  beforeEach(() => {
+    api.get.mockImplementationOnce(() => mockAuthenticationObject);
   });
 
   describe("getSession()", () => {

@@ -8,6 +8,9 @@ import {
   idTokenUserDefaults,
   mockWindow,
 } from "./config/utils.js";
+import {
+  noMfaHeaders
+} from "./config/assertions.js";
 import { login } from "../src/login.js";
 import { logout } from "../src/logout.js";
 import { unsetTokens } from "../src/tokens.js";
@@ -93,7 +96,7 @@ describe("completeSamlLogin()", () => {
     expect(api.post).toHaveBeenCalledWith(`/auth/basic`, {
       tenantId,
       ...payload,
-    });
+    }, noMfaHeaders);
 
     // Should have returned the proper value
     expect(data).toEqual(mockResponse.data);

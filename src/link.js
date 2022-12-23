@@ -4,6 +4,11 @@ import { store } from "./store.js";
 import { getQueryAttr, handleRedirect } from "./url.js";
 import { exchange } from "./refresh.js";
 import { throwFormattedError } from "./utils.js";
+import {
+  getMfaHeaders,
+  handleMfaRequired,
+  clearMfa,
+} from "./authentication.js";
 
 /**
  * Log a user in with a token/uuid combo passed into the function or
@@ -18,20 +23,28 @@ export async function loginWithLink({ token, uuid, redirect } = {}) {
     uuid = uuid || getQueryAttr("uuid");
     if (!token || !uuid) return;
 
-    const { data } = await put("/auth/link", {
-      token,
-      uuid,
-      tenantId: store.tenantId,
-    });
+    const { data } = await put(
+      "/auth/link",
+      {
+        token,
+        uuid,
+        tenantId: store.tenantId,
+      },
+      {
+        headers: getMfaHeaders(),
+      }
+    );
 
     if (data.hasOwnProperty("tokens")) {
+      clearMfa();
       setCookiesAndTokens(data.tokens);
       await exchange(data);
       handleRedirect({ redirect, data });
       return data;
     }
 
-    if (data.hasOwnProperty("firstFactorCode")) {
+    if (data.hasOwnProperty("firstFactorToken")) {
+      handleMfaRequired(data);
       return data;
     }
 

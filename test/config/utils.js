@@ -1,4 +1,5 @@
 import { isTestHostname } from "../../src/mode.js";
+import { authenticationData } from "../../src/authentication.js";
 import jwt from "jsonwebtoken";
 
 export function resetStore(Userfront) {
@@ -121,6 +122,57 @@ export function createRefreshToken(payload = {}) {
   };
   delete jwtPayload.authorization;
   return jwt.sign(jwtPayload, testRsaPrivateKey, { algorithm: "RS256" });
+}
+
+export function createFirstFactorToken() {
+  // The first factor token is arbitrary and opaque from the client's perspective
+  return "uf_test_first_factor_207a4d56ce7e40bc9dafb0918fb6599a";
+}
+
+export function createMfaRequiredResponse({
+  mode,
+  firstFactor,
+  secondFactors,
+}) {
+  const _firstFactor = firstFactor || {
+    strategy: "password",
+    channel: "email",
+  };
+  const _secondFactors = secondFactors || [
+    {
+      strategy: "totp",
+      channel: "authenticator",
+    },
+    {
+      strategy: "verificationCode",
+      channel: "sms",
+    },
+  ];
+  const response = {
+    mode: mode || "live",
+    message: "MFA required",
+    isMfaRequired: true,
+    firstFactorToken: createFirstFactorToken(),
+    authentication: {
+      firstFactor: _firstFactor,
+      secondFactors: _secondFactors,
+    },
+  };
+  return { data: response };
+}
+
+export function setMfaRequired() {
+  authenticationData.secondFactors = [
+    {
+      strategy: "totp",
+      channel: "authenticator",
+    },
+    {
+      strategy: "verificationCode",
+      channel: "sms",
+    },
+  ];
+  authenticationData.firstFactorToken = createFirstFactorToken();
 }
 
 export function addMinutes(date, minutes) {

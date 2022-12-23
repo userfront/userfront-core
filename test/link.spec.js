@@ -1,12 +1,21 @@
 import Userfront from "../src/index.js";
 import api from "../src/api.js";
+import { unsetUser } from "../src/user.js";
 import {
   createAccessToken,
   createIdToken,
   createRefreshToken,
+  createMfaRequiredResponse,
+  setMfaRequired,
   idTokenUserDefaults,
   mockWindow,
 } from "./config/utils.js";
+import {
+  assertAuthenticationDataMatches,
+  assertNoUser,
+  mfaHeaders,
+  noMfaHeaders,
+} from "./config/assertions.js";
 import {
   sendLoginLink,
   loginWithLink,
@@ -36,6 +45,14 @@ const mockResponse = {
     redirectTo: "/dashboard",
   },
 };
+
+// Mock "MFA Required" API response
+const mockMfaRequiredResponse = createMfaRequiredResponse({
+  firstFactor: {
+    strategy: "link",
+    channel: "email",
+  },
+});
 
 describe("sendLoginLink", () => {
   beforeEach(() => {
@@ -152,6 +169,7 @@ describe("loginWithLink", () => {
   beforeEach(() => {
     Userfront.init(tenantId);
     window.location.assign.mockClear();
+    unsetUser();
   });
 
   it("should login and redirect", async () => {
@@ -174,10 +192,14 @@ describe("loginWithLink", () => {
     const data = await loginWithLink(payload);
 
     // Should have sent the proper API request
-    expect(api.put).toHaveBeenCalledWith(`/auth/link`, {
-      tenantId,
-      ...payload,
-    });
+    expect(api.put).toHaveBeenCalledWith(
+      `/auth/link`,
+      {
+        tenantId,
+        ...payload,
+      },
+      noMfaHeaders
+    );
 
     // Should return the correct value
     expect(data).toEqual(mockResponseCopy.data);
@@ -219,10 +241,14 @@ describe("loginWithLink", () => {
     const data = await loginWithLink();
 
     // Should have sent the proper API request
-    expect(api.put).toHaveBeenCalledWith(`/auth/link`, {
-      tenantId,
-      ...query,
-    });
+    expect(api.put).toHaveBeenCalledWith(
+      `/auth/link`,
+      {
+        tenantId,
+        ...query,
+      },
+      noMfaHeaders
+    );
 
     // Should return the correct value
     expect(data).toEqual(mockResponseCopy.data);
@@ -255,10 +281,14 @@ describe("loginWithLink", () => {
     });
 
     // Should have sent the proper API request
-    expect(api.put).toHaveBeenCalledWith(`/auth/link`, {
-      tenantId,
-      ...payload,
-    });
+    expect(api.put).toHaveBeenCalledWith(
+      `/auth/link`,
+      {
+        tenantId,
+        ...payload,
+      },
+      noMfaHeaders
+    );
 
     // Should return the correct value
     expect(data).toEqual(mockResponse.data);
@@ -274,19 +304,10 @@ describe("loginWithLink", () => {
     expect(window.location.assign).not.toHaveBeenCalled();
   });
 
-  it("should return MFA options if tenant requires", async () => {
+  it("should handle an MFA Required response", async () => {
     exchange.mockClear();
 
-    const mockMfaOptionsResponse = {
-      data: {
-        mode: "live",
-        allowedStrategies: ["verificationCode"],
-        allowedChannels: ["sms"],
-        firstFactorCode: "204a8def-651c-4ab2-9ca0-1e3fca9e280a",
-      },
-    };
-
-    api.put.mockImplementationOnce(() => mockMfaOptionsResponse);
+    api.put.mockImplementationOnce(() => mockMfaRequiredResponse);
 
     const payload = {
       token: "some-token",
@@ -295,17 +316,46 @@ describe("loginWithLink", () => {
     const data = await loginWithLink(payload);
 
     // Should have sent the proper API request
-    expect(api.put).toHaveBeenCalledWith(`/auth/link`, {
-      tenantId,
-      ...payload,
-    });
+    expect(api.put).toHaveBeenCalledWith(
+      `/auth/link`,
+      {
+        tenantId,
+        ...payload,
+      },
+      noMfaHeaders
+    );
+
+    // Should have updated the MFA service state
+    assertAuthenticationDataMatches(mockMfaRequiredResponse);
 
     // Should not have set the user object, called exchange, or redirected
-    expect(Userfront.user).toBeUndefined;
+    assertNoUser(Userfront.user);
     expect(exchange).not.toHaveBeenCalled();
     expect(window.location.assign).not.toHaveBeenCalled();
 
-    // Should have returned MFA options & firstFactorCode
-    expect(data).toEqual(mockMfaOptionsResponse.data);
+    // Should have returned MFA options & firstFactorToken
+    expect(data).toEqual(mockMfaRequiredResponse.data);
+  });
+
+  it.only("should include the firstFactorToken if this is the second factor", async () => {
+    // Set up the MFA service
+    setMfaRequired();
+    exchange.mockClear();
+    api.put.mockImplementationOnce(() => mockResponse);
+    const payload = {
+      token: "some-token",
+      uuid: "some-uuid",
+    };
+    await loginWithLink(payload);
+
+    // Should have send the correct API request, with MFA headers attached
+    expect(api.put).toHaveBeenCalledWith(
+      "/auth/link",
+      {
+        tenantId,
+        ...payload,
+      },
+      mfaHeaders
+    );
   });
 });

@@ -1,11 +1,20 @@
 import Userfront from "../src/index.js";
 import api from "../src/api.js";
+import { unsetUser } from "../src/user.js";
 import {
   createAccessToken,
   createIdToken,
   createRefreshToken,
   idTokenUserDefaults,
+  createMfaRequiredResponse,
+  setMfaRequired,
 } from "./config/utils.js";
+import {
+  assertAuthenticationDataMatches,
+  assertNoUser,
+  mfaHeaders,
+  noMfaHeaders,
+} from "./config/assertions.js";
 import { setCookie, removeAllCookies } from "../src/cookies.js";
 import { handleRedirect } from "../src/url.js";
 import { loginWithTotp } from "../src/totp.js";
@@ -30,9 +39,19 @@ describe("loginWithTotp()", () => {
       redirectTo: "/dashboard",
     },
   };
+
+  // Mock "MFA Required" API response
+  const mockMfaRequiredResponse = createMfaRequiredResponse({
+    firstFactor: {
+      strategy: "totp",
+      channel: "authenticator",
+    },
+  });
+
   beforeEach(() => {
     Userfront.init(tenantId);
     jest.resetAllMocks();
+    unsetUser();
   });
 
   it("should login with totpCode", async () => {
@@ -55,10 +74,14 @@ describe("loginWithTotp()", () => {
     const data = await loginWithTotp(payload);
 
     // Should have sent the proper API request
-    expect(api.post).toHaveBeenCalledWith(`/auth/totp`, {
-      tenantId,
-      ...payload,
-    });
+    expect(api.post).toHaveBeenCalledWith(
+      `/auth/totp`,
+      {
+        tenantId,
+        ...payload,
+      },
+      noMfaHeaders
+    );
 
     // Should return the correct value
     expect(data).toEqual(mockResponseCopy.data);
@@ -97,10 +120,14 @@ describe("loginWithTotp()", () => {
     const data = await loginWithTotp(payload);
 
     // Should have sent the proper API request
-    expect(api.post).toHaveBeenCalledWith(`/auth/totp`, {
-      tenantId,
-      ...payload,
-    });
+    expect(api.post).toHaveBeenCalledWith(
+      `/auth/totp`,
+      {
+        tenantId,
+        ...payload,
+      },
+      noMfaHeaders
+    );
 
     // Should return the correct value
     expect(data).toEqual(mockResponseCopy.data);
@@ -135,10 +162,14 @@ describe("loginWithTotp()", () => {
     });
 
     // Should have sent the proper API request
-    expect(api.post).toHaveBeenCalledWith(`/auth/totp`, {
-      tenantId,
-      ...payload,
-    });
+    expect(api.post).toHaveBeenCalledWith(
+      `/auth/totp`,
+      {
+        tenantId,
+        ...payload,
+      },
+      noMfaHeaders
+    );
 
     // Should return the correct value
     expect(data).toEqual(mockResponse.data);
@@ -171,10 +202,14 @@ describe("loginWithTotp()", () => {
     });
 
     // Should have sent the proper API request
-    expect(api.post).toHaveBeenCalledWith(`/auth/totp`, {
-      tenantId,
-      ...payload,
-    });
+    expect(api.post).toHaveBeenCalledWith(
+      `/auth/totp`,
+      {
+        tenantId,
+        ...payload,
+      },
+      noMfaHeaders
+    );
 
     // Should return the correct value
     expect(data).toEqual(mockResponse.data);
@@ -191,6 +226,66 @@ describe("loginWithTotp()", () => {
       redirect: false,
       data: mockResponse.data,
     });
+  });
+
+  it("should handle an MFA Required response", async () => {
+    api.post.mockImplementationOnce(() => mockMfaRequiredResponse);
+
+    // Call loginWithTotp()
+    const payload = {
+      userId: 123,
+      totpCode: "123456",
+    };
+    const data = await loginWithTotp({
+      redirect: false,
+      ...payload,
+    });
+
+    // Should have sent the proper API request
+    expect(api.post).toHaveBeenCalledWith(
+      `/auth/totp`,
+      {
+        tenantId,
+        ...payload,
+      },
+      noMfaHeaders
+    );
+
+    // Should have updated the MFA service state
+    assertAuthenticationDataMatches(mockMfaRequiredResponse);
+
+    // Should not have set the user object or redirected
+    assertNoUser(Userfront.user);
+    expect(handleRedirect).not.toHaveBeenCalled();
+
+    // Should have returned MFA options & firstFactorToken
+    expect(data).toEqual(mockMfaRequiredResponse.data);
+  });
+
+  it("should include the firstFactorToken if this is the second factor", async () => {
+    // Set up the MFA service
+    setMfaRequired();
+    api.post.mockImplementationOnce(() => mockResponse);
+
+    // Call loginWithTotp()
+    const payload = {
+      userId: 123,
+      totpCode: "123456",
+    };
+    await loginWithTotp({
+      redirect: false,
+      ...payload,
+    });
+
+    // Should have sent the proper API request
+    expect(api.post).toHaveBeenCalledWith(
+      `/auth/totp`,
+      {
+        tenantId,
+        ...payload,
+      },
+      mfaHeaders
+    );
   });
 });
 
@@ -226,6 +321,22 @@ describe("user.getTotp()", () => {
         Authorization: `Bearer ${accessToken}`,
       },
     });
+
+    expect(data).toEqual(mockResponse.data);
+  });
+
+  it("should request the user's TOTP information with the firstFactorToken if this is the second factor", async () => {
+    // Set up the MFA services
+    setMfaRequired();
+
+    // Mock the API response
+    api.get.mockImplementationOnce(() => mockResponse);
+
+    // Call user.getTotp()
+    const data = await Userfront.user.getTotp();
+
+    // Should have sent the proper API request
+    expect(api.get).toHaveBeenCalledWith(`/auth/totp`, mfaHeaders);
 
     expect(data).toEqual(mockResponse.data);
   });

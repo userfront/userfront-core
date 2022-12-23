@@ -2,6 +2,11 @@ import {
   isAccessTokenLocallyValid,
   isRefreshTokenLocallyValid,
 } from "./tokens.js";
+import {
+  authenticationData,
+  isMfaRequired,
+  clearMfa,
+} from "./authentication.js";
 import { refresh } from "./refresh.js";
 
 /**
@@ -38,5 +43,11 @@ async function getIsLoggedIn() {
  */
 export async function getSession() {
   const isLoggedIn = await getIsLoggedIn();
-  return { isLoggedIn };
+  return {
+    isLoggedIn,
+    needsSecondFactor: isMfaRequired(),
+    firstFactors: authenticationData.firstFactors,
+    secondFactors: authenticationData.secondFactors,
+    resetMfaState: clearMfa,
+  };
 }

@@ -21,6 +21,7 @@ import { user } from "./user.js";
 import "./user.methods.js";
 import { refresh } from "./refresh.js";
 import { apiUrl } from "./constants.js";
+import { resetMfa } from "./authentication.js";
 
 let initCallbacks = [];
 
@@ -48,7 +49,13 @@ function init(tenantId, opts = {}) {
   setTokenNames();
   // setIframe(); // TODO re-enable when iframe is needed
   setTokensFromCookies();
+
+  // Estimate the mode synchronously with local data.
+  // Clients that require the true mode or the default
+  // authenticationData should call and await setMode.
   setModeSync();
+
+  resetMfa();
 
   try {
     if (initCallbacks.length > 0) {

@@ -1,0 +1,15 @@
+diff --git a/node_modules/microbundle/dist/cli.js b/node_modules/microbundle/dist/cli.js
+index eb2879e..c69c877 100755
+--- a/node_modules/microbundle/dist/cli.js
++++ b/node_modules/microbundle/dist/cli.js
+@@ -1060,7 +1060,9 @@ function createConfig(options, entry, format, writeMeta) {
+         babelHelpers: 'bundled',
+         extensions: EXTENSIONS,
+         // use a regex to make sure to exclude eventual hoisted packages
+-        exclude: /\/node_modules\//,
++        // Patch: enable transpiling node_modules to ensure Axios gets promises polyfilled
++        // without adding a polyfill to the global environment
++        // exclude: /\/node_modules\//,
+         passPerPreset: true,
+         // @see https://babeljs.io/docs/en/options#passperpreset
+         custom: {

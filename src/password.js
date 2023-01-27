@@ -71,15 +71,22 @@ export async function loginWithPassword({
   emailOrUsername,
   password,
   redirect,
+  options
 }) {
   try {
+    const body = {
+      tenantId: store.tenantId,
+      emailOrUsername: email || username || emailOrUsername,
+      password,
+    };
+    if (options && options.noResetEmail) {
+      body.options = {
+        noResetEmail: true
+      }
+    }
     const { data } = await post(
       `/auth/basic`,
-      {
-        tenantId: store.tenantId,
-        emailOrUsername: email || username || emailOrUsername,
-        password,
-      },
+      body,
       {
         headers: getMfaHeaders(),
       }

@@ -35,6 +35,7 @@ export async function login({
   phoneNumber,
   // Password
   password,
+  noResetEmail,
   // Link
   token,
   uuid,
@@ -65,6 +66,7 @@ export async function login({
         emailOrUsername,
         password,
         redirect,
+        noResetEmail
       });
     case "passwordless":
       return sendPasswordlessLink({ email });

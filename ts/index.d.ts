@@ -183,6 +183,7 @@ export declare function login({
   channel,
   // Other
   redirect,
+  options,
 }: {
   method: string;
   userId?: number;
@@ -199,6 +200,7 @@ export declare function login({
   verificationCode?: string;
   channel?: "sms" | "email";
   redirect?: string | boolean;
+  options?: object;
 }): Promise<LoginResponse>;
 
 // logout()

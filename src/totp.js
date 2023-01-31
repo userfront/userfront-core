@@ -37,7 +37,6 @@ export async function loginWithTotp({
   redirect,
 } = {}) {
   try {
-    if (!totpCode && !backupCode) return;
 
     const { data } = await post(
       `/auth/totp`,

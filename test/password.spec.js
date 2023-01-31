@@ -390,6 +390,34 @@ describe("loginWithPassword()", () => {
       });
     });
 
+    it("should set the noResetEmail option if provided", async () => {
+      // Mock the API response
+      api.post.mockImplementationOnce(() => mockResponse);
+
+      // Call loginWithPassword()
+      const payload = {
+        emailOrUsername: idTokenUserDefaults.email,
+        password: "something",
+        options: {
+          noResetEmail: true,
+        },
+      };
+      await loginWithPassword(payload);
+
+      // Should have sent the proper API request
+      expect(api.post).toHaveBeenCalledWith(
+        `/auth/basic`,
+        {
+          tenantId,
+          ...payload,
+          options: {
+            noResetEmail: true,
+          },
+        },
+        noMfaHeaders
+      );
+    });
+
     it("should respond with whatever error the server sends", async () => {
       // Mock the API response
       const mockResponse = {

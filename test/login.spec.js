@@ -42,7 +42,7 @@ describe("login()", () => {
         { username: "user-name", password },
         { emailOrUsername: email, password },
         { email, password, redirect: "/custom" },
-        { email, password, redirect: false },
+        { email, password, redirect: false, options: { noResetEmail: true } },
       ];
 
       // Test login for each combo

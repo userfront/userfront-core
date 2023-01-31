@@ -399,8 +399,8 @@ describe("loginWithPassword()", () => {
         emailOrUsername: idTokenUserDefaults.email,
         password: "something",
         options: {
-          noResetEmail: true
-        }
+          noResetEmail: true,
+        },
       };
       await loginWithPassword(payload);
 
@@ -411,12 +411,12 @@ describe("loginWithPassword()", () => {
           tenantId,
           ...payload,
           options: {
-            noResetEmail: true
-          }
+            noResetEmail: true,
+          },
         },
         noMfaHeaders
       );
-    })
+    });
 
     it("should respond with whatever error the server sends", async () => {
       // Mock the API response

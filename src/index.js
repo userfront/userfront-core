@@ -22,6 +22,7 @@ import "./user.methods.js";
 import { refresh } from "./refresh.js";
 import { apiUrl } from "./constants.js";
 import { resetMfa } from "./authentication.js";
+import { setupPkce } from "./pkce.js"; 
 
 let initCallbacks = [];
 
@@ -56,6 +57,8 @@ function init(tenantId, opts = {}) {
   setModeSync();
 
   resetMfa();
+
+  setupPkce();
 
   try {
     if (initCallbacks.length > 0) {

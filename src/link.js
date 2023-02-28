@@ -9,6 +9,7 @@ import {
   handleMfaRequired,
   clearMfa,
 } from "./authentication.js";
+import { getPkceRequestQueryParams, redirectWithPkce } from "./pkce.js";
 
 /**
  * Log a user in with a token/uuid combo passed into the function or
@@ -32,6 +33,7 @@ export async function loginWithLink({ token, uuid, redirect } = {}) {
       },
       {
         headers: getMfaHeaders(),
+        params: getPkceRequestQueryParams()
       }
     );
 
@@ -46,6 +48,16 @@ export async function loginWithLink({ token, uuid, redirect } = {}) {
     if (data.hasOwnProperty("firstFactorToken")) {
       handleMfaRequired(data);
       return data;
+    }
+
+    if (data.authorizationCode) {
+      const url = redirect || data.redirectTo;
+      if (url) {
+        redirectWithPkce(url, data.authorizationCode);
+        return;
+      } else {
+        // TODO this is neither valid nor invalid
+      }
     }
 
     throw new Error("Problem logging in.");

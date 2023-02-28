@@ -9,6 +9,7 @@ import {
   handleMfaRequired,
   clearMfa,
 } from "./authentication.js";
+import { getPkceRequestQueryParams, redirectWithPkce } from "./pkce.js";
 
 /**
  * Verify that proper identifier is available for the channel
@@ -98,6 +99,7 @@ export async function loginWithVerificationCode({
       },
       {
         headers: getMfaHeaders(),
+        params: getPkceRequestQueryParams(),
       }
     );
 
@@ -112,6 +114,16 @@ export async function loginWithVerificationCode({
     if (data.hasOwnProperty("firstFactorToken")) {
       handleMfaRequired(data);
       return data;
+    }
+
+    if (data.authorizationCode) {
+      const url = redirect || data.redirectTo;
+      if (url) {
+        redirectWithPkce(url, data.authorizationCode);
+        return;
+      } else {
+        // TODO this is neither valid nor invalid
+      }
     }
 
     throw new Error("Problem logging in.");

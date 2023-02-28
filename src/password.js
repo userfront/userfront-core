@@ -9,6 +9,7 @@ import {
   handleMfaRequired,
   clearMfa,
 } from "./authentication.js";
+import { getPkceRequestQueryParams, redirectWithPkce } from "./pkce.js";
 
 /**
  * Register a new user with username, name, email, and password.
@@ -41,6 +42,7 @@ export async function signupWithPassword({
       },
       {
         headers: getMfaHeaders(),
+        params: getPkceRequestQueryParams(),
       }
     );
     if (data.tokens) {
@@ -52,6 +54,13 @@ export async function signupWithPassword({
     } else if (data.firstFactorToken) {
       handleMfaRequired(data);
       return data;
+    } else if (data.authorizationCode) {
+      const url = redirect || data.redirectTo;
+      if (url) {
+        redirectWithPkce(url, data.authorizationCode);
+      } else {
+        // TODO this is neither valid nor invalid
+      }
     } else {
       throw new Error("Please try again.");
     }
@@ -100,6 +109,7 @@ export async function loginWithPassword({
       body,
       {
         headers: getMfaHeaders(),
+        params: getPkceRequestQueryParams(),
       }
     );
 
@@ -113,6 +123,16 @@ export async function loginWithPassword({
     if (data.hasOwnProperty("firstFactorToken")) {
       handleMfaRequired(data);
       return data;
+    }
+
+    if (data.authorizationCode) {
+      const url = redirect || data.redirectTo;
+      if (url) {
+        redirectWithPkce(url, data.authorizationCode);
+        return;
+      } else {
+        // TODO this is neither valid nor invalid
+      }
     }
 
     throw new Error("Please try again.");

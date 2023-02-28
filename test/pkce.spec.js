@@ -1,6 +1,4 @@
-import Userfront from "../src/index.js";
 import * as Pkce from "../src/pkce.js";
-import { mockWindow } from "./config/utils.js";
 
 
 const NOW = Date.now();

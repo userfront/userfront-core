@@ -14,14 +14,17 @@ import {
   assertNoUser,
   mfaHeaders,
   noMfaHeaders,
+  pkceParams,
 } from "./config/assertions.js";
 import { exchange } from "../src/refresh.js";
 import { signupWithPassword, loginWithPassword } from "../src/password.js";
 import { handleRedirect } from "../src/url.js";
+import * as Pkce from "../src/pkce.js";
 
 jest.mock("../src/api.js");
 jest.mock("../src/refresh.js");
 jest.mock("../src/url.js");
+jest.mock("../src/pkce.js");
 
 const tenantId = "abcd9876";
 
@@ -45,6 +48,14 @@ const mockMfaRequiredResponse = createMfaRequiredResponse({
     channel: "email",
   },
 });
+
+const mockPkceRequiredResponse = {
+  data: {
+    message: "PKCE required",
+    authorizationCode: "auth-code",
+    redirectTo: "my-app:/login"
+  }
+}
 
 describe("signupWithPassword()", () => {
   beforeEach(() => {
@@ -491,5 +502,106 @@ describe("loginWithPassword()", () => {
         mfaHeaders
       );
     });
+
+    describe("with PKCE", () => {
+      it("signup: should send a PKCE request if PKCE is required", async () => {
+        Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({ "code_challenge": "code" }));
+        // Mock the API response
+        api.post.mockImplementationOnce(() => mockResponse);
+
+        // Call loginWithPassword()
+        const payload = {
+          email: idTokenUserDefaults.email,
+          password: "something",
+        };
+        await signupWithPassword(payload);
+
+        // Should have sent the proper API request
+        expect(api.post).toHaveBeenCalledWith(
+          `/auth/create`,
+          {
+            tenantId,
+            email: payload.email,
+            password: payload.password,
+          },
+          pkceParams("code")
+        );
+      })
+
+      it("signup: should handle a PKCE Required response", async () => {
+        Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({ "code_challenge": "code" }));
+        api.post.mockImplementationOnce(() => mockPkceRequiredResponse);
+        // Call loginWithPassword()
+        const payload = {
+          email: idTokenUserDefaults.email,
+          password: "something",
+        };
+        await signupWithPassword(payload);
+
+        // Should have sent the proper API request
+        expect(api.post).toHaveBeenCalledWith(
+          `/auth/create`,
+          {
+            tenantId,
+            email: payload.email,
+            password: payload.password,
+          },
+          pkceParams("code")
+        );
+        
+        // Should have requested redirect with the correct params
+        const params = Pkce.redirectWithPkce.mock.lastCall;
+        expect(params[0]).toEqual("my-app:/login");
+        expect(params[1]).toEqual("auth-code");
+      })
+      it("login: should send a PKCE request if PKCE is required", async () => {
+        Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({ "code_challenge": "code" }));
+        // Mock the API response
+        api.post.mockImplementationOnce(() => mockResponse);
+
+        // Call loginWithPassword()
+        const payload = {
+          emailOrUsername: idTokenUserDefaults.email,
+          password: "something"
+        };
+        await loginWithPassword(payload);
+
+        // Should have sent the proper API request
+        expect(api.post).toHaveBeenCalledWith(
+          `/auth/basic`,
+          {
+            tenantId,
+            ...payload,
+          },
+          pkceParams("code")
+        );
+      })
+
+      it("login: should handle a PKCE Required response", async () => {
+        Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({ "code_challenge": "code" }));
+        api.post.mockImplementationOnce(() => mockPkceRequiredResponse);
+        // Call loginWithPassword()
+        const payload = {
+          emailOrUsername: idTokenUserDefaults.email,
+          password: "something"
+        };
+        await loginWithPassword(payload);
+
+        // Should have sent the proper API request
+        expect(api.post).toHaveBeenCalledWith(
+          `/auth/basic`,
+          {
+            tenantId,
+            ...payload,
+          },
+          pkceParams("code")
+        );
+        
+        // Should have requested redirect with the correct params
+        const params = Pkce.redirectWithPkce.mock.lastCall;
+        expect(params[0]).toEqual("my-app:/login");
+        expect(params[1]).toEqual("auth-code");
+      })
+    })
   });
 });

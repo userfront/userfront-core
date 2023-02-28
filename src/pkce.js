@@ -54,9 +54,9 @@ export function setupPkce() {
 
 export function getPkceRequestQueryParams() {
   if (!store.usePkce) {
-    return new URLSearchParams();
+    return {};
   }
-  return new URLSearchParams({ "code_challenge": store.codeChallenge });
+  return new { "code_challenge": store.codeChallenge };
 }
 
 export function redirectWithPkce(url, authorizationCode) {

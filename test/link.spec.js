@@ -15,6 +15,7 @@ import {
   assertNoUser,
   mfaHeaders,
   noMfaHeaders,
+  pkceParams,
 } from "./config/assertions.js";
 import {
   sendLoginLink,
@@ -22,9 +23,11 @@ import {
   sendPasswordlessLink,
 } from "../src/link.js";
 import { exchange } from "../src/refresh.js";
+import * as Pkce from "../src/pkce.js";
 
 jest.mock("../src/refresh.js");
 jest.mock("../src/api.js");
+jest.mock("../src/pkce.js");
 
 mockWindow({
   origin: "https://example.com",
@@ -337,7 +340,7 @@ describe("loginWithLink", () => {
     expect(data).toEqual(mockMfaRequiredResponse.data);
   });
 
-  it.only("should include the firstFactorToken if this is the second factor", async () => {
+  it("should include the firstFactorToken if this is the second factor", async () => {
     // Set up the MFA service
     setMfaRequired();
     exchange.mockClear();
@@ -357,5 +360,65 @@ describe("loginWithLink", () => {
       },
       mfaHeaders
     );
+  });
+
+  describe("with PKCE", () => {
+
+    const mockPkceRequiredResponse = {
+      data: {
+        message: "PKCE required",
+        authorizationCode: "auth-code",
+        redirectTo: "my-app:/login"
+      }
+    }
+
+    it("should send a PKCE request if PKCE is required", async () => {
+      Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({ "code_challenge": "code" }));
+      // Mock the API response
+      api.put.mockImplementationOnce(() => mockResponse);
+
+      const payload = {
+        token: "some-token",
+        uuid: "some-uuid",
+      };
+      await loginWithLink(payload);
+
+      // Should have sent the proper API request
+      expect(api.put).toHaveBeenCalledWith(
+        `/auth/link`,
+        {
+          tenantId,
+          ...payload,
+        },
+        pkceParams("code")
+      );
+    })
+
+    it("should handle a PKCE Required response", async () => {
+      Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({ "code_challenge": "code" }));
+      // Mock the API response
+      api.put.mockImplementationOnce(() => mockPkceRequiredResponse);;
+
+      const payload = {
+        token: "some-token",
+        uuid: "some-uuid",
+      };
+      await loginWithLink(payload);
+
+      // Should have sent the proper API request
+      expect(api.put).toHaveBeenCalledWith(
+        `/auth/link`,
+        {
+          tenantId,
+          ...payload,
+        },
+        pkceParams("code")
+      );
+        
+      // Should have requested redirect with the correct params
+      const params = Pkce.redirectWithPkce.mock.lastCall;
+      expect(params[0]).toEqual("my-app:/login");
+      expect(params[1]).toEqual("auth-code");
+    });
   });
 });

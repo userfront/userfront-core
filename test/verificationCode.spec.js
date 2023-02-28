@@ -13,6 +13,7 @@ import {
   assertNoUser,
   mfaHeaders,
   noMfaHeaders,
+  pkceParams
 } from "./config/assertions.js";
 import {
   sendVerificationCode,
@@ -20,10 +21,12 @@ import {
 } from "../src/verificationCode.js";
 import { exchange } from "../src/refresh.js";
 import { handleRedirect } from "../src/url.js";
+import * as Pkce from "../src/pkce.js";
 
 jest.mock("../src/refresh.js");
 jest.mock("../src/api.js");
 jest.mock("../src/url.js");
+jest.mock("../src/pkce.js");
 
 const tenantId = "abcd9876";
 
@@ -392,5 +395,90 @@ describe("loginWithVerificationCode()", () => {
         verificationCode: "123467",
       })
     ).rejects.toEqual(new Error(`Email verification code requires "email"`));
+  });
+
+  describe("with PKCE", () => {
+
+    const mockPkceRequiredResponse = {
+      data: {
+        message: "PKCE required",
+        authorizationCode: "auth-code",
+        redirectTo: "my-app:/login"
+      }
+    }
+
+    it("should send a PKCE request if PKCE is required", async () => {
+      Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({ "code_challenge": "code" }));
+      api.put.mockImplementationOnce(() => mockResponse);
+
+      // Update the userId to ensure it is overwritten
+      const userAttrs = {
+        userId: 2091,
+        email: "verified@example.com",
+      };
+      const mockResponseCopy = JSON.parse(JSON.stringify(mockResponse));
+      mockResponseCopy.data.tokens.id.value = createIdToken(userAttrs);
+
+      // Mock the API response
+      api.put.mockImplementationOnce(() => mockResponseCopy);
+
+      // Call loginWithVerificationCode()
+      const payload = {
+        channel: "email",
+        email: userAttrs.email,
+        verificationCode: "123467",
+      };
+      await loginWithVerificationCode(payload);
+
+      // Should have sent the proper API request
+      expect(api.put).toHaveBeenCalledWith(
+        `/auth/code`,
+        {
+          tenantId,
+          ...payload,
+        },
+        pkceParams("code")
+      );
+    })
+
+    it("should handle a PKCE Required response", async () => {
+      Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({ "code_challenge": "code" }));
+      // Mock the API response
+      api.put.mockImplementationOnce(() => mockPkceRequiredResponse);;
+
+      // Update the userId to ensure it is overwritten
+      const userAttrs = {
+        userId: 2091,
+        email: "verified@example.com",
+      };
+      const mockResponseCopy = JSON.parse(JSON.stringify(mockResponse));
+      mockResponseCopy.data.tokens.id.value = createIdToken(userAttrs);
+
+      // Mock the API response
+      api.put.mockImplementationOnce(() => mockResponseCopy);
+
+      // Call loginWithVerificationCode()
+      const payload = {
+        channel: "email",
+        email: userAttrs.email,
+        verificationCode: "123467",
+      };
+      await loginWithVerificationCode(payload);
+
+      // Should have sent the proper API request
+      expect(api.put).toHaveBeenCalledWith(
+        `/auth/code`,
+        {
+          tenantId,
+          ...payload,
+        },
+        pkceParams("code")
+      );
+      
+      // Should have requested redirect with the correct params
+      const params = Pkce.redirectWithPkce.mock.lastCall;
+      expect(params[0]).toEqual("my-app:/login");
+      expect(params[1]).toEqual("auth-code");
+    });
   });
 });

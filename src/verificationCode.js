@@ -60,6 +60,8 @@ export async function sendVerificationCode({
       username,
       data,
       tenantId: store.tenantId,
+    }, {
+      headers: getMfaHeaders()
     });
     return res;
   } catch (error) {

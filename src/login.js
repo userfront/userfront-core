@@ -35,7 +35,6 @@ export async function login({
   phoneNumber,
   // Password
   password,
-  noResetEmail,
   // Link
   token,
   uuid,
@@ -47,6 +46,7 @@ export async function login({
   verificationCode,
   // Other
   redirect,
+  options,
 } = {}) {
   if (!method) {
     throw new Error('Userfront.login called without "method" property.');
@@ -66,7 +66,7 @@ export async function login({
         emailOrUsername,
         password,
         redirect,
-        noResetEmail
+        options,
       });
     case "passwordless":
       return sendPasswordlessLink({ email });

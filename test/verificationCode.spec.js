@@ -65,7 +65,7 @@ describe("sendVerificationCode()", () => {
     expect(api.post).toHaveBeenCalledWith(`/auth/code`, {
       tenantId,
       ...payload,
-    });
+    }, noMfaHeaders);
 
     // Should have returned the proper value
     expect(res).toEqual(mockResponse.data);
@@ -84,7 +84,7 @@ describe("sendVerificationCode()", () => {
     expect(api.post).toHaveBeenCalledWith(`/auth/code`, {
       tenantId,
       ...payload,
-    });
+    }, noMfaHeaders);
 
     // Should have returned the proper value
     expect(data).toEqual(mockResponse.data);
@@ -124,6 +124,35 @@ describe("sendVerificationCode()", () => {
       sendVerificationCode({ channel: "email", phoneNumber: "+15558769098" })
     ).rejects.toEqual(new Error(`Email verification code requires "email"`));
   });
+
+  it("should include the firstFactorToken if this is the second factor", async () => {
+    // Set up the MFA service
+    setMfaRequired();
+
+    // Mock the API response
+    api.post.mockImplementationOnce(() => mockResponse);
+
+    const payload = {
+      channel: "sms",
+      phoneNumber: "+15558769098",
+      email: "user@example.com",
+      username: "new-by-sms",
+      name: "New User",
+      data: { attr: "custom-data" },
+    };
+
+    // Call sendVerificationCode()
+    const res = await sendVerificationCode(payload);
+
+    // Should have sent the proper API request with MFA headers
+    expect(api.post).toHaveBeenCalledWith(`/auth/code`, {
+      tenantId,
+      ...payload,
+    }, mfaHeaders);
+
+    // Should have returned the proper value
+    expect(res).toEqual(mockResponse.data);
+  })
 });
 
 describe("loginWithVerificationCode()", () => {

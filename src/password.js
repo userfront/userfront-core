@@ -59,7 +59,9 @@ export async function signupWithPassword({
       if (url) {
         redirectWithPkce(url, data.authorizationCode);
       } else {
-        // TODO this is neither valid nor invalid
+        // We can't exchange the authorizationCode for tokens, because we don't have the verifier code
+        // that matches our challenge code.
+        throw new Error("Received a PKCE (mobile auth) response from the server, but no redirect was provided. Please set the redirect to the app that initiated the request.")
       }
     } else {
       throw new Error("Please try again.");

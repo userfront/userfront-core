@@ -56,7 +56,9 @@ export async function loginWithLink({ token, uuid, redirect } = {}) {
         redirectWithPkce(url, data.authorizationCode);
         return;
       } else {
-        // TODO this is neither valid nor invalid
+        // We can't exchange the authorizationCode for tokens, because we don't have the verifier code
+        // that matches our challenge code.
+        throw new Error("Received a PKCE (mobile auth) response from the server, but no redirect was provided. Please set the redirect to the app that initiated the request.")
       }
     }
 

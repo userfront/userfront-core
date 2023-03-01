@@ -78,7 +78,7 @@ export function getPkceRequestQueryParams() {
   if (!store.usePkce) {
     return {};
   }
-  return new { "code_challenge": store.codeChallenge };
+  return { "code_challenge": store.codeChallenge };
 }
 
 /**

@@ -1,9 +1,7 @@
 /**
- * @jest-environment ./test/config/cookies-jsdom.js
+ * @jest-environment jsdom
+ * @jest-environment-options { "url": "https://has.some.sub.domains.com/" }
  */
-
-// The line above pulls in a custom JSDOM environment
-// that assigns a random URL instead of example.com
 
 import Cookie from "js-cookie";
 import Userfront from "../src/index.js";

@@ -9,6 +9,7 @@ import {
   handleMfaRequired,
   clearMfa,
 } from "./authentication.js";
+import { getPkceRequestQueryParams, redirectWithPkce } from "./pkce.js";
 
 /**
  * Verify that proper identifier is available for the channel
@@ -100,6 +101,7 @@ export async function loginWithVerificationCode({
       },
       {
         headers: getMfaHeaders(),
+        params: getPkceRequestQueryParams(),
       }
     );
 
@@ -114,6 +116,18 @@ export async function loginWithVerificationCode({
     if (data.hasOwnProperty("firstFactorToken")) {
       handleMfaRequired(data);
       return data;
+    }
+
+    if (data.authorizationCode) {
+      const url = redirect || data.redirectTo;
+      if (url) {
+        redirectWithPkce(url, data.authorizationCode);
+        return;
+      } else {
+        // We can't exchange the authorizationCode for tokens, because we don't have the verifier code
+        // that matches our challenge code.
+        throw new Error("Received a PKCE (mobile auth) response from the server, but no redirect was provided. Please set the redirect to the app that initiated the request.")
+      }
     }
 
     throw new Error("Problem logging in.");

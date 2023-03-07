@@ -14,15 +14,18 @@ import {
   assertNoUser,
   mfaHeaders,
   noMfaHeaders,
+  pkceParams
 } from "./config/assertions.js";
 import { setCookie, removeAllCookies } from "../src/cookies.js";
 import { handleRedirect } from "../src/url.js";
 import { loginWithTotp } from "../src/totp.js";
 import { exchange } from "../src/refresh.js";
+import * as Pkce from "../src/pkce.js";
 
 jest.mock("../src/api.js");
 jest.mock("../src/refresh.js");
 jest.mock("../src/url.js");
+jest.mock("../src/pkce.js");
 
 const tenantId = "abcd9876";
 
@@ -286,6 +289,73 @@ describe("loginWithTotp()", () => {
       },
       mfaHeaders
     );
+  });
+
+  describe("with PKCE", () => {
+
+    const mockPkceRequiredResponse = {
+      data: {
+        message: "PKCE required",
+        authorizationCode: "auth-code",
+        redirectTo: "my-app:/login"
+      }
+    }
+
+    it("should send a PKCE request if PKCE is required", async () => {
+      Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({ "code_challenge": "code" }));
+      api.post.mockImplementationOnce(() => mockResponse);
+
+      // Call loginWithTotp()
+      const payload = {
+        userId: 123,
+        totpCode: "123456",
+      };
+      await loginWithTotp({
+        redirect: false,
+        ...payload,
+      });
+
+      // Should have sent the proper API request
+      expect(api.post).toHaveBeenCalledWith(
+        `/auth/totp`,
+        {
+          tenantId,
+          ...payload,
+        },
+        pkceParams("code")
+      );
+    })
+
+    it("should handle a PKCE Required response", async () => {
+      Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({ "code_challenge": "code" }));
+      // Mock the API response
+      api.post.mockImplementationOnce(() => mockPkceRequiredResponse);;
+
+      // Call loginWithTotp()
+      const payload = {
+        userId: 123,
+        totpCode: "123456",
+      };
+      await loginWithTotp({
+        redirect: false,
+        ...payload,
+      });
+
+      // Should have sent the proper API request
+      expect(api.post).toHaveBeenCalledWith(
+        `/auth/totp`,
+        {
+          tenantId,
+          ...payload,
+        },
+        pkceParams("code")
+      );
+      
+      // Should have requested redirect with the correct params
+      const params = Pkce.redirectWithPkce.mock.lastCall;
+      expect(params[0]).toEqual("my-app:/login");
+      expect(params[1]).toEqual("auth-code");
+    });
   });
 });
 

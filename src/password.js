@@ -9,6 +9,7 @@ import {
   handleMfaRequired,
   clearMfa,
 } from "./authentication.js";
+import { getPkceRequestQueryParams, redirectWithPkce } from "./pkce.js";
 
 /**
  * Register a new user with username, name, email, and password.
@@ -41,6 +42,7 @@ export async function signupWithPassword({
       },
       {
         headers: getMfaHeaders(),
+        params: getPkceRequestQueryParams(),
       }
     );
     if (data.tokens) {
@@ -52,6 +54,15 @@ export async function signupWithPassword({
     } else if (data.firstFactorToken) {
       handleMfaRequired(data);
       return data;
+    } else if (data.authorizationCode) {
+      const url = redirect || data.redirectTo;
+      if (url) {
+        redirectWithPkce(url, data.authorizationCode);
+      } else {
+        // We can't exchange the authorizationCode for tokens, because we don't have the verifier code
+        // that matches our challenge code.
+        throw new Error("Received a PKCE (mobile auth) response from the server, but no redirect was provided. Please set the redirect to the app that initiated the request.")
+      }
     } else {
       throw new Error("Please try again.");
     }
@@ -100,6 +111,7 @@ export async function loginWithPassword({
       body,
       {
         headers: getMfaHeaders(),
+        params: getPkceRequestQueryParams(),
       }
     );
 
@@ -113,6 +125,16 @@ export async function loginWithPassword({
     if (data.hasOwnProperty("firstFactorToken")) {
       handleMfaRequired(data);
       return data;
+    }
+
+    if (data.authorizationCode) {
+      const url = redirect || data.redirectTo;
+      if (url) {
+        redirectWithPkce(url, data.authorizationCode);
+        return;
+      } else {
+        // TODO this is neither valid nor invalid
+      }
     }
 
     throw new Error("Please try again.");

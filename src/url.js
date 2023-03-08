@@ -44,7 +44,7 @@ export async function redirectIfLoggedIn({ redirect } = {}) {
     return removeAllCookies();
   }
 
-  // TODO: can handle this more elegantly once we have an exchange tokens -> authorizationCode
+  // TODO see #130: can handle this more elegantly once we have an exchange tokens -> authorizationCode
   // endpoint on the server.
   // If this is a PKCE auth session, don't redirect with this function ever.
   // The only way to get an authorizationCode currently is to go through an auth flow.

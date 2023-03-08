@@ -195,7 +195,7 @@ describe("redirectIfLoggedIn()", () => {
     api.get.mockReset();
   });
 
-  // TODO change this test when we're able to use tokens to get an authorization code
+  // TODO see #130: change this test when we're able to use tokens to get an authorization code
   it("should not redirect if PKCE is in use", async () => {
     Cookies.set(`access.${tenantId}`, mockAccessToken, {});
     store.tokens.accessToken = mockAccessToken;

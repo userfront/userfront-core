@@ -19,7 +19,7 @@ switch (process.env.COMPAT) {
   // Otherwise:
   // - set preset-env target to modern environments
   default: {
-    config.presets.push(["@babel/preset-env", { targets: { node: "current" } }]);
+    config.presets.push(["@babel/preset-env", { targets: { node: "12" } }]);
     break;
   }
 }

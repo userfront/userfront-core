@@ -2,6 +2,7 @@ import { get } from "./api.js";
 import { store } from "./store.js";
 import { removeAllCookies } from "./cookies.js";
 import { getSession } from "./session.js";
+import { store as pkceStore } from "./pkce.js";
 
 /**
  * Get the value of a query attribute, e.g. ?attr=value
@@ -41,6 +42,15 @@ export async function redirectIfLoggedIn({ redirect } = {}) {
   const { isLoggedIn } = await getSession();
   if (!isLoggedIn) {
     return removeAllCookies();
+  }
+
+  // TODO see #130: can handle this more elegantly once we have an exchange tokens -> authorizationCode
+  // endpoint on the server.
+  // If this is a PKCE auth session, don't redirect with this function ever.
+  // The only way to get an authorizationCode currently is to go through an auth flow.
+  // The PKCE module handles redirect after a PKCE Required response is received.
+  if (pkceStore.usePkce) {
+    return;
   }
 
   // Redirect to a provided path (check options first, then url querystring)

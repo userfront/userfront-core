@@ -6,6 +6,7 @@ import { removeAllCookies } from "../src/cookies.js";
 import { store } from "../src/store.js";
 import { handleRedirect } from "../src/url.js";
 import { createAccessToken, mockWindow } from "./config/utils.js";
+import { store as pkceStore } from "../src/pkce.js";
 
 jest.mock("../src/api.js");
 jest.mock("../src/cookies.js");
@@ -193,6 +194,23 @@ describe("redirectIfLoggedIn()", () => {
     // Clear mock
     api.get.mockReset();
   });
+
+  // TODO see #130: change this test when we're able to use tokens to get an authorization code
+  it("should not redirect if PKCE is in use", async () => {
+    Cookies.set(`access.${tenantId}`, mockAccessToken, {});
+    store.tokens.accessToken = mockAccessToken;
+
+    // Signal that we should use PKCE for this session
+    pkceStore.codeChallenge = "use-pkce";
+
+    await Userfront.redirectIfLoggedIn();
+
+    pkceStore.codeChallenge = "";
+
+    // Should not have made request to Userfront API or redirected the user
+    expect(api.get).not.toHaveBeenCalledWith('/self');
+    expect(window.location.assign).not.toHaveBeenCalled();
+  })
 });
 
 describe("redirectIfLoggedOut()", () => {

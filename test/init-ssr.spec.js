@@ -2,6 +2,15 @@
  * @jest-environment node
  */
 
+/*
+ * Tests for Userfront.init() in a Node environment, simulating server-side rendering with NextJS.
+ * This is *mostly* intended as a smoke test, to make sure changes don't break NextJS compatibility.
+ * New tests should always go in init.spec.js, and may be duplicated here. Some tests don't make
+ * sense for the Node environment, so they're not present here.
+ * 
+ * Reference on Jest environment overrides: https://jestjs.io/docs/configuration#testenvironment-string
+ */
+
 import axios from "axios";
 import {
   createAccessToken,

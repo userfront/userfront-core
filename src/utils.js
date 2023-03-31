@@ -52,3 +52,7 @@ export function throwFormattedError(error) {
   }
   throw error;
 }
+
+export function isBrowser() {
+  return typeof window !== "undefined";
+}

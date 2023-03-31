@@ -2,6 +2,7 @@ import { signupWithPassword } from "./password.js";
 import { signonWithSso } from "./sso.js";
 import { sendPasswordlessLink } from "./link.js";
 import { sendVerificationCode } from "./verificationCode.js";
+import { setupPkce } from "./pkce.js";
 
 /**
  * Register a user via the provided method. This method serves to call other
@@ -27,6 +28,7 @@ export async function signup({
   channel,
   redirect,
 } = {}) {
+  setupPkce();
   if (!method) {
     throw new Error('Userfront.signup called without "method" property.');
   }

@@ -4,6 +4,7 @@ import { signonWithSso } from "./sso.js";
 import { loginWithTotp } from "./totp.js";
 import { loginWithVerificationCode } from "./verificationCode.js";
 import { completeSamlLogin } from "./saml.js";
+import { setupPkce } from "./pkce.js";
 
 /**
  * Log a user in via the provided method. This method serves to call other
@@ -51,6 +52,7 @@ export async function login({
   if (!method) {
     throw new Error('Userfront.login called without "method" property.');
   }
+  setupPkce();
   switch (method) {
     case "apple":
     case "azure":

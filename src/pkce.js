@@ -1,4 +1,5 @@
 import { getQueryAttr } from "./url.js";
+import { isBrowser } from "./utils.js";
 
 export const store = {
   codeChallenge: "",
@@ -12,6 +13,9 @@ export const store = {
  * @returns {string?} the challenge code, if an unexpired one is in local storage
  */
 export function readPkceDataFromLocalStorage() {
+  if (!isBrowser()) {
+    return;
+  }
   const codeChallenge = window.localStorage.getItem("uf_pkce_code_challenge");
   if (codeChallenge) {
     const expiresAt = window.localStorage.getItem("uf_pkce_code_challenge_expiresAt");
@@ -27,6 +31,9 @@ export function readPkceDataFromLocalStorage() {
  * @returns 
  */
 export function writePkceDataToLocalStorage(codeChallenge) {
+  if (!isBrowser()) {
+    return;
+  }
   if (!codeChallenge) {
     return clearPkceDataFromLocalStorage();
   }
@@ -44,6 +51,9 @@ export function writePkceDataToLocalStorage(codeChallenge) {
  * Clear the challenge code and expiration from local storage
  */
 export function clearPkceDataFromLocalStorage() {
+  if (!isBrowser()) {
+    return;
+  }
   window.localStorage.removeItem("uf_pkce_code_challenge");
   window.localStorage.removeItem("uf_pkce_code_challenge_expiresAt");
 }
@@ -55,6 +65,9 @@ export function clearPkceDataFromLocalStorage() {
  * @returns {Boolean} true if we should use PKCE in our auth requests
  */
 export function setupPkce() {
+  if (!isBrowser()) {
+    return;
+  }
   const codeChallengeFromQueryParams = getQueryAttr("code_challenge");
   if (codeChallengeFromQueryParams) {
     store.codeChallenge = codeChallengeFromQueryParams;

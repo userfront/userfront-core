@@ -62,9 +62,11 @@ describe("login()", () => {
     it(`should call loginWithPasswordMigrate()`, () => {
       const email = "user@example.com";
       const password = "some-password123";
+      const handleFn = jest.fn();
       const combos = [
         { email, password },
         { username: "user-name", password },
+        { username: "user-name", password, handleUpstreamResponse: handleFn },
         { emailOrUsername: email, password },
         { email, password, redirect: "/custom" },
         { email, password, redirect: false, options: { noResetEmail: true } },

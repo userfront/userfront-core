@@ -1,4 +1,5 @@
 import { loginWithPassword } from "./password.js";
+import { loginWithPasswordMigrate } from "./password.migrate.js";
 import { loginWithLink, sendPasswordlessLink } from "./link.js";
 import { signonWithSso } from "./sso.js";
 import { loginWithTotp } from "./totp.js";
@@ -23,7 +24,8 @@ import { setupPkce } from "./pkce.js";
  * @param {String} backupCode
  * @param {String} channel "sms" or "email"
  * @param {String} verificationCode
- * @param {String} redirect - do not redirect if false, or redirect to given path
+ * @param {String | Boolean} redirect - do not redirect if false, or redirect to given path
+ * @param {Function} handleUpstreamResponse
  */
 export async function login({
   method,
@@ -47,6 +49,7 @@ export async function login({
   verificationCode,
   // Other
   redirect,
+  handleUpstreamResponse,
   options,
 } = {}) {
   if (!method) {
@@ -68,6 +71,16 @@ export async function login({
         emailOrUsername,
         password,
         redirect,
+        options,
+      });
+    case "password-migrate":
+      return loginWithPasswordMigrate({
+        email,
+        username,
+        emailOrUsername,
+        password,
+        redirect,
+        handleUpstreamResponse,
         options,
       });
     case "passwordless":

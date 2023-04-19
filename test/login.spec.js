@@ -2,6 +2,7 @@ import Userfront from "../src/index.js";
 
 import { login } from "../src/login.js";
 import { loginWithPassword } from "../src/password.js";
+import { loginWithPasswordMigrate } from "../src/password.migrate.js";
 import { sendPasswordlessLink, loginWithLink } from "../src/link.js";
 import { signonWithSso } from "../src/sso.js";
 import { loginWithTotp } from "../src/totp.js";
@@ -11,6 +12,7 @@ import { handleRedirect } from "../src/url.js";
 
 // Mock all methods to be called
 jest.mock("../src/password.js");
+jest.mock("../src/password.migrate.js");
 jest.mock("../src/link.js");
 jest.mock("../src/sso.js");
 jest.mock("../src/totp.js");
@@ -52,6 +54,29 @@ describe("login()", () => {
 
         // Assert that loginWithPassword was called correctly
         expect(loginWithPassword).toHaveBeenCalledWith(combo);
+      });
+    });
+  });
+
+  describe(`{ method: "password-migrate" }`, () => {
+    it(`should call loginWithPasswordMigrate()`, () => {
+      const email = "user@example.com";
+      const password = "some-password123";
+      const combos = [
+        { email, password },
+        { username: "user-name", password },
+        { emailOrUsername: email, password },
+        { email, password, redirect: "/custom" },
+        { email, password, redirect: false, options: { noResetEmail: true } },
+      ];
+
+      // Test login for each combo
+      combos.forEach((combo) => {
+        // Call login for the combo
+        Userfront.login({ method: "password-migrate", ...combo });
+
+        // Assert that loginWithPassword was called correctly
+        expect(loginWithPasswordMigrate).toHaveBeenCalledWith(combo);
       });
     });
   });

@@ -1,8 +1,6 @@
 import { get } from "./api.js";
-import { getIframe, postMessageAsPromise } from "./iframe.js";
 import { store } from "./store.js";
 import { removeAllCookies } from "./cookies.js";
-import { setTokensFromCookies } from "./tokens.js";
 import { handleRedirect } from "./url";
 import { throwFormattedError } from "./utils.js";
 
@@ -49,20 +47,3 @@ async function completeSamlLogout() {
     throwFormattedError(error);
   }
 }
-
-// TODO re-enable exchange method once new endpoints are stable [06/15/21]
-// --------------------------
-// const iframe = getIframe();
-// if (!iframe) return;
-// try {
-//   const { data } = await postMessageAsPromise({
-//     type: "logout",
-//     tenantId: store.tenantId,
-//   });
-//   removeAllCookies();
-//   setTokensFromCookies();
-//   handleRedirect({ redirect, data });
-// } catch (error) {
-//   removeAllCookies();
-//   redirectToPath("/");
-// }

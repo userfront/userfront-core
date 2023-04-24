@@ -4,8 +4,6 @@ import {
   tokens,
   accessToken,
   idToken,
-  setTokensFromCookies,
-  setTokenNames,
 } from "./tokens";
 import { getSession } from "./session";
 import { redirectIfLoggedIn, redirectIfLoggedOut } from "./url.js";
@@ -45,10 +43,6 @@ function init(tenantId, opts = {}) {
     axios.defaults.headers.common["x-application-id"] = url;
     axios.defaults.headers.common["x-origin"] = url;
   }
-
-  setTokenNames();
-  // setIframe(); // TODO re-enable when iframe is needed
-  setTokensFromCookies();
 
   // Estimate the mode synchronously with local data.
   // Clients that require the true mode or the default

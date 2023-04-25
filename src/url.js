@@ -30,6 +30,12 @@ export function getQueryAttr(attrName) {
  */
 export const handleRedirect = ({ redirect, data }) => {
   if (redirect === false) return;
+  // If redirect is the boolean true, redirect to the default redirect path, not to "/true"
+  if (redirect === true) {
+    const path = getQueryAttr("redirect") || data.redirectTo || "/";
+    redirectToPath(path);
+    return;
+  }
   const path = redirect || getQueryAttr("redirect") || data.redirectTo || "/";
   redirectToPath(path);
 };

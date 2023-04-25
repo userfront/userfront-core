@@ -58,6 +58,29 @@ describe("handleRedirect()", () => {
     handleRedirect({ redirect: false, data });
     expect(window.location.assign).not.toHaveBeenCalled();
   });
+
+  describe("with redirect=true", () => {
+    it("should redirect based on URL querystring ?redirect", () => {
+      // Add data.redirectTo to ensure it is not used
+      const data = { redirectTo: "/api-response" };
+      // Call handleRedirect()
+      window.location.href = "https://example.com/login?redirect=/url-redirect";
+      handleRedirect({ redirect: true, data });
+      expect(window.location.assign).toHaveBeenCalledWith("/url-redirect");
+    });
+
+    it("should redirect based on data.redirectTo", () => {
+      const data = { redirectTo: "/api-redirect" };
+      handleRedirect({ redirect: true, data });
+      expect(window.location.assign).toHaveBeenCalledWith(data.redirectTo);
+    });
+
+    it("should redirect to / if no other redirect is given", () => {
+      const data = { };
+      handleRedirect({ redirect: true, data });
+      expect(window.location.assign).toHaveBeenCalledWith("/");
+    });
+  });
 });
 
 describe("redirectIfLoggedIn()", () => {

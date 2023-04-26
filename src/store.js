@@ -126,6 +126,7 @@ export function setCookieOptionsByTokenType(tokenType, options = {}) {
 }
 
 /* NOTES ON STORE STRUCTURE AND GET/SET VALUE CLASSES
+ *
  * Values in the store that are derived or computed, or where
  * additional work is needed to get/set/delete the value, are
  * tracked with "get/set value classes" below.
@@ -293,6 +294,7 @@ const tokenStore = {
 
 /**
  * Create store.tokens and add methods to it
+ * 
  * makeFriendlyStore() proxies operators to methods:
  *   const x = store.tokens.accessToken -> tokenStore.accessToken.get()
  *   store.tokens.accessToken = x -> tokenStore.accessToken.set(x)
@@ -370,6 +372,7 @@ for (const prop of userProps) {
 
 /**
  * Create store.user and add methods to it
+ * 
  * makeFriendlyStore() proxies operators to methods:
  *   const x = store.user.email -> userStore.email.get()
  *   store.user.email = x -> userStore.email.set(x)

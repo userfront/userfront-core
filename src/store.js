@@ -5,33 +5,19 @@ import { update, hasRole } from "./user.js";
 import { updatePassword } from "./password.js";
 import { getTotp } from "./totp.js";
 import { refresh } from "./refresh.js";
+import { makeFriendlyStore } from "./store.utils.js";
 
+// The store object that will eventually be exported
 const store = {
   mode: "live",
   tenantId: ""
 };
 
-/*
- * TOKEN STORE
- * Interact with tokens, backed by cookies
- */
 
 /*
- * Track cookie options (secure, sameSite, expiry) by type and name
+ * TOKEN COOKIE HELPERS
+ * Helpers for cookie names and options
  */
-const cookieOptions = {}
-const defaultCookieOptions = Object.freeze({
-  secure: store.mode === "live",
-  sameSite: "Lax"
-});
-const defaultRefreshTokenCookieOptions = Object.freeze({
-  sameSite: "Strict"
-});
-const defaultCookieOptionsByTokenType = {
-  access: defaultCookieOptions,
-  id: defaultCookieOptions,
-  refresh: defaultRefreshTokenCookieOptions
-}
 
 /**
  * Create a function that returns the name for a JWT cookie by type for the current tenant
@@ -45,6 +31,39 @@ const getTokenCookieName = type => () => {
   }
   return `${type}.${store.tenantId}`;
 }
+
+/*
+ * Default cookie options (secure, sameSite, expiry) by type and name
+ */
+const defaultCookieOptions = Object.freeze({
+  secure: store.mode === "live",
+  sameSite: "Lax"
+});
+const defaultRefreshTokenCookieOptions = Object.freeze({
+  sameSite: "Strict"
+});
+const defaultCookieOptionsByTokenType = {
+  access: defaultCookieOptions,
+  id: defaultCookieOptions,
+  refresh: defaultRefreshTokenCookieOptions
+}
+
+/* Currently defined cookie options by cookie name
+ * example:
+ *   cookieOptions = {
+ *     "access.abcd1234": {
+ *       secure: "true",
+ *       sameSite: "Lax",
+ *       expiry: 14
+ *     }
+ *   }
+ * 
+ * Usually we're only dealing with one set of tokens, so there
+ * will only be entries for "access.tenantId", "id.tenantId", and "refresh.tenantId",
+ * and it's more convenient to read/write with getCookieOptionsByTokenType()
+ * and setCookieOptionsByTokenType().
+ */ 
+const cookieOptions = {}
 
 /**
  * Get cookie options for a particular cookie
@@ -106,17 +125,57 @@ export function setCookieOptionsByTokenType(tokenType, options = {}) {
   return setCookieOptionsByName(getTokenCookieName(tokenType), options);
 }
 
+/* NOTES ON STORE STRUCTURE AND GET/SET VALUE CLASSES
+ * Values in the store that are derived or computed, or where
+ * additional work is needed to get/set/delete the value, are
+ * tracked with "get/set value classes" below.
+ * 
+ * These classes all implement the same interface:
+ */
+
+/**
+ * Interface for get/set value classes
+ * @interface GetSetValue
+ * 
+ * Get the current value
+ * @function
+ * @name GetSetValue#get
+ * @returns {any} The current value, or undefined if it's not set
+ * 
+ * Set the value.
+ * For a read-only value, this is a no-op that will return undefined and log a warning.
+ * @function
+ * @name GetSetValue#set
+ * @param {any} value Value to set
+ * @returns {any} The value that was set
+ * 
+ * Delete the value.
+ * For a read-only value, this is a no-op.
+ * Intended to be proxied to the delete operator, but does not necessarily implement
+ * the delete operator's contract:
+ *   delete store.someValue; // proxied to underlying.someValue.delete()
+ *   console.log("someValue" in store); // may still be true
+ * This interface not designed for use cases where there's a distinction between
+ * store.someValue === undefined and !("someValue" in store)
+ * @function
+ * @name GetSetValue#delete
+ */
+
+
+/*
+ * TOKEN STORE IMPLEMENTATION
+ * Interact with tokens, backed by cookies
+ */
+
 /**
  * An interface for a value stored in cookies, with fallback to memory outside the browser
+ * @implements {GetSetValue}
  */
-class TokenCookieStoredValue {
+export class TokenCookieStoredValue {
   /**
-   * 
-   * @param {string | function} cookieName name of the cookie backing this store, or function that returns the name
+   * Define an interface for a JWT token, backed by cookies (or in-memory outside a browser context).
+   * Always refers to the current tenant's tokens (via store.tenantId).
    * @param {string?} tokenType if a JWT token, its type: access, id, refresh
-   * @param {object?} observers callbacks to call on certain events
-   * @property {function} observers.set
-   * @property {function} observers.delete
    * @returns 
    */
   constructor(tokenType) {
@@ -200,8 +259,9 @@ class TokenCookieStoredValue {
 
 /**
  * A simple interface for a computed value (matching the TokenCookieStoredValue interface)
+ * @implements {GetSetValue}
  */
-class ComputedValue {
+export class ComputedValue {
   constructor(compute) {
     this.compute = compute;
   }
@@ -217,90 +277,9 @@ class ComputedValue {
   delete() { }
 }
 
-// Usage note: it's ok to add additional properties to the returned "friendly store" after creating it,
-// but not to add additional properties to the underlying store.
-// Good:
-//   const tokenStore = { accessToken: new TokenCookieStoredValue("access") }
-//   const store = makeFriendlyStore(tokenStore)
-//   store.sayHi = () => console.log("hi")
-//   store.sayHi() // console: hi
-//
-// Not good:
-//   const tokenStore = {
-//     accessToken: new TokenCookieStoredValue("access"),
-//     sayHi: () => console.log("hi")
-//   }
-//   const store = makeFriendlyStore(tokenStore)
-//   store.sayHi() // error: could not read property "get" of ...
-
-/**
- * Given a store where every value is an object with get(), set() and delete() methods,
- * create a "friendly" store where `x = store.key`, `store.key = x`, and `delete store.key`
- * are proxied through to those methods, respectively. Allows defining how to get/set/delete
- * a value without exposing that to store consumers.
- * 
- * @param {object} store an object whose values are objects with get(), set() and delete() methods
- * @returns {object} an object where ordinary get, set and delete are proxied through to those methods
+/*
+ * TOKEN STORE DEFINITION
  */
-export function makeFriendlyStore(store) {
-  // The store.tokens object is a Proxy over the underlying store,
-  // so it can overload the get, set etc. operations
-  const proxyConfig = {
-    // proxy.accessToken ->
-    // store.accessToken.get()
-    get(target, key) {
-      if (key in store) {
-        return store[key].get();
-      }
-      return Reflect.get(...arguments);
-    },
-
-    // proxy.accessToken = "foo" ->
-    // store.accessToken.set("foo")
-    set(target, key, value) {
-      if (key in store) {
-        store[key].set(value);
-        return true;
-      }
-      return Reflect.set(...arguments);
-    },
-
-    // delete proxy.accessToken ->
-    // store.tokens.accessToken.delete()
-    deleteProperty(target, key) {
-      if (key in store) {
-        store[key].delete();
-        return true;
-      }
-      return Reflect.deleteProperty(...arguments);
-    },
-
-    // The last two proxy traps are to ensure the proxy has the expected
-    // behavior when a client examines or manipulates the object
-
-    // Object.getOwnPropertyDescriptor(store.tokens, "accessToken") ->
-    //   { configurable: true, enumerable: true, value: store.accessTokens.get() }
-    getOwnPropertyDescriptor(target, key) {
-      if (key in store) {
-        return {
-          configurable: true,
-          enumerable: true,
-          value: store[key].get()
-        };
-      }
-      return Reflect.getOwnPropertyDescriptor(...arguments);
-    },
-
-    // Include store fields in Object.keys(proxy.tokens) and methods that rely on it
-    ownKeys(target) {
-      return [
-        ...Reflect.ownKeys(target),
-        ...Object.keys(store)
-      ];
-    }
-  }
-  return new Proxy({}, proxyConfig);
-}
 
 // The underlying token store, with tokens stored in cookies and the token names as computed values
 const tokenStore = {
@@ -312,59 +291,25 @@ const tokenStore = {
   refreshTokenName: new ComputedValue(getTokenCookieName("refresh"))
 }
 
+/**
+ * Create store.tokens and add methods to it
+ * makeFriendlyStore() proxies operators to methods:
+ *   const x = store.tokens.accessToken -> tokenStore.accessToken.get()
+ *   store.tokens.accessToken = x -> tokenStore.accessToken.set(x)
+ *   delete store.tokens.accessToken -> tokenStore.accessToken.delete()
+ */
 store.tokens = makeFriendlyStore(tokenStore);
 store.tokens.refresh = refresh;
 
-/**
- * Define the store.user object based on the ID token
- */
-// export function setUser() {
-//   if (!store.tokens.idToken) {
-//     return console.warn("Cannot define user: missing ID token");
-//   }
-
-//   store.user = store.user || {};
-//   const idTokenPayload = getJwtPayload(store.tokens.idToken);
-
-//   // Set basic user information properties from ID token
-//   const propsToDefine = [
-//     "email",
-//     "phoneNumber",
-//     "username",
-//     "name",
-//     "image",
-//     "data",
-//     "confirmedAt",
-//     "createdAt",
-//     "updatedAt",
-//     "mode",
-//     "userId",
-//     "userUuid",
-//     "tenantId",
-//     "isConfirmed",
-//   ];
-//   for (const prop of propsToDefine) {
-//     if (prop === "update") return;
-//     store.user[prop] = idTokenPayload[prop];
-//   }
-// }
-
-// /**
-//  * Remove all user information
-//  */
-// export function unsetUser() {
-//   for (const attr in store.user) {
-//     if (typeof store.user[attr] !== "function") {
-//       delete store.user[attr];
-//     }
-//   }
-// }
-
 /*
- * USER STORE
+ * USER STORE IMPLEMENTATION
  * Interact with user data, backed by token store (which is backed by cookies)
  */
 
+/**
+ * Interface for a read-only value derived from a token's TokenCookieStoredValue
+ * @implements {GetSetValue}
+ */
 class ReadonlyTokenDerivedValue {
   constructor(tokenValue, valueKey) {
     this.tokenValue = tokenValue;
@@ -397,6 +342,11 @@ class ReadonlyTokenDerivedValue {
   }
 }
 
+/*
+ * USER STORE DEFINITION
+ */
+
+// The underlying user store, with fields computed from the id token at time of access
 const userStore = {}
 const userProps = [
   "email",
@@ -418,11 +368,14 @@ for (const prop of userProps) {
   userStore[prop] = new ReadonlyTokenDerivedValue(tokenStore.idToken, prop)
 }
 
-store.user = makeFriendlyStore(userStore);
-
 /**
- * Add methods to the store.user object
+ * Create store.user and add methods to it
+ * makeFriendlyStore() proxies operators to methods:
+ *   const x = store.user.email -> userStore.email.get()
+ *   store.user.email = x -> userStore.email.set(x)
+ *   delete store.user.email -> userStore.email.delete()
  */
+store.user = makeFriendlyStore(userStore);
 store.user.update = update;
 store.user.hasRole = hasRole;
 store.user.updatePassword = updatePassword;

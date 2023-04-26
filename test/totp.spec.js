@@ -1,6 +1,5 @@
 import Userfront from "../src/index.js";
 import api from "../src/api.js";
-import { unsetUser } from "../src/user.js";
 import {
   createAccessToken,
   createIdToken,
@@ -8,6 +7,8 @@ import {
   idTokenUserDefaults,
   createMfaRequiredResponse,
   setMfaRequired,
+  setCookie,
+  removeTokenCookies
 } from "./config/utils.js";
 import {
   assertAuthenticationDataMatches,
@@ -16,7 +17,7 @@ import {
   noMfaHeaders,
   pkceParams
 } from "./config/assertions.js";
-import { setCookie, removeAllCookies } from "../src/cookies.js";
+import { removeAllCookies } from "../src/cookies.js";
 import { handleRedirect } from "../src/url.js";
 import { loginWithTotp } from "../src/totp.js";
 import { exchange } from "../src/refresh.js";
@@ -54,7 +55,7 @@ describe("loginWithTotp()", () => {
   beforeEach(() => {
     Userfront.init(tenantId);
     jest.resetAllMocks();
-    unsetUser();
+    removeTokenCookies(tenantId);
   });
 
   it("should login with totpCode", async () => {
@@ -374,7 +375,7 @@ describe("user.getTotp()", () => {
   beforeEach(() => {
     Userfront.init(tenantId);
     // Log the user in
-    setCookie(accessToken, { secure: "true", sameSite: "Lax" }, "access");
+    setCookie(`access.${tenantId}`, accessToken, { secure: "true", sameSite: "Lax" });
     jest.resetAllMocks();
   });
 

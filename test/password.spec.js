@@ -1,6 +1,5 @@
 import Userfront from "../src/index.js";
 import api from "../src/api.js";
-import { unsetUser } from "../src/user.js";
 import {
   createAccessToken,
   createIdToken,
@@ -8,6 +7,7 @@ import {
   idTokenUserDefaults,
   createMfaRequiredResponse,
   setMfaRequired,
+  removeTokenCookies
 } from "./config/utils.js";
 import {
   assertAuthenticationDataMatches,
@@ -61,7 +61,7 @@ describe("signupWithPassword()", () => {
   beforeEach(() => {
     Userfront.init(tenantId);
     jest.resetAllMocks();
-    unsetUser();
+    removeTokenCookies(tenantId);
   });
 
   it("should send a request, set access and ID cookies, and initiate nonce exchange", async () => {
@@ -272,7 +272,7 @@ describe("loginWithPassword()", () => {
   beforeEach(() => {
     Userfront.init(tenantId);
     jest.resetAllMocks();
-    unsetUser();
+    removeTokenCookies(tenantId);
   });
 
   describe("with username & password", () => {

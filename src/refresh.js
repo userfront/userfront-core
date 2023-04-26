@@ -1,4 +1,3 @@
-import Cookies from "js-cookie";
 import { get } from "./api.js";
 import { setCookiesAndTokens } from "./cookies.js";
 import { store } from "./store.js";
@@ -27,7 +26,7 @@ export async function refresh() {
  * mode whenever an SSL certificate has not been set up.
  */
 async function basicRefresh() {
-  const refreshToken = Cookies.get(store.tokens.refreshTokenName);
+  const refreshToken = store.tokens.refreshToken;
   try {
     const { data, status } = await get(`/auth/refresh`, {
       headers: {

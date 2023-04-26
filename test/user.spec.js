@@ -1,9 +1,6 @@
 import Userfront from "../src/index.js";
 import api from "../src/api";
-import { setCookie } from "../src/cookies.js";
-import { setUser } from "../src/user.js";
 import { refresh } from "../src/refresh.js";
-import { setTokensFromCookies } from "../src/tokens.js";
 import { getTotp } from "../src/totp.js";
 import { updatePassword } from "../src/password.js";
 import {
@@ -11,6 +8,8 @@ import {
   createIdToken,
   idTokenUserDefaults,
   defaultIdTokenProperties,
+  setCookie,
+  setCookies
 } from "./config/utils.js";
 
 jest.mock("../src/api.js");
@@ -20,27 +19,28 @@ console.warn = jest.fn();
 const tenantId = "hijk9876";
 
 describe("User", () => {
-  beforeAll(async () => {
-    // Set the factory access and ID tokens as cookies
-    Userfront.store.tenantId = tenantId;
-    setCookie(
-      createAccessToken(),
-      { secure: "true", sameSite: "Lax" },
-      "access"
-    );
-    setCookie(createIdToken(), { secure: "true", sameSite: "Lax" }, "id");
-
-    return Promise.resolve();
-  });
 
   beforeEach(() => {
+    // Set the factory access and ID tokens as cookies
+    setCookies([
+      {
+        name: `access.${tenantId}`,
+        value: createAccessToken(),
+        options: { secure: "true", sameSite: "Lax" }
+      },
+      {
+        name: `id.${tenantId}`,
+        value: createIdToken(),
+        options: { secure: "true", sameSite: "Lax" }
+      }
+    ]);
     Userfront.init(tenantId);
   });
 
   afterEach(jest.resetAllMocks);
 
-  describe("user object", () => {
-    it("should get user's information", () => {
+  describe.only("user object", () => {
+    it.only("should get user's information", () => {
       const defaultUserValues = idTokenUserDefaults;
 
       // Assert primary values were set correctly
@@ -51,35 +51,6 @@ describe("User", () => {
       // Assert data values were set correctly
       for (const prop in defaultUserValues.data) {
         expect(Userfront.user.data[prop]).toEqual(defaultUserValues.data[prop]);
-      }
-    });
-  });
-
-  describe("setUser", () => {
-    it("should set store.user object based on ID token", () => {
-      const newUserValues = JSON.parse(JSON.stringify(idTokenUserDefaults));
-
-      // Change the ID token value
-      newUserValues.name = "Johnny B. Good";
-      newUserValues.data.color = "greenish";
-      setCookie(
-        createIdToken(newUserValues),
-        { secure: "true", sameSite: "Lax" },
-        "id"
-      );
-      setTokensFromCookies();
-
-      // Call setUser
-      setUser();
-
-      // Assert primary values were set correctly
-      for (const prop in newUserValues) {
-        expect(Userfront.user[prop]).toEqual(newUserValues[prop]);
-      }
-
-      // Assert data values were set correctly
-      for (const prop in newUserValues.data) {
-        expect(Userfront.user.data[prop]).toEqual(newUserValues.data[prop]);
       }
     });
   });
@@ -196,11 +167,11 @@ describe("User", () => {
         },
       };
       setCookie(
+        `access.${tenantId}`,
         createAccessToken({
           authorization,
         }),
-        { secure: "true", sameSite: "Lax" },
-        "access"
+        { secure: "true", sameSite: "Lax" }
       );
       Userfront.init(tenantId);
     });

@@ -7,13 +7,13 @@ import {
   createRefreshToken,
   idTokenUserDefaults,
   mockWindow,
+  removeTokenCookies
 } from "./config/utils.js";
 import {
   noMfaHeaders
 } from "./config/assertions.js";
 import { login } from "../src/login.js";
 import { logout } from "../src/logout.js";
-import { unsetTokens } from "../src/tokens.js";
 
 jest.mock("../src/api.js");
 
@@ -56,7 +56,7 @@ describe("completeSamlLogin()", () => {
   });
 
   it(`should return warning if store.tokens.accessToken isn't defined`, async () => {
-    unsetTokens();
+    removeTokenCookies(tenantId);
     console.warn = jest.fn();
 
     expect(console.warn).not.toHaveBeenCalled();

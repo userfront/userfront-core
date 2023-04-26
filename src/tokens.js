@@ -1,8 +1,5 @@
 import { store } from "./store.js";
-import { refresh } from "./refresh.js";
 import { isJwtLocallyValid } from "./utils.js";
-
-store.tokens.refresh = refresh;
 
 /**
  * Get the access token's value
@@ -35,8 +32,3 @@ export function isAccessTokenLocallyValid() {
 export function isRefreshTokenLocallyValid() {
   return isJwtLocallyValid(store.tokens.refreshToken);
 }
-
-/**
- * Export the store.tokens object
- */
-export const tokens = store.tokens;

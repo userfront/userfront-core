@@ -1,6 +1,7 @@
 import { isTestHostname } from "../../src/mode.js";
 import { authenticationData } from "../../src/authentication.js";
 import jwt from "jsonwebtoken";
+import Cookies from "js-cookie";
 
 export function resetStore(Userfront) {
   Userfront.store = {
@@ -190,6 +191,28 @@ export function mockWindow({ origin, href }) {
     origin,
     href,
   };
+}
+
+export function setCookie(name, value, options) {
+  if (typeof window === "undefined") {
+    console.warn("test/config/utils.js setCookie(): tried to set a cookie in a non-browser test environment.")
+    return;
+  }
+  Cookies.set(name, value, options);
+}
+
+export function setCookies(cookies = []) {
+  if (!Array.isArray(cookies)) {
+    console.error("test/config/utils.js setCookies(): requires an array of cookies, received a non-array value.")
+    return;
+  }
+  cookies.forEach(({ name, value, options }) => setCookie(name, value, options))
+}
+
+export function removeTokenCookies(tenantId) {
+  Cookies.remove(`access.${tenantId}`);
+  Cookies.remove(`id.${tenantId}`);
+  Cookies.remove(`refresh.${tenantId}`);
 }
 
 export default {

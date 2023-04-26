@@ -1,7 +1,6 @@
 import axios from "axios";
 import { store } from "./store.js";
 import {
-  tokens,
   accessToken,
   idToken,
 } from "./tokens";
@@ -15,8 +14,6 @@ import { sendVerificationCode } from "./verificationCode";
 import { logout } from "./logout.js";
 import { mode, setMode, setModeSync } from "./mode.js";
 // import { setIframe } from "./iframe.js";
-import { user } from "./user.js";
-import "./user.methods.js";
 import { refresh } from "./refresh.js";
 import { apiUrl } from "./constants.js";
 import { resetMfa } from "./authentication.js";
@@ -143,7 +140,7 @@ export default {
   store,
 
   // tokens
-  tokens,
+  tokens: store.tokens,
   accessToken,
   idToken,
 
@@ -155,7 +152,7 @@ export default {
   redirectIfLoggedOut,
 
   // user
-  user,
+  user: store.user,
 
   // utils
 };

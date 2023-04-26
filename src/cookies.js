@@ -41,9 +41,9 @@ export function removeCookie(name) {
  * Remove all auth cookies (access, id, refresh).
  */
 export function removeAllCookies() {
-  delete store.tokens.accessToken;
-  delete store.tokens.idToken;
-  delete store.tokens.refreshToken;
+  removeCookie(store.tokens.accessTokenName);
+  removeCookie(store.tokens.idTokenName);
+  removeCookie(store.tokens.refreshTokenName);
 }
 
 /**

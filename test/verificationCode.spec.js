@@ -1,12 +1,12 @@
 import Userfront from "../src/index.js";
 import api from "../src/api.js";
-import { unsetUser } from "../src/user.js";
 import {
   createAccessToken,
   createIdToken,
   createRefreshToken,
   createMfaRequiredResponse,
   setMfaRequired,
+  removeTokenCookies
 } from "./config/utils.js";
 import {
   assertAuthenticationDataMatches,
@@ -179,7 +179,7 @@ describe("loginWithVerificationCode()", () => {
 
   beforeEach(() => {
     Userfront.init(tenantId);
-    unsetUser();
+    removeTokenCookies(tenantId);
   });
 
   afterEach(() => {

@@ -1,25 +1,18 @@
 import Userfront from "../src/index.js";
 import api from "../src/api.js";
-import { unsetUser } from "../src/user.js";
 import {
   createAccessToken,
   createIdToken,
   createRefreshToken,
   idTokenUserDefaults,
-  createMfaRequiredResponse,
-  setMfaRequired,
+  removeTokenCookies
 } from "./config/utils.js";
 import {
-  assertAuthenticationDataMatches,
-  assertNoUser,
-  mfaHeaders,
   noMfaHeaders,
-  pkceParams,
 } from "./config/assertions.js";
 import { exchange } from "../src/refresh.js";
 import { loginWithPasswordMigrate } from "../src/password.migrate.js";
 import { handleRedirect } from "../src/url.js";
-import * as Pkce from "../src/pkce.js";
 
 jest.mock("../src/api.js");
 jest.mock("../src/refresh.js");
@@ -48,7 +41,7 @@ describe("loginWithPasswordMigrate()", () => {
   beforeEach(() => {
     Userfront.init(tenantId);
     jest.resetAllMocks();
-    unsetUser();
+    removeTokenCookies(tenantId);
   });
 
   describe("with username & password", () => {

@@ -21,7 +21,6 @@ xdescribe("verifyToken", () => {
   Userfront.setCookiesAndTokens = Userfront.__get__("setCookiesAndTokens");
 
   beforeEach(() => {
-    Userfront.__set__("setUser", jest.fn());
     Userfront.init(tenantId);
 
     // Create and set access & ID tokens

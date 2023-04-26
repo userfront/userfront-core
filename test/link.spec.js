@@ -1,6 +1,5 @@
 import Userfront from "../src/index.js";
 import api from "../src/api.js";
-import { unsetUser } from "../src/user.js";
 import {
   createAccessToken,
   createIdToken,
@@ -9,6 +8,7 @@ import {
   setMfaRequired,
   idTokenUserDefaults,
   mockWindow,
+  removeTokenCookies
 } from "./config/utils.js";
 import {
   assertAuthenticationDataMatches,
@@ -170,9 +170,9 @@ describe("sendPasswordlessLink", () => {
 
 describe("loginWithLink", () => {
   beforeEach(() => {
+    removeTokenCookies(tenantId);
     Userfront.init(tenantId);
     window.location.assign.mockClear();
-    unsetUser();
   });
 
   it("should login and redirect", async () => {

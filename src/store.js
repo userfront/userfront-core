@@ -63,7 +63,16 @@ const defaultCookieOptionsByTokenType = {
  * and it's more convenient to read/write with getCookieOptionsByTokenType()
  * and setCookieOptionsByTokenType().
  */ 
-const cookieOptions = {}
+let cookieOptions;
+
+/**
+ * Clear all previously set cookie options. Primarily for testing.
+ */
+export function clearAllCookieOptions() {
+  cookieOptions = {};
+}
+
+clearAllCookieOptions();
 
 /**
  * Get cookie options for a particular cookie
@@ -72,14 +81,13 @@ const cookieOptions = {}
  * @returns 
  */
 export function getCookieOptionsByName(cookieName, tokenType = "") {
-  const storedOptions = cookieOptions[cookieName];
-  if (storedOptions && type && defaultCookieOptionsByTokenType[tokenType]) {
-    return Object.assign({}, defaultCookieOptionsByTokenType[tokenType], storedOptions);
-  }
-  if (storedOptions) {
-    return Object.assign({}, defaultCookieOptions, storedOptions);
-  }
-  return Object.assign({}, defaultCookieOptions);
+  const storedOptions = cookieOptions[cookieName] || {};
+  const defaultOptions = Object.assign(
+    {},
+    defaultCookieOptions,
+    defaultCookieOptionsByTokenType[tokenType] || {}
+  );
+  return Object.assign({}, defaultOptions, storedOptions);
 }
 
 /**
@@ -112,7 +120,7 @@ export function setCookieOptionsByName(cookieName, options = {}) {
 
 /**
  * Set cookie options for a JWT cookie by type, for the current tenant
- * @param {string} cookieName 
+ * @param {string} tokenType
  * @param {object} options 
  * @property {string} options.secure
  * @property {string} options.sameSite
@@ -124,6 +132,8 @@ export function setCookieOptionsByName(cookieName, options = {}) {
 export function setCookieOptionsByTokenType(tokenType, options = {}) {
   return setCookieOptionsByName(getTokenCookieName(tokenType), options);
 }
+
+
 
 /* NOTES ON STORE STRUCTURE AND GET/SET VALUE CLASSES
  *
@@ -282,26 +292,32 @@ export class ComputedValue {
  * TOKEN STORE DEFINITION
  */
 
-// The underlying token store, with tokens stored in cookies and the token names as computed values
-const tokenStore = {
-  accessToken: new TokenCookieStoredValue("access"),
-  idToken: new TokenCookieStoredValue("id"),
-  refreshToken: new TokenCookieStoredValue("refresh"),
-  accessTokenName: new ComputedValue(getTokenCookieName("access")),
-  idTokenName: new ComputedValue(getTokenCookieName("id")),
-  refreshTokenName: new ComputedValue(getTokenCookieName("refresh"))
+let tokenStore = {}
+
+const createTokenStore = () => {
+  // The underlying token store, with tokens stored in cookies and the token names as computed values
+  tokenStore = {
+    accessToken: new TokenCookieStoredValue("access"),
+    idToken: new TokenCookieStoredValue("id"),
+    refreshToken: new TokenCookieStoredValue("refresh"),
+    accessTokenName: new ComputedValue(getTokenCookieName("access")),
+    idTokenName: new ComputedValue(getTokenCookieName("id")),
+    refreshTokenName: new ComputedValue(getTokenCookieName("refresh"))
+  }
+
+  /**
+   * Create store.tokens and add methods to it
+   * 
+   * makeFriendlyStore() proxies operators to methods:
+   *   const x = store.tokens.accessToken -> tokenStore.accessToken.get()
+   *   store.tokens.accessToken = x -> tokenStore.accessToken.set(x)
+   *   delete store.tokens.accessToken -> tokenStore.accessToken.delete()
+   */
+  store.tokens = makeFriendlyStore(tokenStore);
+  store.tokens.refresh = refresh;
 }
 
-/**
- * Create store.tokens and add methods to it
- * 
- * makeFriendlyStore() proxies operators to methods:
- *   const x = store.tokens.accessToken -> tokenStore.accessToken.get()
- *   store.tokens.accessToken = x -> tokenStore.accessToken.set(x)
- *   delete store.tokens.accessToken -> tokenStore.accessToken.delete()
- */
-store.tokens = makeFriendlyStore(tokenStore);
-store.tokens.refresh = refresh;
+createTokenStore();
 
 /*
  * USER STORE IMPLEMENTATION
@@ -312,7 +328,7 @@ store.tokens.refresh = refresh;
  * Interface for a read-only value derived from a token's TokenCookieStoredValue
  * @implements {GetSetValue}
  */
-class ReadonlyTokenDerivedValue {
+export class ReadonlyTokenDerivedValue {
   constructor(tokenValue, valueKey) {
     this.tokenValue = tokenValue;
     this.valueKey = valueKey;
@@ -348,40 +364,55 @@ class ReadonlyTokenDerivedValue {
  * USER STORE DEFINITION
  */
 
-// The underlying user store, with fields computed from the id token at time of access
-const userStore = {}
-const userProps = [
-  "email",
-  "phoneNumber",
-  "username",
-  "name",
-  "image",
-  "data",
-  "confirmedAt",
-  "createdAt",
-  "updatedAt",
-  "mode",
-  "userId",
-  "userUuid",
-  "tenantId",
-  "isConfirmed",
-];
-for (const prop of userProps) {
-  userStore[prop] = new ReadonlyTokenDerivedValue(tokenStore.idToken, prop)
+const createUserStore = () => {
+  // The underlying user store, with fields computed from the id token at time of access
+  const userStore = {}
+  const userProps = [
+    "email",
+    "phoneNumber",
+    "username",
+    "name",
+    "image",
+    "data",
+    "confirmedAt",
+    "createdAt",
+    "updatedAt",
+    "mode",
+    "userId",
+    "userUuid",
+    "tenantId",
+    "isConfirmed",
+  ];
+  for (const prop of userProps) {
+    userStore[prop] = new ReadonlyTokenDerivedValue(tokenStore.idToken, prop)
+  }
+
+  /**
+   * Create store.user and add methods to it
+   * 
+   * makeFriendlyStore() proxies operators to methods:
+   *   const x = store.user.email -> userStore.email.get()
+   *   store.user.email = x -> userStore.email.set(x)
+   *   delete store.user.email -> userStore.email.delete()
+   */
+  store.user = makeFriendlyStore(userStore);
+  store.user.update = update;
+  store.user.hasRole = hasRole;
+  store.user.updatePassword = updatePassword;
+  store.user.getTotp = getTotp;
 }
 
+createUserStore();
+
 /**
- * Create store.user and add methods to it
+ * Reset the token and user stores by creating new store objects for them
+ * and assigning them to store.tokens and store.user.
  * 
- * makeFriendlyStore() proxies operators to methods:
- *   const x = store.user.email -> userStore.email.get()
- *   store.user.email = x -> userStore.email.set(x)
- *   delete store.user.email -> userStore.email.delete()
+ * Intended for testing use only.
  */
-store.user = makeFriendlyStore(userStore);
-store.user.update = update;
-store.user.hasRole = hasRole;
-store.user.updatePassword = updatePassword;
-store.user.getTotp = getTotp;
+export const _resetStore = () => {
+  createTokenStore();
+  createUserStore();
+}
 
 export { store };

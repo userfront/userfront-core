@@ -4,7 +4,7 @@ import Userfront from "../src/index.js";
 import api from "../src/api.js";
 import { removeAllCookies } from "../src/cookies.js";
 import { store } from "../src/store.js";
-import { handleRedirect } from "../src/url.js";
+import { defaultHandleRedirect } from "../src/url.js";
 import { createAccessToken, mockWindow } from "./config/utils.js";
 import { store as pkceStore } from "../src/pkce.js";
 
@@ -19,7 +19,7 @@ mockWindow({
   href: "https://example.com/login",
 });
 
-describe("handleRedirect()", () => {
+describe("defaultHandleRedirect()", () => {
   beforeEach(() => {
     window.location.href = "https://example.com/login";
     jest.resetAllMocks();
@@ -29,24 +29,24 @@ describe("handleRedirect()", () => {
     // Add querystring and data.redirectTo to ensure they are not used
     window.location.href = "https://example.com/login?redirect=/manual";
     const data = { redirectTo: "/api-response" };
-    // Call handleRedirect() with manual path
+    // Call defaultHandleRedirect() with manual path
     const path = "/manual-redirect";
-    handleRedirect({ redirect: path, data });
+    defaultHandleRedirect(path, data);
     expect(window.location.assign).toHaveBeenCalledWith(path);
   });
 
   it("should redirect based on URL querystring ?redirect", () => {
     // Add data.redirectTo to ensure it is not used
     const data = { redirectTo: "/api-response" };
-    // Call handleRedirect()
+    // Call defaultHandleRedirect()
     window.location.href = "https://example.com/login?redirect=/url-redirect";
-    handleRedirect({ data });
+    defaultHandleRedirect(undefined, data);
     expect(window.location.assign).toHaveBeenCalledWith("/url-redirect");
   });
 
   it("should redirect based on data.redirectTo", () => {
     const data = { redirectTo: "/api-redirect" };
-    handleRedirect({ redirect: undefined, data });
+    defaultHandleRedirect(undefined, data);
     expect(window.location.assign).toHaveBeenCalledWith(data.redirectTo);
   });
 
@@ -54,8 +54,8 @@ describe("handleRedirect()", () => {
     // Add querystring and data.redirectTo to ensure they are not used
     window.location.href = "https://example.com/login?redirect=/url-redirect";
     const data = { redirectTo: "/api-redirect" };
-    // Call handleRedirect() with redirect=false
-    handleRedirect({ redirect: false, data });
+    // Call defaultHandleRedirect() with redirect=false
+    defaultHandleRedirect(false, data);
     expect(window.location.assign).not.toHaveBeenCalled();
   });
 
@@ -63,21 +63,21 @@ describe("handleRedirect()", () => {
     it("should redirect based on URL querystring ?redirect", () => {
       // Add data.redirectTo to ensure it is not used
       const data = { redirectTo: "/api-response" };
-      // Call handleRedirect()
+      // Call defaultHandleRedirect()
       window.location.href = "https://example.com/login?redirect=/url-redirect";
-      handleRedirect({ redirect: true, data });
+      defaultHandleRedirect(true, data);
       expect(window.location.assign).toHaveBeenCalledWith("/url-redirect");
     });
 
     it("should redirect based on data.redirectTo", () => {
       const data = { redirectTo: "/api-redirect" };
-      handleRedirect({ redirect: true, data });
+      defaultHandleRedirect(true, data);
       expect(window.location.assign).toHaveBeenCalledWith(data.redirectTo);
     });
 
     it("should redirect to / if no other redirect is given", () => {
-      const data = { };
-      handleRedirect({ redirect: true, data });
+      const data = {};
+      defaultHandleRedirect(true, data);
       expect(window.location.assign).toHaveBeenCalledWith("/");
     });
   });
@@ -105,7 +105,7 @@ describe("redirectIfLoggedIn()", () => {
     expect(removeAllCookies).toHaveBeenCalledTimes(1);
 
     // Should not have made request to Userfront API or redirected the user
-    expect(api.get).not.toHaveBeenCalledWith('/self');
+    expect(api.get).not.toHaveBeenCalledWith("/self");
     expect(window.location.assign).not.toHaveBeenCalled();
   });
 
@@ -147,7 +147,7 @@ describe("redirectIfLoggedIn()", () => {
 
     // Should redirected immediately without calling Userfront API
     expect(removeAllCookies).not.toHaveBeenCalled();
-    expect(api.get).not.toHaveBeenCalledWith('/self');
+    expect(api.get).not.toHaveBeenCalledWith("/self");
     expect(window.location.assign).toHaveBeenCalledTimes(1);
     expect(window.location.assign).toHaveBeenCalledWith(targetPath);
 
@@ -168,7 +168,7 @@ describe("redirectIfLoggedIn()", () => {
 
     // Should redirected immediately without calling Userfront API
     expect(removeAllCookies).not.toHaveBeenCalled();
-    expect(api.get).not.toHaveBeenCalledWith('/self');
+    expect(api.get).not.toHaveBeenCalledWith("/self");
     expect(window.location.assign).toHaveBeenCalledTimes(1);
     expect(window.location.assign).toHaveBeenCalledWith(targetPath);
 
@@ -231,9 +231,9 @@ describe("redirectIfLoggedIn()", () => {
     pkceStore.codeChallenge = "";
 
     // Should not have made request to Userfront API or redirected the user
-    expect(api.get).not.toHaveBeenCalledWith('/self');
+    expect(api.get).not.toHaveBeenCalledWith("/self");
     expect(window.location.assign).not.toHaveBeenCalled();
-  })
+  });
 });
 
 describe("redirectIfLoggedOut()", () => {
@@ -257,7 +257,7 @@ describe("redirectIfLoggedOut()", () => {
     expect(removeAllCookies).toHaveBeenCalledTimes(1);
 
     // Should not have made request to Userfront API or redirected the user
-    expect(api.get).not.toHaveBeenCalledWith('/self');
+    expect(api.get).not.toHaveBeenCalledWith("/self");
     expect(window.location.assign).not.toHaveBeenCalled();
   });
 
@@ -272,7 +272,7 @@ describe("redirectIfLoggedOut()", () => {
 
     // Should redirected immediately without calling Userfront API
     expect(removeAllCookies).toHaveBeenCalled();
-    expect(api.get).not.toHaveBeenCalledWith('/self');
+    expect(api.get).not.toHaveBeenCalledWith("/self");
     expect(window.location.assign).toHaveBeenCalledTimes(1);
     expect(window.location.assign).toHaveBeenCalledWith(targetPath);
 
@@ -291,7 +291,7 @@ describe("redirectIfLoggedOut()", () => {
 
     // Should redirected immediately without calling Userfront API
     expect(removeAllCookies).toHaveBeenCalled();
-    expect(api.get).not.toHaveBeenCalledWith('/self');
+    expect(api.get).not.toHaveBeenCalledWith("/self");
     expect(window.location.assign).toHaveBeenCalledTimes(1);
     expect(window.location.assign).toHaveBeenCalledWith(targetPath);
 

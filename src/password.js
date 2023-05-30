@@ -1,7 +1,7 @@
 import { post, put } from "./api.js";
 import { setCookiesAndTokens } from "./cookies.js";
 import { store } from "./store.js";
-import { getQueryAttr, handleRedirect } from "./url.js";
+import { getQueryAttr, defaultHandleRedirect } from "./url.js";
 import { throwFormattedError } from "./utils.js";
 import { exchange } from "./refresh.js";
 import {
@@ -49,7 +49,7 @@ export async function signupWithPassword({
       clearMfa();
       setCookiesAndTokens(data.tokens);
       await exchange(data);
-      handleRedirect({ redirect, data });
+      defaultHandleRedirect(redirect, data);
       return data;
     } else if (data.firstFactorToken) {
       handleMfaRequired(data);
@@ -61,7 +61,9 @@ export async function signupWithPassword({
       } else {
         // We can't exchange the authorizationCode for tokens, because we don't have the verifier code
         // that matches our challenge code.
-        throw new Error("Received a PKCE (mobile auth) response from the server, but no redirect was provided. Please set the redirect to the app that initiated the request.")
+        throw new Error(
+          "Received a PKCE (mobile auth) response from the server, but no redirect was provided. Please set the redirect to the app that initiated the request."
+        );
       }
     } else {
       throw new Error("Please try again.");
@@ -79,13 +81,13 @@ export async function signupWithPassword({
  * @param {string} params.username The user's username. One of email/username/emailOrUsername should be present.
  * @param {string} params.emailOrUsername Either the user's email or username. One of email/username/emailOrUsername should be present.
  * @param {string} params.password
- * @param {string | boolean} params.redirect 
+ * @param {string | boolean} params.redirect
  *  URL to redirect to after login, or false to suppress redirect. Otherwise, redirects to the after-login path set on the server.
  * @param {object} params.options
  * @param {boolean} params.options.noResetEmail
  *  By default, Userfront sends a password reset email if a user without a password tries to log in with a password.
  *  Set options.noResetEmail = true to override this behavior and return an error instead.
- * 
+ *
  */
 export async function loginWithPassword({
   email,
@@ -93,7 +95,7 @@ export async function loginWithPassword({
   emailOrUsername,
   password,
   redirect,
-  options
+  options,
 }) {
   try {
     const body = {
@@ -103,22 +105,18 @@ export async function loginWithPassword({
     };
     if (options && options.noResetEmail) {
       body.options = {
-        noResetEmail: true
-      }
+        noResetEmail: true,
+      };
     }
-    const { data } = await post(
-      `/auth/basic`,
-      body,
-      {
-        headers: getMfaHeaders(),
-        params: getPkceRequestQueryParams(),
-      }
-    );
+    const { data } = await post(`/auth/basic`, body, {
+      headers: getMfaHeaders(),
+      params: getPkceRequestQueryParams(),
+    });
 
     if (data.hasOwnProperty("tokens")) {
       setCookiesAndTokens(data.tokens);
       await exchange(data);
-      handleRedirect({ redirect, data });
+      defaultHandleRedirect(redirect, data);
       return data;
     }
 
@@ -224,7 +222,7 @@ export async function updatePasswordWithLink({
     });
     if (data.tokens) {
       setCookiesAndTokens(data.tokens);
-      handleRedirect({ redirect, data });
+      defaultHandleRedirect(redirect, data);
       return data;
     } else {
       throw new Error(

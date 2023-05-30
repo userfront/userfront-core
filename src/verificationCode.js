@@ -1,7 +1,7 @@
 import { post, put } from "./api.js";
 import { setCookiesAndTokens } from "./cookies.js";
 import { store } from "./store.js";
-import { handleRedirect } from "./url.js";
+import { defaultHandleRedirect } from "./url.js";
 import { exchange } from "./refresh.js";
 import { throwFormattedError } from "./utils.js";
 import {
@@ -52,17 +52,21 @@ export async function sendVerificationCode({
       email,
     });
 
-    const { data: res } = await post(`/auth/code`, {
-      channel,
-      email,
-      phoneNumber,
-      name,
-      username,
-      data,
-      tenantId: store.tenantId,
-    }, {
-      headers: getMfaHeaders()
-    });
+    const { data: res } = await post(
+      `/auth/code`,
+      {
+        channel,
+        email,
+        phoneNumber,
+        name,
+        username,
+        data,
+        tenantId: store.tenantId,
+      },
+      {
+        headers: getMfaHeaders(),
+      }
+    );
     return res;
   } catch (error) {
     throwFormattedError(error);
@@ -109,7 +113,7 @@ export async function loginWithVerificationCode({
       clearMfa();
       setCookiesAndTokens(data.tokens);
       await exchange(data);
-      handleRedirect({ redirect, data });
+      defaultHandleRedirect(redirect, data);
       return data;
     }
 
@@ -126,7 +130,9 @@ export async function loginWithVerificationCode({
       } else {
         // We can't exchange the authorizationCode for tokens, because we don't have the verifier code
         // that matches our challenge code.
-        throw new Error("Received a PKCE (mobile auth) response from the server, but no redirect was provided. Please set the redirect to the app that initiated the request.")
+        throw new Error(
+          "Received a PKCE (mobile auth) response from the server, but no redirect was provided. Please set the redirect to the app that initiated the request."
+        );
       }
     }
 

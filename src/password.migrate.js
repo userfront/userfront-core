@@ -1,7 +1,7 @@
 import { post } from "./api.js";
 import { setCookiesAndTokens } from "./cookies.js";
 import { store } from "./store.js";
-import { handleRedirect } from "./url.js";
+import { defaultHandleRedirect } from "./url.js";
 import { throwFormattedError } from "./utils.js";
 import { exchange } from "./refresh.js";
 import { getMfaHeaders, handleMfaRequired } from "./authentication.js";
@@ -17,7 +17,9 @@ import { getPkceRequestQueryParams, redirectWithPkce } from "./pkce.js";
  * @param {string} params.password
  * @param {string | boolean} params.redirect
  *  URL to redirect to after login, or false to suppress redirect. Otherwise, redirects to the after-login path set on the server.
- * @param {function} params.handleUpstreamResponse Function to run after receiving response, but before redirection
+ * @param {function} params.handleUpstreamResponse Function to run after receiving response, but before handling tokens
+ * @param {function} params.handleTokens Function to run after handling upstream response, but before redirection
+ * @param {function} params.handleRedirect Function to run after handling tokens
  * @param {object} params.options
  * @param {boolean} params.options.noResetEmail
  *  By default, Userfront sends a password reset email if a user without a password tries to log in with a password.
@@ -31,6 +33,8 @@ export async function loginWithPasswordMigrate({
   password,
   redirect,
   handleUpstreamResponse,
+  handleTokens,
+  handleRedirect,
   options,
 }) {
   try {
@@ -51,28 +55,40 @@ export async function loginWithPasswordMigrate({
       params: getPkceRequestQueryParams(),
     });
 
+    // Handle upstreamResponse
     if (typeof handleUpstreamResponse === "function") {
-      await handleUpstreamResponse(data.upstreamResponse);
+      await handleUpstreamResponse(data.upstreamResponse, data);
     }
 
+    // Handle tokens
     if (data.hasOwnProperty("tokens")) {
-      setCookiesAndTokens(data.tokens);
-      await exchange(data);
-      handleRedirect({ redirect, data });
-      return data;
+      if (typeof handleTokens === "function") {
+        await handleTokens(data.tokens, data);
+      } else {
+        setCookiesAndTokens(data.tokens);
+        await exchange(data);
+      }
     }
 
-    if (data.authorizationCode) {
+    // Handle redirectTo
+    if (typeof handleRedirect === "function") {
+      await handleRedirect(data.redirectTo, data);
+    } else {
+      defaultHandleRedirect(redirect, data);
+    }
+
+    // Handle authorizationCode for PKCE
+    if (data.hasOwnProperty("authorizationCode")) {
       const url = redirect || data.redirectTo;
       if (url) {
         redirectWithPkce(url, data.authorizationCode);
         return;
       } else {
-        // TODO this is neither valid nor invalid
+        throw new Error("Missing PKCE redirect url");
       }
     }
 
-    throw new Error("Please try again.");
+    return data;
   } catch (error) {
     throwFormattedError(error);
   }

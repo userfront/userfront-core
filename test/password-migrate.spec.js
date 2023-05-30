@@ -18,7 +18,7 @@ import {
 } from "./config/assertions.js";
 import { exchange } from "../src/refresh.js";
 import { loginWithPasswordMigrate } from "../src/password.migrate.js";
-import { handleRedirect } from "../src/url.js";
+import { defaultHandleRedirect } from "../src/url.js";
 import * as Pkce from "../src/pkce.js";
 
 jest.mock("../src/api.js");
@@ -83,25 +83,29 @@ describe("loginWithPasswordMigrate()", () => {
       expect(Userfront.user.email).toEqual(payload.emailOrUsername);
       expect(Userfront.user.userId).toEqual(idTokenUserDefaults.userId);
 
-      // Should call handleRedirect correctly
-      expect(handleRedirect).toHaveBeenCalledWith({
-        redirect: payload.redirect,
-        data: mockResponse.data,
-      });
+      // Should call defaultHandleRedirect correctly
+      expect(defaultHandleRedirect).toHaveBeenCalledWith(
+        payload.redirect,
+        mockResponse.data
+      );
     });
 
-    it("should call handleUpstreamResponse before redirecting", async () => {
+    it("should call hooks when present", async () => {
       // Mock the API response
       api.post.mockImplementationOnce(() => mockResponse);
 
-      // Add a handleUpstreamResponse method
-      const handleFn = jest.fn();
+      // Add hooks
+      const handleUpstreamResponse = jest.fn();
+      const handleTokens = jest.fn();
+      const handleRedirect = jest.fn();
 
       // Call loginWithPasswordMigrate()
       const payload = {
         emailOrUsername: idTokenUserDefaults.email,
         password: "something",
-        handleUpstreamResponse: handleFn,
+        handleUpstreamResponse,
+        handleTokens,
+        handleRedirect,
       };
       const data = await loginWithPasswordMigrate(payload);
 
@@ -119,21 +123,36 @@ describe("loginWithPasswordMigrate()", () => {
       // Should have returned the proper value
       expect(data).toEqual(mockResponse.data);
 
-      // Should have called exchange() with the API's response
-      expect(exchange).toHaveBeenCalledWith(mockResponse.data);
+      // Should have called handleUpstreamResponse
+      expect(handleUpstreamResponse).toHaveBeenCalledWith(
+        mockResponse.data.upstreamResponse,
+        mockResponse.data
+      );
 
-      // Should have called handleFn with the upstreamResponse
-      expect(handleFn).toHaveBeenCalledWith(mockResponse.data.upstreamResponse);
+      // Should have called handleTokens instead of exchange()
+      expect(handleTokens).toHaveBeenCalledWith(
+        mockResponse.data.tokens,
+        mockResponse.data
+      );
+      expect(exchange).not.toHaveBeenCalled();
+
+      // Should have called handleRedirect
+      expect(handleRedirect).toHaveBeenCalledWith(
+        mockResponse.data.redirectTo,
+        mockResponse.data
+      );
 
       // Should have set the user object
+      // TODO need to set the user object separately from setCookiesAndTokens, so that
+      // it is available when handleTokens is used.
       expect(Userfront.user.email).toEqual(payload.emailOrUsername);
       expect(Userfront.user.userId).toEqual(idTokenUserDefaults.userId);
 
       // Should call handleRedirect correctly
-      expect(handleRedirect).toHaveBeenCalledWith({
-        redirect: payload.redirect,
-        data: mockResponse.data,
-      });
+      expect(defaultHandleRedirect).toHaveBeenCalledWith(
+        payload.redirect,
+        mockResponse.data
+      );
     });
 
     it("should login and not redirect if redirect = false", async () => {
@@ -179,11 +198,11 @@ describe("loginWithPasswordMigrate()", () => {
       expect(Userfront.user.email).toEqual(payload.email);
       expect(Userfront.user.userId).toEqual(newAttrs.userId);
 
-      // Should call handleRedirect correctly
-      expect(handleRedirect).toHaveBeenCalledWith({
-        redirect: false,
-        data: mockResponseCopy.data,
-      });
+      // Should call defaultHandleRedirect correctly
+      expect(defaultHandleRedirect).toHaveBeenCalledWith(
+        false,
+        mockResponseCopy.data
+      );
     });
 
     it("should login and redirect to a provided path", async () => {
@@ -216,11 +235,11 @@ describe("loginWithPasswordMigrate()", () => {
       expect(Userfront.user.email).toEqual(payload.emailOrUsername);
       expect(Userfront.user.userId).toEqual(idTokenUserDefaults.userId);
 
-      // Should call handleRedirect correctly
-      expect(handleRedirect).toHaveBeenCalledWith({
-        redirect: false,
-        data: mockResponse.data,
-      });
+      // Should call defaultHandleRedirect correctly
+      expect(defaultHandleRedirect).toHaveBeenCalledWith(
+        false,
+        mockResponse.data
+      );
     });
 
     it("should set the noResetEmail option if provided", async () => {

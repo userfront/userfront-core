@@ -26,6 +26,8 @@ import { setupPkce } from "./pkce.js";
  * @param {String} verificationCode
  * @param {String | Boolean} redirect - do not redirect if false, or redirect to given path
  * @param {Function} handleUpstreamResponse
+ * @param {Function} handleTokens
+ * @param {Function} handleRedirect
  */
 export async function login({
   method,
@@ -50,6 +52,8 @@ export async function login({
   // Other
   redirect,
   handleUpstreamResponse,
+  handleTokens,
+  handleRedirect,
   options,
 } = {}) {
   if (!method) {
@@ -71,6 +75,9 @@ export async function login({
         emailOrUsername,
         password,
         redirect,
+        handleUpstreamResponse,
+        handleTokens,
+        handleRedirect,
         options,
       });
     case "password-migrate":
@@ -81,12 +88,21 @@ export async function login({
         password,
         redirect,
         handleUpstreamResponse,
+        handleTokens,
+        handleRedirect,
         options,
       });
     case "passwordless":
       return sendPasswordlessLink({ email });
     case "link":
-      return loginWithLink({ token, uuid, redirect });
+      return loginWithLink({
+        token,
+        uuid,
+        redirect,
+        handleUpstreamResponse,
+        handleTokens,
+        handleRedirect,
+      });
     case "totp":
       return loginWithTotp({
         totpCode,
@@ -98,6 +114,9 @@ export async function login({
         username,
         phoneNumber,
         redirect,
+        handleUpstreamResponse,
+        handleTokens,
+        handleRedirect,
       });
     case "verificationCode":
       return loginWithVerificationCode({
@@ -106,6 +125,9 @@ export async function login({
         phoneNumber,
         verificationCode,
         redirect,
+        handleUpstreamResponse,
+        handleTokens,
+        handleRedirect,
       });
     case "saml":
       return completeSamlLogin();

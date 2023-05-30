@@ -14,10 +14,10 @@ import {
   assertNoUser,
   mfaHeaders,
   noMfaHeaders,
-  pkceParams
+  pkceParams,
 } from "./config/assertions.js";
 import { setCookie, removeAllCookies } from "../src/cookies.js";
-import { handleRedirect } from "../src/url.js";
+import { defaultHandleRedirect } from "../src/url.js";
 import { loginWithTotp } from "../src/totp.js";
 import { exchange } from "../src/refresh.js";
 import * as Pkce from "../src/pkce.js";
@@ -97,10 +97,10 @@ describe("loginWithTotp()", () => {
     expect(Userfront.user.username).toEqual(newAttrs.username);
 
     // Should redirect correctly
-    expect(handleRedirect).toHaveBeenCalledWith({
-      redirect: undefined,
-      data: mockResponseCopy.data,
-    });
+    expect(defaultHandleRedirect).toHaveBeenCalledWith(
+      undefined,
+      mockResponseCopy.data
+    );
   });
 
   it("should login with backupCode", async () => {
@@ -143,10 +143,10 @@ describe("loginWithTotp()", () => {
     expect(Userfront.user.username).toEqual(newAttrs.username);
 
     // Should redirect correctly
-    expect(handleRedirect).toHaveBeenCalledWith({
-      redirect: undefined,
-      data: mockResponseCopy.data,
-    });
+    expect(defaultHandleRedirect).toHaveBeenCalledWith(
+      undefined,
+      mockResponseCopy.data
+    );
   });
 
   it("should login with explicit redirect", async () => {
@@ -185,10 +185,10 @@ describe("loginWithTotp()", () => {
     expect(Userfront.user.userId).toEqual(idTokenUserDefaults.userId);
 
     // Should redirect correctly
-    expect(handleRedirect).toHaveBeenCalledWith({
+    expect(defaultHandleRedirect).toHaveBeenCalledWith(
       redirect,
-      data: mockResponse.data,
-    });
+      mockResponse.data
+    );
   });
 
   it("should login with redirect = false", async () => {
@@ -225,10 +225,10 @@ describe("loginWithTotp()", () => {
     expect(Userfront.user.userId).toEqual(idTokenUserDefaults.userId);
 
     // Should redirect correctly
-    expect(handleRedirect).toHaveBeenCalledWith({
-      redirect: false,
-      data: mockResponse.data,
-    });
+    expect(defaultHandleRedirect).toHaveBeenCalledWith(
+      false,
+      mockResponse.data
+    );
   });
 
   it("should handle an MFA Required response", async () => {
@@ -259,7 +259,7 @@ describe("loginWithTotp()", () => {
 
     // Should not have set the user object or redirected
     assertNoUser(Userfront.user);
-    expect(handleRedirect).not.toHaveBeenCalled();
+    expect(defaultHandleRedirect).not.toHaveBeenCalled();
 
     // Should have returned MFA options & firstFactorToken
     expect(data).toEqual(mockMfaRequiredResponse.data);
@@ -292,17 +292,18 @@ describe("loginWithTotp()", () => {
   });
 
   describe("with PKCE", () => {
-
     const mockPkceRequiredResponse = {
       data: {
         message: "PKCE required",
         authorizationCode: "auth-code",
-        redirectTo: "my-app:/login"
-      }
-    }
+        redirectTo: "my-app:/login",
+      },
+    };
 
     it("should send a PKCE request if PKCE is required", async () => {
-      Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({ "code_challenge": "code" }));
+      Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({
+        code_challenge: "code",
+      }));
       api.post.mockImplementationOnce(() => mockResponse);
 
       // Call loginWithTotp()
@@ -324,12 +325,14 @@ describe("loginWithTotp()", () => {
         },
         pkceParams("code")
       );
-    })
+    });
 
     it("should handle a PKCE Required response", async () => {
-      Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({ "code_challenge": "code" }));
+      Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({
+        code_challenge: "code",
+      }));
       // Mock the API response
-      api.post.mockImplementationOnce(() => mockPkceRequiredResponse);;
+      api.post.mockImplementationOnce(() => mockPkceRequiredResponse);
 
       // Call loginWithTotp()
       const payload = {
@@ -350,7 +353,7 @@ describe("loginWithTotp()", () => {
         },
         pkceParams("code")
       );
-      
+
       // Should have requested redirect with the correct params
       const params = Pkce.redirectWithPkce.mock.lastCall;
       expect(params[0]).toEqual("my-app:/login");

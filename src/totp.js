@@ -1,7 +1,7 @@
 import { get, post } from "./api.js";
 import { setCookiesAndTokens } from "./cookies.js";
 import { store } from "./store.js";
-import { handleRedirect } from "./url.js";
+import { defaultHandleRedirect } from "./url.js";
 import { exchange } from "./refresh.js";
 import { throwFormattedError } from "./utils.js";
 import {
@@ -38,7 +38,6 @@ export async function loginWithTotp({
   redirect,
 } = {}) {
   try {
-
     const { data } = await post(
       `/auth/totp`,
       {
@@ -62,7 +61,7 @@ export async function loginWithTotp({
       clearMfa();
       setCookiesAndTokens(data.tokens);
       await exchange(data);
-      handleRedirect({ redirect, data });
+      defaultHandleRedirect(redirect, data);
       return data;
     }
 
@@ -79,7 +78,9 @@ export async function loginWithTotp({
       } else {
         // We can't exchange the authorizationCode for tokens, because we don't have the verifier code
         // that matches our challenge code.
-        throw new Error("Received a PKCE (mobile auth) response from the server, but no redirect was provided. Please set the redirect to the app that initiated the request.")
+        throw new Error(
+          "Received a PKCE (mobile auth) response from the server, but no redirect was provided. Please set the redirect to the app that initiated the request."
+        );
       }
     }
 

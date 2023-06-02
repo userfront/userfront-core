@@ -10,6 +10,7 @@ const providers = [
   "github",
   "google",
   "linkedin",
+  "okta",
 ];
 
 mockWindow({

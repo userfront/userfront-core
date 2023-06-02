@@ -39,6 +39,7 @@ export async function signup({
     case "github":
     case "google":
     case "linkedin":
+    case "okta":
       return signonWithSso({ provider: method, redirect });
     case "password":
       return signupWithPassword({

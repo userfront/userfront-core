@@ -69,6 +69,7 @@ describe("signup()", () => {
         { method: "github" },
         { method: "google", redirect: "/after-google" },
         { method: "linkedin", redirect: false },
+        { method: "okta" },
       ];
 
       // Test login for each provider

@@ -117,7 +117,7 @@ export async function handleLoginResponse({
   handleRedirect,
 }) {
   const redirectValueIfNotFalse =
-    redirect || getQueryAttr("redirect") || data.redirectTo;
+    redirect || getQueryAttr("redirect") || data.redirectTo || "/";
 
   const redirectValue = redirect === false ? false : redirectValueIfNotFalse;
 

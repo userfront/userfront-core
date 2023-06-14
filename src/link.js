@@ -1,15 +1,9 @@
 import { post, put } from "./api.js";
-import { setCookiesAndTokens } from "./cookies.js";
 import { store } from "./store.js";
-import { getQueryAttr, defaultHandleRedirect } from "./url.js";
-import { exchange } from "./refresh.js";
+import { getQueryAttr } from "./url.js";
 import { throwFormattedError } from "./utils.js";
-import {
-  getMfaHeaders,
-  handleMfaRequired,
-  clearMfa,
-} from "./authentication.js";
-import { getPkceRequestQueryParams, redirectWithPkce } from "./pkce.js";
+import { getMfaHeaders, handleLoginResponse } from "./authentication.js";
+import { getPkceRequestQueryParams } from "./pkce.js";
 
 /**
  * Log a user in with a token/uuid combo passed into the function or
@@ -18,7 +12,14 @@ import { getPkceRequestQueryParams, redirectWithPkce } from "./pkce.js";
  * @param {UUID} uuid
  * @param {String} redirect - do not redirect if false, or redirect to given path
  */
-export async function loginWithLink({ token, uuid, redirect } = {}) {
+export async function loginWithLink({
+  token,
+  uuid,
+  redirect,
+  handleUpstreamResponse,
+  handleTokens,
+  handleRedirect,
+} = {}) {
   try {
     token = token || getQueryAttr("token");
     uuid = uuid || getQueryAttr("uuid");
@@ -37,34 +38,14 @@ export async function loginWithLink({ token, uuid, redirect } = {}) {
       }
     );
 
-    if (data.hasOwnProperty("tokens")) {
-      clearMfa();
-      setCookiesAndTokens(data.tokens);
-      await exchange(data);
-      defaultHandleRedirect(redirect, data);
-      return data;
-    }
-
-    if (data.hasOwnProperty("firstFactorToken")) {
-      handleMfaRequired(data);
-      return data;
-    }
-
-    if (data.authorizationCode) {
-      const url = redirect || data.redirectTo;
-      if (url) {
-        redirectWithPkce(url, data.authorizationCode);
-        return;
-      } else {
-        // We can't exchange the authorizationCode for tokens, because we don't have the verifier code
-        // that matches our challenge code.
-        throw new Error(
-          "Received a PKCE (mobile auth) response from the server, but no redirect was provided. Please set the redirect to the app that initiated the request."
-        );
-      }
-    }
-
-    throw new Error("Problem logging in.");
+    // Handle the API response to the login request
+    return handleLoginResponse({
+      data,
+      redirect,
+      handleUpstreamResponse,
+      handleTokens,
+      handleRedirect,
+    });
   } catch (error) {
     throwFormattedError(error);
   }

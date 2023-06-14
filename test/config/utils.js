@@ -142,10 +142,12 @@ export function createMfaRequiredResponse({
     {
       strategy: "totp",
       channel: "authenticator",
+      isConfiguredByUser: false,
     },
     {
       strategy: "verificationCode",
       channel: "sms",
+      isConfiguredByUser: false,
     },
   ];
   const response = {
@@ -166,10 +168,12 @@ export function setMfaRequired() {
     {
       strategy: "totp",
       channel: "authenticator",
+      isConfiguredByUser: false,
     },
     {
       strategy: "verificationCode",
       channel: "sms",
+      isConfiguredByUser: false,
     },
   ];
   authenticationData.firstFactorToken = createFirstFactorToken();

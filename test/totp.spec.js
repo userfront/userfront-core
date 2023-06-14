@@ -98,7 +98,7 @@ describe("loginWithTotp()", () => {
 
     // Should redirect correctly
     expect(defaultHandleRedirect).toHaveBeenCalledWith(
-      undefined,
+      mockResponseCopy.data.redirectTo,
       mockResponseCopy.data
     );
   });
@@ -144,7 +144,7 @@ describe("loginWithTotp()", () => {
 
     // Should redirect correctly
     expect(defaultHandleRedirect).toHaveBeenCalledWith(
-      undefined,
+      mockResponseCopy.data.redirectTo,
       mockResponseCopy.data
     );
   });

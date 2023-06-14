@@ -363,17 +363,18 @@ describe("loginWithLink", () => {
   });
 
   describe("with PKCE", () => {
-
     const mockPkceRequiredResponse = {
       data: {
         message: "PKCE required",
         authorizationCode: "auth-code",
-        redirectTo: "my-app:/login"
-      }
-    }
+        redirectTo: "my-app:/login",
+      },
+    };
 
     it("should send a PKCE request if PKCE is required", async () => {
-      Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({ "code_challenge": "code" }));
+      Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({
+        code_challenge: "code",
+      }));
       // Mock the API response
       api.put.mockImplementationOnce(() => mockResponse);
 
@@ -392,12 +393,14 @@ describe("loginWithLink", () => {
         },
         pkceParams("code")
       );
-    })
+    });
 
     it("should handle a PKCE Required response", async () => {
-      Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({ "code_challenge": "code" }));
+      Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({
+        code_challenge: "code",
+      }));
       // Mock the API response
-      api.put.mockImplementationOnce(() => mockPkceRequiredResponse);;
+      api.put.mockImplementationOnce(() => mockPkceRequiredResponse);
 
       const payload = {
         token: "some-token",
@@ -414,7 +417,7 @@ describe("loginWithLink", () => {
         },
         pkceParams("code")
       );
-        
+
       // Should have requested redirect with the correct params
       const params = Pkce.redirectWithPkce.mock.lastCall;
       expect(params[0]).toEqual("my-app:/login");

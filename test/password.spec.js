@@ -309,7 +309,7 @@ describe("loginWithPassword()", () => {
 
       // Should call defaultHandleRedirect correctly
       expect(defaultHandleRedirect).toHaveBeenCalledWith(
-        payload.redirect,
+        mockResponse.data.redirectTo,
         mockResponse.data
       );
     });

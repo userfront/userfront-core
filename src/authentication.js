@@ -1,4 +1,8 @@
 import { store } from "./store.js";
+import { setCookiesAndTokens } from "./cookies.js";
+import { defaultHandleRedirect, getQueryAttr } from "./url.js";
+import { exchange } from "./refresh.js";
+import { redirectWithPkce } from "./pkce.js";
 
 // Data specific to the MFA service
 export const authenticationData = {
@@ -94,4 +98,66 @@ export function clearMfa() {
 export function resetMfa() {
   clearMfa();
   authenticationData.firstFactors = [];
+}
+
+/**
+ * Handle the API response for an authentication request
+ * @property {Object} data
+ * @property {String|Boolean} redirect
+ * @property {Function} handleUpstreamResponse
+ * @property {Function} handleTokens
+ * @property {Function} handleRedirect
+ * @returns {Object} data (or redirection)
+ */
+export async function handleLoginResponse({
+  data,
+  redirect,
+  handleUpstreamResponse,
+  handleTokens,
+  handleRedirect,
+}) {
+  const redirectValueIfNotFalse =
+    redirect || getQueryAttr("redirect") || data.redirectTo;
+
+  const redirectValue = redirect === false ? false : redirectValueIfNotFalse;
+
+  // Handle upstreamResponse
+  if (typeof handleUpstreamResponse === "function") {
+    await handleUpstreamResponse(data.upstreamResponse, data);
+  }
+
+  // Handle "MFA required" response
+  if (data.hasOwnProperty("firstFactorToken")) {
+    handleMfaRequired(data);
+    return data;
+  }
+
+  // Handle tokens
+  if (data.hasOwnProperty("tokens")) {
+    if (typeof handleTokens === "function") {
+      await handleTokens(data.tokens, data);
+    } else {
+      setCookiesAndTokens(data.tokens);
+      await exchange(data);
+    }
+  }
+
+  // Handle authorizationCode for PKCE
+  if (data.hasOwnProperty("authorizationCode")) {
+    if (redirectValueIfNotFalse) {
+      redirectWithPkce(redirectValueIfNotFalse, data.authorizationCode);
+      return data;
+    } else {
+      throw new Error("Missing PKCE redirect url");
+    }
+  }
+
+  // Handle redirection
+  if (typeof handleRedirect === "function") {
+    await handleRedirect(data.redirectTo, data);
+  } else {
+    defaultHandleRedirect(redirectValue, data);
+  }
+
+  return data;
 }

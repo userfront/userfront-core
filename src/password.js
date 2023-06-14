@@ -7,6 +7,7 @@ import { exchange } from "./refresh.js";
 import {
   getMfaHeaders,
   handleMfaRequired,
+  handleLoginResponse,
   clearMfa,
 } from "./authentication.js";
 import { getPkceRequestQueryParams, redirectWithPkce } from "./pkce.js";
@@ -95,6 +96,9 @@ export async function loginWithPassword({
   emailOrUsername,
   password,
   redirect,
+  handleUpstreamResponse,
+  handleTokens,
+  handleRedirect,
   options,
 }) {
   try {
@@ -113,29 +117,14 @@ export async function loginWithPassword({
       params: getPkceRequestQueryParams(),
     });
 
-    if (data.hasOwnProperty("tokens")) {
-      setCookiesAndTokens(data.tokens);
-      await exchange(data);
-      defaultHandleRedirect(redirect, data);
-      return data;
-    }
-
-    if (data.hasOwnProperty("firstFactorToken")) {
-      handleMfaRequired(data);
-      return data;
-    }
-
-    if (data.authorizationCode) {
-      const url = redirect || data.redirectTo;
-      if (url) {
-        redirectWithPkce(url, data.authorizationCode);
-        return;
-      } else {
-        // TODO this is neither valid nor invalid
-      }
-    }
-
-    throw new Error("Please try again.");
+    // Handle the API response to the login request
+    return handleLoginResponse({
+      data,
+      redirect,
+      handleUpstreamResponse,
+      handleTokens,
+      handleRedirect,
+    });
   } catch (error) {
     throwFormattedError(error);
   }

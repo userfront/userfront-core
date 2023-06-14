@@ -23,11 +23,12 @@ export function assertNoUser(user) {
   expect(userFields).toEqual([]);
 }
 
-export const pkceParams = (codeChallenge) => expect.objectContaining({
-  params: {
-    code_challenge: expect.stringContaining(codeChallenge)
-  }
-})
+export const pkceParams = (codeChallenge) =>
+  expect.objectContaining({
+    params: {
+      code_challenge: expect.stringContaining(codeChallenge),
+    },
+  });
 
 export const mfaHeaders = expect.objectContaining({
   headers: {

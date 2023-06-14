@@ -1,11 +1,8 @@
 import { post } from "./api.js";
-import { setCookiesAndTokens } from "./cookies.js";
 import { store } from "./store.js";
-import { defaultHandleRedirect } from "./url.js";
 import { throwFormattedError } from "./utils.js";
-import { exchange } from "./refresh.js";
-import { getMfaHeaders, handleMfaRequired } from "./authentication.js";
-import { getPkceRequestQueryParams, redirectWithPkce } from "./pkce.js";
+import { getMfaHeaders, handleLoginResponse } from "./authentication.js";
+import { getPkceRequestQueryParams } from "./pkce.js";
 
 /**
  * Log a user in with email/username and password using the password/migrate endpoint.
@@ -55,40 +52,14 @@ export async function loginWithPasswordMigrate({
       params: getPkceRequestQueryParams(),
     });
 
-    // Handle upstreamResponse
-    if (typeof handleUpstreamResponse === "function") {
-      await handleUpstreamResponse(data.upstreamResponse, data);
-    }
-
-    // Handle tokens
-    if (data.hasOwnProperty("tokens")) {
-      if (typeof handleTokens === "function") {
-        await handleTokens(data.tokens, data);
-      } else {
-        setCookiesAndTokens(data.tokens);
-        await exchange(data);
-      }
-    }
-
-    // Handle redirectTo
-    if (typeof handleRedirect === "function") {
-      await handleRedirect(data.redirectTo, data);
-    } else {
-      defaultHandleRedirect(redirect, data);
-    }
-
-    // Handle authorizationCode for PKCE
-    if (data.hasOwnProperty("authorizationCode")) {
-      const url = redirect || data.redirectTo;
-      if (url) {
-        redirectWithPkce(url, data.authorizationCode);
-        return;
-      } else {
-        throw new Error("Missing PKCE redirect url");
-      }
-    }
-
-    return data;
+    // Handle the API response to the login request
+    return handleLoginResponse({
+      data,
+      redirect,
+      handleUpstreamResponse,
+      handleTokens,
+      handleRedirect,
+    });
   } catch (error) {
     throwFormattedError(error);
   }

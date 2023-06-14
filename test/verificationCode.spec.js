@@ -240,7 +240,7 @@ describe("loginWithVerificationCode()", () => {
 
     // Should have redirected correctly
     expect(defaultHandleRedirect).toHaveBeenCalledWith(
-      undefined,
+      mockResponseCopy.data.redirectTo,
       mockResponseCopy.data
     );
   });

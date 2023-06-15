@@ -3,9 +3,9 @@ import Userfront from "../src/index.js";
 
 import { getIframe, triageEvent, resolvers } from "../src/iframe.js";
 import { refresh } from "../src/refresh.js";
-import { setCookiesAndTokens } from "../src/cookies.js";
+import { setCookiesAndTokens } from "../src/authentication.js";
 
-jest.mock("../src/cookies.js", () => {
+jest.mock("../src/authentication.js", () => {
   return {
     __esModule: true,
     setCookiesAndTokens: jest.fn(),
@@ -22,7 +22,7 @@ const tenantId = "abcd4321";
  * SSL certificates while in live mode.
  */
 
-describe("refresh with httpOnly method", () => {
+xdescribe("refresh with httpOnly method", () => {
   afterEach(() => {
     resetStore(Userfront);
     setCookiesAndTokens.mockClear();

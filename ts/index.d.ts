@@ -2,7 +2,7 @@
 export declare function init(tenantId: string, options?: object): Promise<void>;
 
 // addInitCallback()
-export declare function addInitCallback(callback: Function): void;
+export declare function addInitCallback(callback: function): void;
 
 // user
 interface User {
@@ -21,10 +21,10 @@ interface User {
   userId?: number;
   userUuid?: string;
   // methods
-  update?: Function;
-  updatePassword?: Function;
-  getTotp?: Function;
-  hasRole?: Function;
+  update?: function;
+  updatePassword?: function;
+  getTotp?: function;
+  hasRole?: function;
 }
 export declare const user: User;
 
@@ -34,6 +34,7 @@ interface Tokens {
   accessTokenName: string;
   idToken: string;
   idTokenName: string;
+  refresh: function;
 }
 export declare const tokens: Tokens;
 
@@ -41,7 +42,7 @@ export declare const tokens: Tokens;
 interface Mode {
   value: "live" | "test";
   reason?: string;
-  setMode?: Function;
+  setMode?: function;
 }
 export declare const mode: Mode;
 
@@ -148,6 +149,11 @@ export declare function signup({
   password,
   channel,
   redirect,
+  handleUpstreamResponse,
+  handleMfaRequired,
+  handlePkceRequired,
+  handleTokens,
+  handleRedirect,
 }: {
   method: string;
   email?: string;
@@ -158,6 +164,11 @@ export declare function signup({
   password?: string;
   channel?: "sms" | "email";
   redirect?: string | boolean;
+  handleUpstreamResponse?: function;
+  handleMfaRequired?: function;
+  handlePkceRequired?: function;
+  handleTokens?: function;
+  handleRedirect?: function;
 }): Promise<SignupResponse>;
 
 // login()
@@ -183,6 +194,11 @@ export declare function login({
   channel,
   // Other
   redirect,
+  handleUpstreamResponse,
+  handleMfaRequired,
+  handlePkceRequired,
+  handleTokens,
+  handleRedirect,
   options,
 }: {
   method: string;
@@ -200,6 +216,11 @@ export declare function login({
   verificationCode?: string;
   channel?: "sms" | "email";
   redirect?: string | boolean;
+  handleUpstreamResponse?: function;
+  handleMfaRequired?: function;
+  handlePkceRequired?: function;
+  handleTokens?: function;
+  handleRedirect?: function;
   options?: object;
 }): Promise<LoginResponse>;
 

@@ -4,7 +4,7 @@ import Userfront from "../src/index.js";
 import api from "../src/api.js";
 import { getIframe, resolvers } from "../src/iframe.js";
 import { logout } from "../src/logout.js";
-import { handleRedirect } from "../src/url.js";
+import { defaultHandleRedirect } from "../src/url.js";
 import { createAccessToken, createIdToken } from "./config/utils.js";
 
 jest.mock("../src/api.js");
@@ -63,9 +63,10 @@ describe("logout", () => {
       expect(Userfront.user.update).toBeTruthy();
 
       // Should redirect correctly
-      expect(handleRedirect).toHaveBeenCalledWith({
-        data: mockResponse.data,
-      });
+      expect(defaultHandleRedirect).toHaveBeenCalledWith(
+        undefined,
+        mockResponse.data
+      );
     });
 
     it("should send a request to logout, then redirect to custom path", async () => {
@@ -100,10 +101,10 @@ describe("logout", () => {
       expect(Userfront.user.update).toBeTruthy();
 
       // Should redirect correctly
-      expect(handleRedirect).toHaveBeenCalledWith({
-        redirect: "/custom",
-        data: mockResponse.data,
-      });
+      expect(defaultHandleRedirect).toHaveBeenCalledWith(
+        "/custom",
+        mockResponse.data
+      );
     });
 
     it("should send a request to logout, then not redirect if redirect is false", async () => {
@@ -138,10 +139,10 @@ describe("logout", () => {
       expect(Userfront.user.update).toBeTruthy();
 
       // Should redirect correctly
-      expect(handleRedirect).toHaveBeenCalledWith({
-        redirect: false,
-        data: mockResponse.data,
-      });
+      expect(defaultHandleRedirect).toHaveBeenCalledWith(
+        false,
+        mockResponse.data
+      );
     });
   });
 

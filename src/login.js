@@ -10,22 +10,26 @@ import { setupPkce } from "./pkce.js";
 /**
  * Log a user in via the provided method. This method serves to call other
  * methods, depending on the "method" parameter passed in.
- * @param {String} method
- * @param {Number} userId
- * @param {String} userUuid
- * @param {String} email
- * @param {String} username
- * @param {String} emailOrUsername
- * @param {String} phoneNumber
- * @param {String} password
- * @param {String} token
- * @param {String} uuid
- * @param {String} totpCode
- * @param {String} backupCode
- * @param {String} channel "sms" or "email"
- * @param {String} verificationCode
- * @param {String | Boolean} redirect - do not redirect if false, or redirect to given path
- * @param {Function} handleUpstreamResponse
+ * @property {String} method
+ * @property {Number} userId
+ * @property {String} userUuid
+ * @property {String} email
+ * @property {String} username
+ * @property {String} emailOrUsername
+ * @property {String} phoneNumber
+ * @property {String} password
+ * @property {String} token
+ * @property {String} uuid
+ * @property {String} totpCode
+ * @property {String} backupCode
+ * @property {String} channel "sms" or "email"
+ * @property {String} verificationCode
+ * @property {String | Boolean} redirect - do not redirect if false, or redirect to given path
+ * @property {Function} handleUpstreamResponse
+ * @property {Function} handleMfaRequired
+ * @property {Function} handlePkceRequired
+ * @property {Function} handleTokens
+ * @property {Function} handleRedirect
  */
 export async function login({
   method,
@@ -50,6 +54,10 @@ export async function login({
   // Other
   redirect,
   handleUpstreamResponse,
+  handleMfaRequired,
+  handlePkceRequired,
+  handleTokens,
+  handleRedirect,
   options,
 } = {}) {
   if (!method) {
@@ -72,6 +80,11 @@ export async function login({
         emailOrUsername,
         password,
         redirect,
+        handleUpstreamResponse,
+        handleMfaRequired,
+        handlePkceRequired,
+        handleTokens,
+        handleRedirect,
         options,
       });
     case "password-migrate":
@@ -82,12 +95,25 @@ export async function login({
         password,
         redirect,
         handleUpstreamResponse,
+        handleMfaRequired,
+        handlePkceRequired,
+        handleTokens,
+        handleRedirect,
         options,
       });
     case "passwordless":
       return sendPasswordlessLink({ email });
     case "link":
-      return loginWithLink({ token, uuid, redirect });
+      return loginWithLink({
+        token,
+        uuid,
+        redirect,
+        handleUpstreamResponse,
+        handleMfaRequired,
+        handlePkceRequired,
+        handleTokens,
+        handleRedirect,
+      });
     case "totp":
       return loginWithTotp({
         totpCode,
@@ -99,6 +125,11 @@ export async function login({
         username,
         phoneNumber,
         redirect,
+        handleUpstreamResponse,
+        handleMfaRequired,
+        handlePkceRequired,
+        handleTokens,
+        handleRedirect,
       });
     case "verificationCode":
       return loginWithVerificationCode({
@@ -107,6 +138,11 @@ export async function login({
         phoneNumber,
         verificationCode,
         redirect,
+        handleUpstreamResponse,
+        handleMfaRequired,
+        handlePkceRequired,
+        handleTokens,
+        handleRedirect,
       });
     case "saml":
       return completeSamlLogin();

@@ -11,19 +11,19 @@ import {
 } from "./config/utils.js";
 import {
   assertAuthenticationDataMatches,
-  assertNoUser,
   mfaHeaders,
   noMfaHeaders,
   pkceParams,
 } from "./config/assertions.js";
-import { exchange } from "../src/refresh.js";
 import { signupWithPassword, loginWithPassword } from "../src/password.js";
-import { handleRedirect } from "../src/url.js";
+import { defaultHandleRedirect } from "../src/url.js";
+import { defaultHandleTokens } from "../src/tokens.js";
 import * as Pkce from "../src/pkce.js";
 
 jest.mock("../src/api.js");
 jest.mock("../src/refresh.js");
 jest.mock("../src/url.js");
+jest.mock("../src/tokens.js");
 jest.mock("../src/pkce.js");
 
 const tenantId = "abcd9876";
@@ -53,9 +53,9 @@ const mockPkceRequiredResponse = {
   data: {
     message: "PKCE required",
     authorizationCode: "auth-code",
-    redirectTo: "my-app:/login"
-  }
-}
+    redirectTo: "my-app:/login",
+  },
+};
 
 describe("signupWithPassword()", () => {
   beforeEach(() => {
@@ -90,21 +90,14 @@ describe("signupWithPassword()", () => {
       noMfaHeaders
     );
 
-    // Should have called exchange() with the API's response
-    expect(exchange).toHaveBeenCalledWith(mockResponse.data);
-
     // Should have returned the proper value
     expect(data).toEqual(mockResponse.data);
 
-    // Should have set the user object
-    expect(Userfront.user.email).toEqual(payload.email);
-    expect(Userfront.user.userId).toEqual(idTokenUserDefaults.userId);
+    // Should call defaultHandleTokens correctly
+    expect(defaultHandleTokens).toHaveBeenCalledWith(data.tokens, data);
 
-    // Should call handleRedirect correctly
-    expect(handleRedirect).toHaveBeenCalledWith({
-      redirect: payload.redirect,
-      data: mockResponse.data,
-    });
+    // Should call defaultHandleRedirect correctly
+    expect(defaultHandleRedirect).toHaveBeenCalledWith(data.redirectTo, data);
   });
 
   it("should sign up and redirect to provided path", async () => {
@@ -130,21 +123,14 @@ describe("signupWithPassword()", () => {
       noMfaHeaders
     );
 
-    // Should have called exchange() with the API's response
-    expect(exchange).toHaveBeenCalledWith(mockResponse.data);
-
     // Should have returned the proper value
     expect(data).toEqual(mockResponse.data);
 
-    // Should have set the user object
-    expect(Userfront.user.email).toEqual(payload.email);
-    expect(Userfront.user.userId).toEqual(idTokenUserDefaults.userId);
+    // Should call defaultHandleTokens correctly
+    expect(defaultHandleTokens).toHaveBeenCalledWith(data.tokens, data);
 
-    // Should call handleRedirect correctly
-    expect(handleRedirect).toHaveBeenCalledWith({
-      redirect: payload.redirect,
-      data: mockResponse.data,
-    });
+    // Should call defaultHandleRedirect correctly
+    expect(defaultHandleRedirect).toHaveBeenCalledWith(payload.redirect, data);
   });
 
   it("should sign up and not redirect if redirect = false", async () => {
@@ -164,7 +150,7 @@ describe("signupWithPassword()", () => {
       email: newAttrs.email,
       password: "something",
     };
-    await signupWithPassword({
+    const data = await signupWithPassword({
       redirect: false,
       ...payload,
     });
@@ -179,18 +165,14 @@ describe("signupWithPassword()", () => {
       noMfaHeaders
     );
 
-    // Should have called exchange() with the API's response
-    expect(exchange).toHaveBeenCalledWith(mockResponseCopy.data);
+    // Should have returned the proper value
+    expect(data).toEqual(mockResponseCopy.data);
 
-    // Should have set the user object
-    expect(Userfront.user.email).toEqual(payload.email);
-    expect(Userfront.user.userId).toEqual(newAttrs.userId);
+    // Should call defaultHandleTokens correctly
+    expect(defaultHandleTokens).toHaveBeenCalledWith(data.tokens, data);
 
-    // Should call handleRedirect correctly
-    expect(handleRedirect).toHaveBeenCalledWith({
-      redirect: false,
-      data: mockResponseCopy.data,
-    });
+    // Should not call defaultHandleRedirect
+    expect(defaultHandleRedirect).not.toHaveBeenCalled();
   });
 
   it("should respond with whatever error the server sends", async () => {
@@ -238,8 +220,8 @@ describe("signupWithPassword()", () => {
     assertAuthenticationDataMatches(mockMfaRequiredResponse);
 
     // Should not have set the user object or redirected
-    assertNoUser(Userfront.user);
-    expect(handleRedirect).not.toHaveBeenCalled();
+    expect(defaultHandleTokens).not.toHaveBeenCalled();
+    expect(defaultHandleRedirect).not.toHaveBeenCalled();
 
     // Should have returned MFA options & firstFactorToken
     expect(data).toEqual(mockMfaRequiredResponse.data);
@@ -300,18 +282,11 @@ describe("loginWithPassword()", () => {
       // Should have returned the proper value
       expect(data).toEqual(mockResponse.data);
 
-      // Should have called exchange() with the API's response
-      expect(exchange).toHaveBeenCalledWith(mockResponse.data);
+      // Should call defaultHandleTokens correctly
+      expect(defaultHandleTokens).toHaveBeenCalledWith(data.tokens, data);
 
-      // Should have set the user object
-      expect(Userfront.user.email).toEqual(payload.emailOrUsername);
-      expect(Userfront.user.userId).toEqual(idTokenUserDefaults.userId);
-
-      // Should call handleRedirect correctly
-      expect(handleRedirect).toHaveBeenCalledWith({
-        redirect: payload.redirect,
-        data: mockResponse.data,
-      });
+      // Should call defaultHandleRedirect correctly
+      expect(defaultHandleRedirect).toHaveBeenCalledWith(data.redirectTo, data);
     });
 
     it("should login and not redirect if redirect = false", async () => {
@@ -347,21 +322,14 @@ describe("loginWithPassword()", () => {
         noMfaHeaders
       );
 
-      // Should have called exchange() with the API's response
-      expect(exchange).toHaveBeenCalledWith(mockResponseCopy.data);
-
       // Should have returned the proper value
       expect(data).toEqual(mockResponseCopy.data);
 
-      // Should have set the user object
-      expect(Userfront.user.email).toEqual(payload.email);
-      expect(Userfront.user.userId).toEqual(newAttrs.userId);
+      // Should call defaultHandleTokens correctly
+      expect(defaultHandleTokens).toHaveBeenCalledWith(data.tokens, data);
 
-      // Should call handleRedirect correctly
-      expect(handleRedirect).toHaveBeenCalledWith({
-        redirect: false,
-        data: mockResponseCopy.data,
-      });
+      // Should not call defaultHandleRedirect
+      expect(defaultHandleRedirect).not.toHaveBeenCalled();
     });
 
     it("should login and redirect to a provided path", async () => {
@@ -372,7 +340,7 @@ describe("loginWithPassword()", () => {
         emailOrUsername: idTokenUserDefaults.email,
         password: "something",
       };
-      await loginWithPassword({
+      const data = await loginWithPassword({
         redirect: false,
         ...payload,
       });
@@ -387,18 +355,14 @@ describe("loginWithPassword()", () => {
         noMfaHeaders
       );
 
-      // Should have called exchange() with the API's response
-      expect(exchange).toHaveBeenCalledWith(mockResponse.data);
+      // Should have returned the proper value
+      expect(data).toEqual(mockResponse.data);
 
-      // Should have set the user object
-      expect(Userfront.user.email).toEqual(payload.emailOrUsername);
-      expect(Userfront.user.userId).toEqual(idTokenUserDefaults.userId);
+      // Should call defaultHandleTokens correctly
+      expect(defaultHandleTokens).toHaveBeenCalledWith(data.tokens, data);
 
-      // Should call handleRedirect correctly
-      expect(handleRedirect).toHaveBeenCalledWith({
-        redirect: false,
-        data: mockResponse.data,
-      });
+      // Should not call defaultHandleRedirect
+      expect(defaultHandleRedirect).not.toHaveBeenCalled();
     });
 
     it("should set the noResetEmail option if provided", async () => {
@@ -474,8 +438,8 @@ describe("loginWithPassword()", () => {
       assertAuthenticationDataMatches(mockMfaRequiredResponse);
 
       // Should not have set the user object or redirected
-      assertNoUser(Userfront.user);
-      expect(handleRedirect).not.toHaveBeenCalled();
+      expect(defaultHandleTokens).not.toHaveBeenCalled();
+      expect(defaultHandleRedirect).not.toHaveBeenCalled();
 
       // Should have returned MFA options & firstFactorToken
       expect(data).toEqual(mockMfaRequiredResponse.data);
@@ -503,9 +467,95 @@ describe("loginWithPassword()", () => {
       );
     });
 
+    it("should call handleRedirect instead of defaultHandleRedirect if present", async () => {
+      // Mock the API response
+      api.post.mockImplementationOnce(() => mockResponse);
+
+      const handleRedirect = jest.fn();
+
+      // Call loginWithPassword()
+      const payload = {
+        emailOrUsername: idTokenUserDefaults.email,
+        password: "something",
+      };
+      const data = await loginWithPassword({ ...payload, handleRedirect });
+
+      // Should have sent the proper API request
+      expect(api.post).toHaveBeenCalledWith(
+        `/auth/basic`,
+        {
+          tenantId,
+          ...payload,
+        },
+        noMfaHeaders
+      );
+
+      // Should have returned the proper value
+      expect(data).toEqual(mockResponse.data);
+
+      // Should call defaultHandleTokens correctly
+      expect(defaultHandleTokens).toHaveBeenCalledWith(data.tokens, data);
+
+      // Should call handleRedirect correctly
+      expect(handleRedirect).toHaveBeenCalledWith(data.redirectTo, data);
+
+      // Should not call defaultHandleRedirect
+      expect(defaultHandleRedirect).not.toHaveBeenCalled();
+    });
+
+    it("should call handleTokens instead of defaultHandleTokens if present", async () => {
+      // Mock the API response
+      api.post.mockImplementationOnce(() => mockResponse);
+
+      const handleTokens = jest.fn();
+
+      // Call loginWithPassword()
+      const payload = {
+        emailOrUsername: idTokenUserDefaults.email,
+        password: "something",
+      };
+      const data = await loginWithPassword({ ...payload, handleTokens });
+
+      // Should have sent the proper API request
+      expect(api.post).toHaveBeenCalledWith(
+        `/auth/basic`,
+        {
+          tenantId,
+          ...payload,
+        },
+        noMfaHeaders
+      );
+
+      // Should have returned the proper value
+      expect(data).toEqual(mockResponse.data);
+
+      // TODO update to set the user object even when custom handleTokens() method is used
+      // https://linear.app/userfront/issue/DEV-327/corejs-set-the-userfrontuser-object-when-custom-handletokens-method-is
+      // Should not have set the user object
+      expect(Userfront.user.email).toEqual(undefined);
+      expect(Userfront.user.userId).toEqual(undefined);
+
+      // Should call defaultHandleRedirect correctly
+      expect(defaultHandleRedirect).toHaveBeenCalledWith(
+        mockResponse.data.redirectTo,
+        mockResponse.data
+      );
+
+      // Should call handleTokens correctly
+      expect(handleTokens).toHaveBeenCalledWith(
+        mockResponse.data.tokens,
+        mockResponse.data
+      );
+
+      // Should not call defaultHandleTokens
+      expect(defaultHandleTokens).not.toHaveBeenCalled();
+    });
+
     describe("with PKCE", () => {
       it("signup: should send a PKCE request if PKCE is required", async () => {
-        Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({ "code_challenge": "code" }));
+        Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({
+          code_challenge: "code",
+        }));
         // Mock the API response
         api.post.mockImplementationOnce(() => mockResponse);
 
@@ -526,17 +576,19 @@ describe("loginWithPassword()", () => {
           },
           pkceParams("code")
         );
-      })
+      });
 
       it("signup: should handle a PKCE Required response", async () => {
-        Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({ "code_challenge": "code" }));
+        Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({
+          code_challenge: "code",
+        }));
         api.post.mockImplementationOnce(() => mockPkceRequiredResponse);
         // Call loginWithPassword()
         const payload = {
           email: idTokenUserDefaults.email,
           password: "something",
         };
-        await signupWithPassword(payload);
+        const data = await signupWithPassword(payload);
 
         // Should have sent the proper API request
         expect(api.post).toHaveBeenCalledWith(
@@ -548,21 +600,25 @@ describe("loginWithPassword()", () => {
           },
           pkceParams("code")
         );
-        
-        // Should have requested redirect with the correct params
-        const params = Pkce.redirectWithPkce.mock.lastCall;
-        expect(params[0]).toEqual("my-app:/login");
-        expect(params[1]).toEqual("auth-code");
-      })
+
+        // Should have requested PKCE redirect with the correct params
+        expect(Pkce.defaultHandlePkceRequired).toHaveBeenCalledWith(
+          data.authorizationCode,
+          data.redirectTo,
+          data
+        );
+      });
       it("login: should send a PKCE request if PKCE is required", async () => {
-        Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({ "code_challenge": "code" }));
+        Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({
+          code_challenge: "code",
+        }));
         // Mock the API response
         api.post.mockImplementationOnce(() => mockResponse);
 
         // Call loginWithPassword()
         const payload = {
           emailOrUsername: idTokenUserDefaults.email,
-          password: "something"
+          password: "something",
         };
         await loginWithPassword(payload);
 
@@ -575,17 +631,19 @@ describe("loginWithPassword()", () => {
           },
           pkceParams("code")
         );
-      })
+      });
 
       it("login: should handle a PKCE Required response", async () => {
-        Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({ "code_challenge": "code" }));
+        Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({
+          code_challenge: "code",
+        }));
         api.post.mockImplementationOnce(() => mockPkceRequiredResponse);
         // Call loginWithPassword()
         const payload = {
           emailOrUsername: idTokenUserDefaults.email,
-          password: "something"
+          password: "something",
         };
-        await loginWithPassword(payload);
+        const data = await loginWithPassword(payload);
 
         // Should have sent the proper API request
         expect(api.post).toHaveBeenCalledWith(
@@ -596,12 +654,14 @@ describe("loginWithPassword()", () => {
           },
           pkceParams("code")
         );
-        
-        // Should have requested redirect with the correct params
-        const params = Pkce.redirectWithPkce.mock.lastCall;
-        expect(params[0]).toEqual("my-app:/login");
-        expect(params[1]).toEqual("auth-code");
-      })
-    })
+
+        // Should have requested PKCE redirect with the correct params
+        expect(Pkce.defaultHandlePkceRequired).toHaveBeenCalledWith(
+          data.authorizationCode,
+          data.redirectTo,
+          data
+        );
+      });
+    });
   });
 });

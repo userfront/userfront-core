@@ -10,22 +10,22 @@ import {
 } from "./config/utils.js";
 import {
   assertAuthenticationDataMatches,
-  assertNoUser,
   mfaHeaders,
   noMfaHeaders,
-  pkceParams
+  pkceParams,
 } from "./config/assertions.js";
 import {
   sendVerificationCode,
   loginWithVerificationCode,
 } from "../src/verificationCode.js";
-import { exchange } from "../src/refresh.js";
-import { handleRedirect } from "../src/url.js";
+import { defaultHandleRedirect } from "../src/url.js";
+import { defaultHandleTokens } from "../src/tokens.js";
 import * as Pkce from "../src/pkce.js";
 
 jest.mock("../src/refresh.js");
 jest.mock("../src/api.js");
 jest.mock("../src/url.js");
+jest.mock("../src/tokens.js");
 jest.mock("../src/pkce.js");
 
 const tenantId = "abcd9876";
@@ -62,10 +62,14 @@ describe("sendVerificationCode()", () => {
     const res = await sendVerificationCode(payload);
 
     // Should have sent the proper API request
-    expect(api.post).toHaveBeenCalledWith(`/auth/code`, {
-      tenantId,
-      ...payload,
-    }, noMfaHeaders);
+    expect(api.post).toHaveBeenCalledWith(
+      `/auth/code`,
+      {
+        tenantId,
+        ...payload,
+      },
+      noMfaHeaders
+    );
 
     // Should have returned the proper value
     expect(res).toEqual(mockResponse.data);
@@ -81,10 +85,14 @@ describe("sendVerificationCode()", () => {
     const data = await sendVerificationCode(payload);
 
     // Should have sent the proper API request
-    expect(api.post).toHaveBeenCalledWith(`/auth/code`, {
-      tenantId,
-      ...payload,
-    }, noMfaHeaders);
+    expect(api.post).toHaveBeenCalledWith(
+      `/auth/code`,
+      {
+        tenantId,
+        ...payload,
+      },
+      noMfaHeaders
+    );
 
     // Should have returned the proper value
     expect(data).toEqual(mockResponse.data);
@@ -145,14 +153,18 @@ describe("sendVerificationCode()", () => {
     const res = await sendVerificationCode(payload);
 
     // Should have sent the proper API request with MFA headers
-    expect(api.post).toHaveBeenCalledWith(`/auth/code`, {
-      tenantId,
-      ...payload,
-    }, mfaHeaders);
+    expect(api.post).toHaveBeenCalledWith(
+      `/auth/code`,
+      {
+        tenantId,
+        ...payload,
+      },
+      mfaHeaders
+    );
 
     // Should have returned the proper value
     expect(res).toEqual(mockResponse.data);
-  })
+  });
 });
 
 describe("loginWithVerificationCode()", () => {
@@ -219,17 +231,11 @@ describe("loginWithVerificationCode()", () => {
     // Should return the correct value
     expect(data).toEqual(mockResponseCopy.data);
 
-    // Should have called exchange() with the API's response
-    expect(exchange).toHaveBeenCalledWith(mockResponseCopy.data);
+    // Should call defaultHandleTokens correctly
+    expect(defaultHandleTokens).toHaveBeenCalledWith(data.tokens, data);
 
-    // Should have set the user object
-    expect(Userfront.user.email).toEqual(userAttrs.email);
-    expect(Userfront.user.userId).toEqual(userAttrs.userId);
-
-    // Should have redirected correctly
-    expect(handleRedirect).toHaveBeenCalledWith({
-      data: mockResponseCopy.data,
-    });
+    // Should call defaultHandleRedirect correctly
+    expect(defaultHandleRedirect).toHaveBeenCalledWith(data.redirectTo, data);
   });
 
   it("should login with custom redirect", async () => {
@@ -268,18 +274,11 @@ describe("loginWithVerificationCode()", () => {
     // Should return the correct value
     expect(data).toEqual(mockResponseCopy.data);
 
-    // Should have called exchange() with the API's response
-    expect(exchange).toHaveBeenCalledWith(mockResponseCopy.data);
+    // Should call defaultHandleTokens correctly
+    expect(defaultHandleTokens).toHaveBeenCalledWith(data.tokens, data);
 
-    // Should have set the user object
-    expect(Userfront.user.email).toEqual(userAttrs.email);
-    expect(Userfront.user.userId).toEqual(userAttrs.userId);
-
-    // Should redirect correctly
-    expect(handleRedirect).toHaveBeenCalledWith({
-      redirect: payload.redirect,
-      data: mockResponseCopy.data,
-    });
+    // Should call defaultHandleRedirect correctly
+    expect(defaultHandleRedirect).toHaveBeenCalledWith(payload.redirect, data);
   });
 
   it("should login without redirect if redirect=false", async () => {
@@ -318,18 +317,11 @@ describe("loginWithVerificationCode()", () => {
     // Should return the correct value
     expect(data).toEqual(mockResponseCopy.data);
 
-    // Should have called exchange() with the API's response
-    expect(exchange).toHaveBeenCalledWith(mockResponseCopy.data);
+    // Should call defaultHandleTokens correctly
+    expect(defaultHandleTokens).toHaveBeenCalledWith(data.tokens, data);
 
-    // Should have set the user object
-    expect(Userfront.user.phoneNumber).toEqual(userAttrs.phoneNumber);
-    expect(Userfront.user.userId).toEqual(userAttrs.userId);
-
-    // Should redirect correctly
-    expect(handleRedirect).toHaveBeenCalledWith({
-      redirect: false,
-      data: mockResponseCopy.data,
-    });
+    // Should not call defaultHandleRedirect
+    expect(defaultHandleRedirect).not.toHaveBeenCalled();
   });
 
   it("should handle an MFA Required response", async () => {
@@ -360,8 +352,8 @@ describe("loginWithVerificationCode()", () => {
     assertAuthenticationDataMatches(mockMfaRequiredResponse);
 
     // Should not have set the user object or redirected
-    assertNoUser(Userfront.user);
-    expect(handleRedirect).not.toHaveBeenCalled();
+    expect(defaultHandleTokens).not.toHaveBeenCalled();
+    expect(defaultHandleRedirect).not.toHaveBeenCalled();
 
     // Should have returned MFA options & firstFactorToken
     expect(data).toEqual(mockMfaRequiredResponse.data);
@@ -427,17 +419,18 @@ describe("loginWithVerificationCode()", () => {
   });
 
   describe("with PKCE", () => {
-
     const mockPkceRequiredResponse = {
       data: {
         message: "PKCE required",
         authorizationCode: "auth-code",
-        redirectTo: "my-app:/login"
-      }
-    }
+        redirectTo: "my-app:/login",
+      },
+    };
 
     it("should send a PKCE request if PKCE is required", async () => {
-      Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({ "code_challenge": "code" }));
+      Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({
+        code_challenge: "code",
+      }));
       api.put.mockImplementationOnce(() => mockResponse);
 
       // Update the userId to ensure it is overwritten
@@ -468,12 +461,14 @@ describe("loginWithVerificationCode()", () => {
         },
         pkceParams("code")
       );
-    })
+    });
 
     it("should handle a PKCE Required response", async () => {
-      Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({ "code_challenge": "code" }));
+      Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({
+        code_challenge: "code",
+      }));
       // Mock the API response
-      api.put.mockImplementationOnce(() => mockPkceRequiredResponse);;
+      api.put.mockImplementationOnce(() => mockPkceRequiredResponse);
 
       // Update the userId to ensure it is overwritten
       const userAttrs = {
@@ -492,7 +487,7 @@ describe("loginWithVerificationCode()", () => {
         email: userAttrs.email,
         verificationCode: "123467",
       };
-      await loginWithVerificationCode(payload);
+      const data = await loginWithVerificationCode(payload);
 
       // Should have sent the proper API request
       expect(api.put).toHaveBeenCalledWith(
@@ -503,11 +498,13 @@ describe("loginWithVerificationCode()", () => {
         },
         pkceParams("code")
       );
-      
-      // Should have requested redirect with the correct params
-      const params = Pkce.redirectWithPkce.mock.lastCall;
-      expect(params[0]).toEqual("my-app:/login");
-      expect(params[1]).toEqual("auth-code");
+
+      // Should have requested PKCE redirect with the correct params
+      expect(Pkce.defaultHandlePkceRequired).toHaveBeenCalledWith(
+        data.authorizationCode,
+        data.redirectTo,
+        data
+      );
     });
   });
 });

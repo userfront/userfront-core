@@ -1,16 +1,19 @@
-import Userfront from "../src/index.js";
-import api from "../src/api.js";
+import { mockWindow } from "./config/utils.js";
 import {
   authenticationData,
-  setFirstFactors,
-  isMfaRequired,
-  handleMfaRequired,
-  getMfaHeaders,
-  clearMfa,
-  resetMfa,
+  handleLoginResponse,
 } from "../src/authentication.js";
+import { defaultHandleMfaRequired } from "../src/mfa.js";
+import { defaultHandlePkceRequired } from "../src/pkce.js";
 
 jest.mock("../src/api.js");
+jest.mock("../src/mfa.js");
+jest.mock("../src/pkce.js");
+
+mockWindow({
+  origin: "https://example.com",
+  href: "https://example.com/login",
+});
 
 const blankAuthenticationData = {
   ...authenticationData,
@@ -19,226 +22,108 @@ const blankAuthenticationData = {
 describe("Authentication service", () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    window.location.href = `https://example.com/login`;
     for (const key in authenticationData) {
       authenticationData[key] = blankAuthenticationData[key];
     }
   });
 
-  describe("setFirstFactors", () => {
-    it("should update the available first factors when passed a valid authentication object", async () => {
-      const authentication = {
-        firstFactors: [
-          {
-            channel: "email",
-            strategy: "password",
+  describe("handleLoginResponse()", () => {
+    describe("redirection", () => {
+      it("should redirect to redirect argument when present", async () => {
+        const redirect = "/argument";
+        window.location.href = `https://example.com/login?redirect=/redirect-query`; // should ignore
+        await handleLoginResponse({
+          data: {
+            redirectTo: "/data", // should ignore
           },
-          {
-            channel: "email",
-            strategy: "link",
+          redirect,
+        });
+
+        // Should have redirected correctly
+        expect(window.location.assign).toHaveBeenCalledWith(redirect);
+      });
+
+      it("should redirect to querystring redirect when other redirect argument is not present", async () => {
+        const redirectQuery = "/redirect-query";
+        window.location.href = `https://example.com/login?redirect=${redirectQuery}`;
+        await handleLoginResponse({
+          data: {
+            redirectTo: "/data", // should ignore
           },
-        ],
-      };
-      Userfront.init("demo1234");
+          redirect: undefined,
+        });
 
-      setFirstFactors(authentication);
-      expect(authenticationData.firstFactors).toEqual(
-        authentication.firstFactors
-      );
-    });
+        // Should have redirected correctly
+        expect(window.location.assign).toHaveBeenCalledWith(redirectQuery);
+      });
 
-    it("should fail gracefully for bad inputs", async () => {
-      expect(() => {
-        setFirstFactors(null);
-      }).not.toThrow();
-      expect(() => {
-        setFirstFactors("bad input");
-      }).not.toThrow();
-      expect(() => {
-        setFirstFactors({ mode: "test" });
-      }).not.toThrow();
-      expect(() => {
-        setFirstFactors({ firstFactors: ["corrupt", "data"] });
-      }).not.toThrow();
-    });
-  });
-
-  describe("isMfaRequired()", () => {
-    it("should return true if MFA is currently required", () => {
-      authenticationData.firstFactorToken = "uf_live_first_factor_sometoken";
-      expect(isMfaRequired()).toEqual(true);
-    });
-    it("should return false if MFA is not currently required", () => {
-      authenticationData.firstFactorToken = "";
-      expect(isMfaRequired()).toEqual(false);
-    });
-  });
-
-  describe("handleMfaRequired()", () => {
-    it("should do nothing if the response is not an MFA Required response", () => {
-      const mockResponse = {
-        message: "OK",
-        result: {
-          channel: "sms",
-          phoneNumber: "+15558675309",
-          submittedAt: "2022-10-21T23:26:07.146Z",
-          messageId: "fe3194f6-da85-48aa-a24e-3eab4c5c19d1",
-        },
-      };
-      handleMfaRequired(mockResponse);
-      expect(authenticationData).toEqual(blankAuthenticationData);
-    });
-    it("should set the MFA service state if it is an MFA Required response", () => {
-      const mockResponse = {
-        message: "MFA required",
-        isMfaRequired: true,
-        firstFactorToken:
-          "uf_test_first_factor_207a4d56ce7e40bc9dafb0918fb6599a",
-        authentication: {
-          firstFactor: {
-            strategy: "link",
-            channel: "email",
+      it("should redirect to data.redirectTo when other redirect methods are not present", async () => {
+        const redirectTo = "/data";
+        await handleLoginResponse({
+          data: {
+            redirectTo,
           },
-          secondFactors: [
-            {
-              strategy: "totp",
-              channel: "authenticator",
-            },
-            {
-              strategy: "verificationCode",
-              channel: "sms",
-            },
-          ],
-        },
-      };
-      handleMfaRequired(mockResponse);
-      expect(authenticationData.secondFactors).toEqual([
-        {
-          strategy: "totp",
-          channel: "authenticator",
-        },
-        {
-          strategy: "verificationCode",
-          channel: "sms",
-        },
-      ]);
-      expect(authenticationData.firstFactorToken).toEqual("uf_test_first_factor_207a4d56ce7e40bc9dafb0918fb6599a")
-    });
-    it("should overwrite the firstFactorToken on sequential successful first factor logins", () => {
-      const firstFactorToken1 = "uf_test_first_factor_207a4d56ce7e40bc9dafb0918fb6599a"
-      const mockResponse1 = {
-        message: "MFA required",
-        isMfaRequired: true,
-        firstFactorToken: firstFactorToken1,
-        authentication: {
-          firstFactor: {
-            strategy: "link",
-            channel: "email",
-          },
-          secondFactors: [
-            {
-              strategy: "totp",
-              channel: "authenticator",
-            },
-            {
-              strategy: "verificationCode",
-              channel: "sms",
-            },
-          ],
-        },
-      };
-      handleMfaRequired(mockResponse1);
-      expect(authenticationData.firstFactorToken).toEqual(firstFactorToken1);
-      const firstFactorToken2 = "uf_test_first_factor_12345d56ce7e4ae3677ea0918fbabcde"
-      const mockResponse2 = {
-        message: "MFA required",
-        isMfaRequired: true,
-        firstFactorToken: firstFactorToken2,
-        authentication: {
-          firstFactor: {
-            strategy: "link",
-            channel: "email",
-          },
-          secondFactors: [
-            {
-              strategy: "totp",
-              channel: "authenticator",
-            },
-            {
-              strategy: "verificationCode",
-              channel: "sms",
-            },
-          ],
-        },
-      };
-      handleMfaRequired(mockResponse2);
-      expect(authenticationData.firstFactorToken).toEqual(firstFactorToken2)
-    })
-  });
+          redirect: undefined,
+        });
 
-  describe("getMfaHeaders()", () => {
-    it("should return an authorization header if there is a firstFactorToken set", () => {
-      authenticationData.firstFactorToken = "uf_test_first_factor_token";
-      const headers = getMfaHeaders();
-      expect(headers).toEqual({
-        authorization: "Bearer uf_test_first_factor_token",
+        // Should have redirected correctly
+        expect(window.location.assign).toHaveBeenCalledWith(redirectTo);
+      });
+
+      it("should not redirect when redirect=false", async () => {
+        window.location.href = `https://example.com/login?redirect=/redirect-query`; // should ignore
+        await handleLoginResponse({
+          data: {
+            redirectTo: "/data", // should ignore
+          },
+          redirect: false,
+        });
+
+        // Should have redirected correctly
+        expect(window.location.assign).not.toHaveBeenCalled();
       });
     });
-    it("should return an empty object if there is no firstFactorToken set", () => {
-      const headers = getMfaHeaders();
-      expect(headers).toEqual({});
+
+    describe("PKCE", () => {
+      it(`should handle "PKCE required" response`, async () => {
+        const payload = {
+          data: {
+            message: "PKCE required",
+            authorizationCode: "auth-code",
+            redirectTo: "my-app:/login",
+          },
+        };
+
+        const data = await handleLoginResponse(payload);
+
+        // Should have requested PKCE redirect with the correct params
+        expect(defaultHandlePkceRequired).toHaveBeenCalledWith(
+          data.authorizationCode,
+          data.redirectTo,
+          data
+        );
+      });
     });
-  });
 
-  it("clearMfa should clear the transient MFA state", () => {
-    authenticationData.secondFactors = [
-      {
-        strategy: "totp",
-        channel: "authenticator",
-      },
-      {
-        strategy: "verificationCode",
-        channel: "sms",
-      },
-    ];
-    authenticationData.firstFactorToken = "uf_test_first_factor_token";
-    authenticationData.firstFactors = [
-      {
-        channel: "email",
-        strategy: "password",
-      },
-    ];
-    clearMfa();
-    expect(authenticationData.secondFactors).toEqual([]);
-    expect(authenticationData.firstFactorToken).toEqual(null);
-    expect(authenticationData.firstFactors).toEqual([
-      {
-        channel: "email",
-        strategy: "password",
-      },
-    ]);
-  });
+    describe("MFA", () => {
+      it(`should handle "MFA required" response`, async () => {
+        const payload = {
+          data: {
+            message: "MFA required",
+            firstFactorToken: "uf_factor",
+            authentication: {},
+          },
+        };
 
-  it("resetMfa should reset the MFA service to the uninitialized state", () => {
-    authenticationData.secondFactors = [
-      {
-        strategy: "totp",
-        channel: "authenticator",
-      },
-      {
-        strategy: "verificationCode",
-        channel: "sms",
-      },
-    ];
-    authenticationData.firstFactorToken = "uf_test_first_factor_token";
-    authenticationData.firstFactors = [
-      {
-        channel: "email",
-        strategy: "password",
-      },
-    ];
-    resetMfa();
-    expect(authenticationData.secondFactors).toEqual([]);
-    expect(authenticationData.firstFactorToken).toEqual(null);
-    expect(authenticationData.firstFactors).toEqual([]);
+        const data = await handleLoginResponse(payload);
+
+        // Should called the defaultHandleMfaRequired handler
+        expect(defaultHandleMfaRequired).toHaveBeenCalledWith(
+          data.firstFactorToken,
+          data
+        );
+      });
+    });
   });
 });

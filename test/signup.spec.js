@@ -4,7 +4,7 @@ import { signupWithPassword } from "../src/password.js";
 import { signonWithSso } from "../src/sso.js";
 import { sendPasswordlessLink } from "../src/link.js";
 import { sendVerificationCode } from "../src/verificationCode.js";
-import { handleRedirect } from "../src/url.js";
+import { defaultHandleRedirect } from "../src/url.js";
 
 // Mock all methods to be called
 jest.mock("../src/password.js");
@@ -25,7 +25,7 @@ describe("signup()", () => {
     expect(signup()).rejects.toEqual(
       new Error(`Userfront.signup called without "method" property.`)
     );
-    expect(handleRedirect).not.toHaveBeenCalled();
+    expect(defaultHandleRedirect).not.toHaveBeenCalled();
   });
 
   describe(`{ method: "password" }`, () => {

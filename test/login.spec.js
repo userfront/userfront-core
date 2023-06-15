@@ -8,7 +8,7 @@ import { signonWithSso } from "../src/sso.js";
 import { loginWithTotp } from "../src/totp.js";
 import { loginWithVerificationCode } from "../src/verificationCode.js";
 import { completeSamlLogin } from "../src/saml.js";
-import { handleRedirect } from "../src/url.js";
+import { defaultHandleRedirect } from "../src/url.js";
 
 // Mock all methods to be called
 jest.mock("../src/password.js");
@@ -32,16 +32,22 @@ describe("login()", () => {
     expect(login()).rejects.toEqual(
       new Error(`Userfront.login called without "method" property.`)
     );
-    expect(handleRedirect).not.toHaveBeenCalled();
+    expect(defaultHandleRedirect).not.toHaveBeenCalled();
   });
 
   describe(`{ method: "password" }`, () => {
     it(`should call loginWithPassword()`, () => {
       const email = "user@example.com";
       const password = "some-password123";
+      const handleUpstreamResponse = jest.fn();
+      const handleTokens = jest.fn();
+      const handleRedirect = jest.fn();
       const combos = [
         { email, password },
         { username: "user-name", password },
+        { username: "user-name", password, handleUpstreamResponse },
+        { username: "user-name", password, handleTokens },
+        { username: "user-name", password, handleRedirect },
         { emailOrUsername: email, password },
         { email, password, redirect: "/custom" },
         { email, password, redirect: false, options: { noResetEmail: true } },
@@ -62,11 +68,15 @@ describe("login()", () => {
     it(`should call loginWithPasswordMigrate()`, () => {
       const email = "user@example.com";
       const password = "some-password123";
-      const handleFn = jest.fn();
+      const handleUpstreamResponse = jest.fn();
+      const handleTokens = jest.fn();
+      const handleRedirect = jest.fn();
       const combos = [
         { email, password },
         { username: "user-name", password },
-        { username: "user-name", password, handleUpstreamResponse: handleFn },
+        { username: "user-name", password, handleUpstreamResponse },
+        { username: "user-name", password, handleTokens },
+        { username: "user-name", password, handleRedirect },
         { emailOrUsername: email, password },
         { email, password, redirect: "/custom" },
         { email, password, redirect: false, options: { noResetEmail: true } },
@@ -141,8 +151,14 @@ describe("login()", () => {
     it(`should call loginWithLink()`, () => {
       const token = "some-token";
       const uuid = "some-uuid";
+      const handleUpstreamResponse = jest.fn();
+      const handleTokens = jest.fn();
+      const handleRedirect = jest.fn();
       const combos = [
         { token, uuid },
+        { token, uuid, handleUpstreamResponse },
+        { token, uuid, handleTokens },
+        { token, uuid, handleRedirect },
         { token, uuid, redirect: "/custom" },
         { token, uuid, redirect: false },
       ];
@@ -186,16 +202,21 @@ describe("login()", () => {
   });
 
   describe(`{ method: "verificationCode" }`, () => {
+    const handleUpstreamResponse = jest.fn();
+    const handleTokens = jest.fn();
+    const handleRedirect = jest.fn();
     const combos = [
       {
         channel: "sms",
         phoneNumber: "+15552223344",
         verificationCode: "456123",
+        handleUpstreamResponse,
       },
       {
         channel: "email",
         email: "user@example.com",
         verificationCode: "456123",
+        handleTokens,
       },
       {
         channel: "sms",
@@ -208,6 +229,7 @@ describe("login()", () => {
         email: "user@example.com",
         verificationCode: "456123",
         redirect: "/custom",
+        handleRedirect,
       },
     ];
     // Loop over all input combos and ensure that loginWithTotp is called correctly for each

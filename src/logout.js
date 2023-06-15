@@ -3,7 +3,7 @@ import { getIframe, postMessageAsPromise } from "./iframe.js";
 import { store } from "./store.js";
 import { removeAllCookies } from "./cookies.js";
 import { setTokensFromCookies } from "./tokens.js";
-import { handleRedirect } from "./url";
+import { defaultHandleRedirect } from "./url";
 import { throwFormattedError } from "./utils.js";
 
 /**
@@ -24,7 +24,7 @@ export async function logout({ method, redirect } = {}) {
       },
     });
     removeAllCookies();
-    handleRedirect({ redirect, data });
+    defaultHandleRedirect(redirect, data);
   } catch (err) {
     removeAllCookies();
   }
@@ -61,7 +61,7 @@ async function completeSamlLogout() {
 //   });
 //   removeAllCookies();
 //   setTokensFromCookies();
-//   handleRedirect({ redirect, data });
+//   defaultHandleRedirect(redirect, data);
 // } catch (error) {
 //   removeAllCookies();
 //   redirectToPath("/");

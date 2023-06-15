@@ -5,8 +5,8 @@ export const store = {
   codeChallenge: "",
   get usePkce() {
     return !!store.codeChallenge;
-  }
-}
+  },
+};
 
 /**
  * Reads an unexpired challenge code from local storage
@@ -18,8 +18,10 @@ export function readPkceDataFromLocalStorage() {
   }
   const codeChallenge = window.localStorage.getItem("uf_pkce_code_challenge");
   if (codeChallenge) {
-    const expiresAt = window.localStorage.getItem("uf_pkce_code_challenge_expiresAt");
-    if (expiresAt && (parseInt(expiresAt, 10) > Date.now())) {
+    const expiresAt = window.localStorage.getItem(
+      "uf_pkce_code_challenge_expiresAt"
+    );
+    if (expiresAt && parseInt(expiresAt, 10) > Date.now()) {
       return codeChallenge;
     }
   }
@@ -27,8 +29,8 @@ export function readPkceDataFromLocalStorage() {
 
 /**
  * Write a challenge code to local storage, expiring in 5 minutes
- * @param {string} codeChallenge 
- * @returns 
+ * @param {string} codeChallenge
+ * @returns
  */
 export function writePkceDataToLocalStorage(codeChallenge) {
   if (!isBrowser()) {
@@ -38,7 +40,7 @@ export function writePkceDataToLocalStorage(codeChallenge) {
     return clearPkceDataFromLocalStorage();
   }
   store.codeChallenge = codeChallenge;
-  const expiresAt = (Date.now() + 1000 * 60 * 5); // 5 minutes from now
+  const expiresAt = Date.now() + 1000 * 60 * 5; // 5 minutes from now
   try {
     window.localStorage.setItem("uf_pkce_code_challenge", codeChallenge);
     window.localStorage.setItem("uf_pkce_code_challenge_expiresAt", expiresAt);
@@ -91,23 +93,25 @@ export function getPkceRequestQueryParams() {
   if (!store.usePkce) {
     return {};
   }
-  return { "code_challenge": store.codeChallenge };
+  return { code_challenge: store.codeChallenge };
 }
 
 /**
  * Redirect to url with PKCE query params (authorization_code) set. Does not redirect
  * if url or authorizationCode are falsy.
- * 
+ *
  * @param {string} url full URL to redirect to (may be a deep link for a mobile app)
  * @param {string} authorizationCode the authorization code received from the server
- * @returns 
+ * @returns
  */
-export function redirectWithPkce(url, authorizationCode) {
+export function defaultHandlePkceRequired(authorizationCode, url, data) {
   if (!url || !authorizationCode) {
     return;
   }
   if (!store.usePkce) {
-    console.warn("Redirecting with a PKCE authorization code, but no PKCE challenge code is present in the client. This is unexpected.")
+    console.warn(
+      "Redirecting with a PKCE authorization code, but no PKCE challenge code is present in the client. This is unexpected."
+    );
   }
   const _url = new URL(url);
   _url.searchParams.set("authorization_code", authorizationCode);

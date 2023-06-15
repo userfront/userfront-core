@@ -12,7 +12,6 @@ import {
 } from "./config/utils.js";
 import {
   assertAuthenticationDataMatches,
-  assertNoUser,
   mfaHeaders,
   noMfaHeaders,
   pkceParams,
@@ -22,11 +21,14 @@ import {
   loginWithLink,
   sendPasswordlessLink,
 } from "../src/link.js";
-import { exchange } from "../src/refresh.js";
+import { defaultHandleRedirect } from "../src/url.js";
+import { defaultHandleTokens } from "../src/tokens.js";
 import * as Pkce from "../src/pkce.js";
 
-jest.mock("../src/refresh.js");
 jest.mock("../src/api.js");
+jest.mock("../src/refresh.js");
+jest.mock("../src/url.js");
+jest.mock("../src/tokens.js");
 jest.mock("../src/pkce.js");
 
 mockWindow({
@@ -171,6 +173,7 @@ describe("sendPasswordlessLink", () => {
 describe("loginWithLink", () => {
   beforeEach(() => {
     Userfront.init(tenantId);
+    jest.resetAllMocks();
     window.location.assign.mockClear();
     unsetUser();
   });
@@ -207,15 +210,11 @@ describe("loginWithLink", () => {
     // Should return the correct value
     expect(data).toEqual(mockResponseCopy.data);
 
-    // Should have called exchange() with the API's response
-    expect(exchange).toHaveBeenCalledWith(mockResponseCopy.data);
+    // Should call defaultHandleTokens correctly
+    expect(defaultHandleTokens).toHaveBeenCalledWith(data.tokens, data);
 
-    // Should have set the user object
-    expect(Userfront.user.email).toEqual(newAttrs.email);
-    expect(Userfront.user.userId).toEqual(newAttrs.userId);
-
-    // Should have redirected correctly
-    expect(window.location.assign).toHaveBeenCalledWith("/dashboard");
+    // Should call defaultHandleRedirect correctly
+    expect(defaultHandleRedirect).toHaveBeenCalledWith(data.redirectTo, data);
   });
 
   it("should read token, uuid, and redirect from the URL if not present", async () => {
@@ -241,7 +240,7 @@ describe("loginWithLink", () => {
     api.put.mockImplementationOnce(() => mockResponseCopy);
 
     // Call loginWithLink()
-    const data = await loginWithLink();
+    const data = await loginWithLink(query);
 
     // Should have sent the proper API request
     expect(api.put).toHaveBeenCalledWith(
@@ -256,18 +255,11 @@ describe("loginWithLink", () => {
     // Should return the correct value
     expect(data).toEqual(mockResponseCopy.data);
 
-    // Should have called exchange() with the API's response
-    expect(exchange).toHaveBeenCalledWith(mockResponseCopy.data);
+    // Should call defaultHandleTokens correctly
+    expect(defaultHandleTokens).toHaveBeenCalledWith(data.tokens, data);
 
-    // Should have set the user object
-    expect(Userfront.user.email).toEqual(newAttrs.email);
-    expect(Userfront.user.userId).toEqual(newAttrs.userId);
-
-    // Should have redirected correctly
-    expect(window.location.assign).toHaveBeenCalledWith(redirect);
-
-    // Reset the URL
-    window.location.href = `https://example.com/login`;
+    // Should call defaultHandleRedirect correctly
+    expect(defaultHandleRedirect).toHaveBeenCalledWith(data.redirectTo, data);
   });
 
   it("should not redirect if redirect = false", async () => {
@@ -296,20 +288,15 @@ describe("loginWithLink", () => {
     // Should return the correct value
     expect(data).toEqual(mockResponse.data);
 
-    // Should have called exchange() with the API's response
-    expect(exchange).toHaveBeenCalledWith(mockResponse.data);
+    // Should call defaultHandleTokens correctly
+    expect(defaultHandleTokens).toHaveBeenCalledWith(data.tokens, data);
 
-    // Should have set the user object
-    expect(Userfront.user.email).toEqual(idTokenUserDefaults.email);
-    expect(Userfront.user.userId).toEqual(idTokenUserDefaults.userId);
-
-    // Should not have redirected
-    expect(window.location.assign).not.toHaveBeenCalled();
+    // Should not call defaultHandleRedirect
+    expect(defaultHandleRedirect).not.toHaveBeenCalled();
   });
 
   it("should handle an MFA Required response", async () => {
-    exchange.mockClear();
-
+    // Mock the API response
     api.put.mockImplementationOnce(() => mockMfaRequiredResponse);
 
     const payload = {
@@ -331,10 +318,9 @@ describe("loginWithLink", () => {
     // Should have updated the MFA service state
     assertAuthenticationDataMatches(mockMfaRequiredResponse);
 
-    // Should not have set the user object, called exchange, or redirected
-    assertNoUser(Userfront.user);
-    expect(exchange).not.toHaveBeenCalled();
-    expect(window.location.assign).not.toHaveBeenCalled();
+    // Should not have set the user object or redirected
+    expect(defaultHandleRedirect).not.toHaveBeenCalled();
+    expect(defaultHandleTokens).not.toHaveBeenCalled();
 
     // Should have returned MFA options & firstFactorToken
     expect(data).toEqual(mockMfaRequiredResponse.data);
@@ -343,7 +329,6 @@ describe("loginWithLink", () => {
   it("should include the firstFactorToken if this is the second factor", async () => {
     // Set up the MFA service
     setMfaRequired();
-    exchange.mockClear();
     api.put.mockImplementationOnce(() => mockResponse);
     const payload = {
       token: "some-token",
@@ -363,17 +348,18 @@ describe("loginWithLink", () => {
   });
 
   describe("with PKCE", () => {
-
     const mockPkceRequiredResponse = {
       data: {
         message: "PKCE required",
         authorizationCode: "auth-code",
-        redirectTo: "my-app:/login"
-      }
-    }
+        redirectTo: "my-app:/login",
+      },
+    };
 
     it("should send a PKCE request if PKCE is required", async () => {
-      Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({ "code_challenge": "code" }));
+      Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({
+        code_challenge: "code",
+      }));
       // Mock the API response
       api.put.mockImplementationOnce(() => mockResponse);
 
@@ -392,18 +378,20 @@ describe("loginWithLink", () => {
         },
         pkceParams("code")
       );
-    })
+    });
 
     it("should handle a PKCE Required response", async () => {
-      Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({ "code_challenge": "code" }));
+      Pkce.getPkceRequestQueryParams.mockImplementationOnce(() => ({
+        code_challenge: "code",
+      }));
       // Mock the API response
-      api.put.mockImplementationOnce(() => mockPkceRequiredResponse);;
+      api.put.mockImplementationOnce(() => mockPkceRequiredResponse);
 
       const payload = {
         token: "some-token",
         uuid: "some-uuid",
       };
-      await loginWithLink(payload);
+      const data = await loginWithLink(payload);
 
       // Should have sent the proper API request
       expect(api.put).toHaveBeenCalledWith(
@@ -414,11 +402,16 @@ describe("loginWithLink", () => {
         },
         pkceParams("code")
       );
-        
-      // Should have requested redirect with the correct params
-      const params = Pkce.redirectWithPkce.mock.lastCall;
-      expect(params[0]).toEqual("my-app:/login");
-      expect(params[1]).toEqual("auth-code");
+
+      // Should have returned the proper value
+      expect(data).toEqual(mockPkceRequiredResponse.data);
+
+      // Should have requested PKCE redirect with the correct params
+      expect(Pkce.defaultHandlePkceRequired).toHaveBeenCalledWith(
+        data.authorizationCode,
+        data.redirectTo,
+        data
+      );
     });
   });
 });

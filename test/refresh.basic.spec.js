@@ -9,7 +9,7 @@ import {
 } from "./config/utils.js";
 
 import { refresh } from "../src/refresh.js";
-import { setCookiesAndTokens } from "../src/cookies.js";
+import { setCookiesAndTokens } from "../src/authentication.js";
 
 jest.mock("../src/api.js");
 

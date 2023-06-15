@@ -1,25 +1,26 @@
 import { post, put } from "./api.js";
-import { setCookiesAndTokens } from "./cookies.js";
+import { setCookiesAndTokens } from "./authentication.js";
 import { store } from "./store.js";
-import { getQueryAttr, handleRedirect } from "./url.js";
+import { getQueryAttr, defaultHandleRedirect } from "./url.js";
 import { throwFormattedError } from "./utils.js";
-import { exchange } from "./refresh.js";
-import {
-  getMfaHeaders,
-  handleMfaRequired,
-  clearMfa,
-} from "./authentication.js";
-import { getPkceRequestQueryParams, redirectWithPkce } from "./pkce.js";
+import { handleLoginResponse } from "./authentication.js";
+import { getMfaHeaders } from "./mfa.js";
+import { getPkceRequestQueryParams } from "./pkce.js";
 
 /**
  * Register a new user with username, name, email, and password.
  * Redirect the browser after successful signup based on the redirectTo value returned.
- * @param {String} username
- * @param {String} name
- * @param {String} email
- * @param {String} password
- * @param {Object} userData - alias for the user.data object, since "data" is used in the response
- * @param {String} redirect - do not redirect if false, or redirect to a specific path
+ * @property {String} username
+ * @property {String} name
+ * @property {String} email
+ * @property {String} password
+ * @property {Object} userData - alias for the user.data object, since "data" is used in the response
+ * @property {String} redirect - do not redirect if false, or redirect to a specific path
+ * @property {Function} handleUpstreamResponse
+ * @property {Function} handleMfaRequired
+ * @property {Function} handlePkceRequired
+ * @property {Function} handleTokens
+ * @property {Function} handleRedirect
  */
 export async function signupWithPassword({
   username,
@@ -28,6 +29,11 @@ export async function signupWithPassword({
   password,
   userData,
   redirect,
+  handleUpstreamResponse,
+  handleMfaRequired,
+  handlePkceRequired,
+  handleTokens,
+  handleRedirect,
 } = {}) {
   try {
     const { data } = await post(
@@ -45,27 +51,17 @@ export async function signupWithPassword({
         params: getPkceRequestQueryParams(),
       }
     );
-    if (data.tokens) {
-      clearMfa();
-      setCookiesAndTokens(data.tokens);
-      await exchange(data);
-      handleRedirect({ redirect, data });
-      return data;
-    } else if (data.firstFactorToken) {
-      handleMfaRequired(data);
-      return data;
-    } else if (data.authorizationCode) {
-      const url = redirect || data.redirectTo;
-      if (url) {
-        redirectWithPkce(url, data.authorizationCode);
-      } else {
-        // We can't exchange the authorizationCode for tokens, because we don't have the verifier code
-        // that matches our challenge code.
-        throw new Error("Received a PKCE (mobile auth) response from the server, but no redirect was provided. Please set the redirect to the app that initiated the request.")
-      }
-    } else {
-      throw new Error("Please try again.");
-    }
+
+    // Handle the API response to the login request
+    return handleLoginResponse({
+      data,
+      redirect,
+      handleUpstreamResponse,
+      handleMfaRequired,
+      handlePkceRequired,
+      handleTokens,
+      handleRedirect,
+    });
   } catch (error) {
     throwFormattedError(error);
   }
@@ -74,18 +70,22 @@ export async function signupWithPassword({
 /**
  * Log a user in with email/username and password.
  * Redirect the browser after successful login based on the redirectTo value returned.
- * @param {Object} params
- * @param {string} params.email The user's email. One of email/username/emailOrUsername should be present.
- * @param {string} params.username The user's username. One of email/username/emailOrUsername should be present.
- * @param {string} params.emailOrUsername Either the user's email or username. One of email/username/emailOrUsername should be present.
- * @param {string} params.password
- * @param {string | boolean} params.redirect 
+ * @property {String} email The user's email. One of email/username/emailOrUsername should be present.
+ * @property {String} username The user's username. One of email/username/emailOrUsername should be present.
+ * @property {String} emailOrUsername Either the user's email or username. One of email/username/emailOrUsername should be present.
+ * @property {String} password
+ * @property {String|Boolean} redirect
  *  URL to redirect to after login, or false to suppress redirect. Otherwise, redirects to the after-login path set on the server.
- * @param {object} params.options
- * @param {boolean} params.options.noResetEmail
+ * @property {Function} handleUpstreamResponse
+ * @property {Function} handleMfaRequired
+ * @property {Function} handlePkceRequired
+ * @property {Function} handleTokens
+ * @property {Function} handleRedirect
+ * @property {Object} options
+ * @property {Boolean} options.noResetEmail
  *  By default, Userfront sends a password reset email if a user without a password tries to log in with a password.
  *  Set options.noResetEmail = true to override this behavior and return an error instead.
- * 
+ *
  */
 export async function loginWithPassword({
   email,
@@ -93,7 +93,12 @@ export async function loginWithPassword({
   emailOrUsername,
   password,
   redirect,
-  options
+  handleUpstreamResponse,
+  handleMfaRequired,
+  handlePkceRequired,
+  handleTokens,
+  handleRedirect,
+  options,
 }) {
   try {
     const body = {
@@ -103,41 +108,24 @@ export async function loginWithPassword({
     };
     if (options && options.noResetEmail) {
       body.options = {
-        noResetEmail: true
-      }
+        noResetEmail: true,
+      };
     }
-    const { data } = await post(
-      `/auth/basic`,
-      body,
-      {
-        headers: getMfaHeaders(),
-        params: getPkceRequestQueryParams(),
-      }
-    );
+    const { data } = await post(`/auth/basic`, body, {
+      headers: getMfaHeaders(),
+      params: getPkceRequestQueryParams(),
+    });
 
-    if (data.hasOwnProperty("tokens")) {
-      setCookiesAndTokens(data.tokens);
-      await exchange(data);
-      handleRedirect({ redirect, data });
-      return data;
-    }
-
-    if (data.hasOwnProperty("firstFactorToken")) {
-      handleMfaRequired(data);
-      return data;
-    }
-
-    if (data.authorizationCode) {
-      const url = redirect || data.redirectTo;
-      if (url) {
-        redirectWithPkce(url, data.authorizationCode);
-        return;
-      } else {
-        // TODO this is neither valid nor invalid
-      }
-    }
-
-    throw new Error("Please try again.");
+    // Handle the API response to the login request
+    return handleLoginResponse({
+      data,
+      redirect,
+      handleUpstreamResponse,
+      handleMfaRequired,
+      handlePkceRequired,
+      handleTokens,
+      handleRedirect,
+    });
   } catch (error) {
     throwFormattedError(error);
   }
@@ -224,7 +212,7 @@ export async function updatePasswordWithLink({
     });
     if (data.tokens) {
       setCookiesAndTokens(data.tokens);
-      handleRedirect({ redirect, data });
+      defaultHandleRedirect(redirect, data);
       return data;
     } else {
       throw new Error(

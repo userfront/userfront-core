@@ -1,15 +1,9 @@
 import { post, put } from "./api.js";
-import { setCookiesAndTokens } from "./cookies.js";
 import { store } from "./store.js";
-import { handleRedirect } from "./url.js";
-import { exchange } from "./refresh.js";
 import { throwFormattedError } from "./utils.js";
-import {
-  getMfaHeaders,
-  handleMfaRequired,
-  clearMfa,
-} from "./authentication.js";
-import { getPkceRequestQueryParams, redirectWithPkce } from "./pkce.js";
+import { handleLoginResponse } from "./authentication.js";
+import { getMfaHeaders } from "./mfa.js";
+import { getPkceRequestQueryParams } from "./pkce.js";
 
 /**
  * Verify that proper identifier is available for the channel
@@ -52,17 +46,21 @@ export async function sendVerificationCode({
       email,
     });
 
-    const { data: res } = await post(`/auth/code`, {
-      channel,
-      email,
-      phoneNumber,
-      name,
-      username,
-      data,
-      tenantId: store.tenantId,
-    }, {
-      headers: getMfaHeaders()
-    });
+    const { data: res } = await post(
+      `/auth/code`,
+      {
+        channel,
+        email,
+        phoneNumber,
+        name,
+        username,
+        data,
+        tenantId: store.tenantId,
+      },
+      {
+        headers: getMfaHeaders(),
+      }
+    );
     return res;
   } catch (error) {
     throwFormattedError(error);
@@ -82,6 +80,11 @@ export async function loginWithVerificationCode({
   email,
   phoneNumber,
   redirect,
+  handleUpstreamResponse,
+  handleMfaRequired,
+  handlePkceRequired,
+  handleTokens,
+  handleRedirect,
 } = {}) {
   try {
     enforceChannel({
@@ -105,32 +108,16 @@ export async function loginWithVerificationCode({
       }
     );
 
-    if (data.hasOwnProperty("tokens")) {
-      clearMfa();
-      setCookiesAndTokens(data.tokens);
-      await exchange(data);
-      handleRedirect({ redirect, data });
-      return data;
-    }
-
-    if (data.hasOwnProperty("firstFactorToken")) {
-      handleMfaRequired(data);
-      return data;
-    }
-
-    if (data.authorizationCode) {
-      const url = redirect || data.redirectTo;
-      if (url) {
-        redirectWithPkce(url, data.authorizationCode);
-        return;
-      } else {
-        // We can't exchange the authorizationCode for tokens, because we don't have the verifier code
-        // that matches our challenge code.
-        throw new Error("Received a PKCE (mobile auth) response from the server, but no redirect was provided. Please set the redirect to the app that initiated the request.")
-      }
-    }
-
-    throw new Error("Problem logging in.");
+    // Handle the API response to the login request
+    return handleLoginResponse({
+      data,
+      redirect,
+      handleUpstreamResponse,
+      handleMfaRequired,
+      handlePkceRequired,
+      handleTokens,
+      handleRedirect,
+    });
   } catch (error) {
     throwFormattedError(error);
   }

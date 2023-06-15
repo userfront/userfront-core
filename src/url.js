@@ -28,7 +28,7 @@ export function getQueryAttr(attrName) {
  * @property {Object} data The response object from the API
  * @returns
  */
-export const handleRedirect = ({ redirect, data }) => {
+export const defaultHandleRedirect = (redirect, data) => {
   if (redirect === false) return;
   // If redirect is the boolean true, redirect to the default redirect path, not to "/true"
   if (redirect === true) {

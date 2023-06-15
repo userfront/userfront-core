@@ -1,7 +1,7 @@
 import { get } from "./api.js";
 import { privateIPRegex } from "./constants.js";
 import { store } from "./store.js";
-import { setFirstFactors } from "./authentication.js";
+import { setFirstFactors } from "./mfa.js";
 
 /**
  * Global mode object

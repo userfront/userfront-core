@@ -2,11 +2,8 @@ import {
   isAccessTokenLocallyValid,
   isRefreshTokenLocallyValid,
 } from "./tokens.js";
-import {
-  authenticationData,
-  isMfaRequired,
-  clearMfa,
-} from "./authentication.js";
+import { authenticationData } from "./authentication.js";
+import { isMfaRequired, clearMfa } from "./mfa.js";
 import { refresh } from "./refresh.js";
 
 /**

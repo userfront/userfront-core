@@ -1,16 +1,9 @@
 import { get, post } from "./api.js";
-import { setCookiesAndTokens } from "./cookies.js";
 import { store } from "./store.js";
-import { handleRedirect } from "./url.js";
-import { exchange } from "./refresh.js";
 import { throwFormattedError } from "./utils.js";
-import {
-  isMfaRequired,
-  getMfaHeaders,
-  handleMfaRequired,
-  clearMfa,
-} from "./authentication.js";
-import { getPkceRequestQueryParams, redirectWithPkce } from "./pkce.js";
+import { handleLoginResponse } from "./authentication.js";
+import { isMfaRequired, getMfaHeaders } from "./mfa.js";
+import { getPkceRequestQueryParams } from "./pkce.js";
 
 /**
  * Log a user in with a TOTP authenticator code or a TOTP backup code,
@@ -36,9 +29,13 @@ export async function loginWithTotp({
   username,
   phoneNumber,
   redirect,
+  handleUpstreamResponse,
+  handleMfaRequired,
+  handlePkceRequired,
+  handleTokens,
+  handleRedirect,
 } = {}) {
   try {
-
     const { data } = await post(
       `/auth/totp`,
       {
@@ -58,32 +55,16 @@ export async function loginWithTotp({
       }
     );
 
-    if (data.hasOwnProperty("tokens")) {
-      clearMfa();
-      setCookiesAndTokens(data.tokens);
-      await exchange(data);
-      handleRedirect({ redirect, data });
-      return data;
-    }
-
-    if (data.hasOwnProperty("firstFactorToken")) {
-      handleMfaRequired(data);
-      return data;
-    }
-
-    if (data.authorizationCode) {
-      const url = redirect || data.redirectTo;
-      if (url) {
-        redirectWithPkce(url, data.authorizationCode);
-        return;
-      } else {
-        // We can't exchange the authorizationCode for tokens, because we don't have the verifier code
-        // that matches our challenge code.
-        throw new Error("Received a PKCE (mobile auth) response from the server, but no redirect was provided. Please set the redirect to the app that initiated the request.")
-      }
-    }
-
-    throw new Error("Problem logging in.");
+    // Handle the API response to the login request
+    return handleLoginResponse({
+      data,
+      redirect,
+      handleUpstreamResponse,
+      handleMfaRequired,
+      handlePkceRequired,
+      handleTokens,
+      handleRedirect,
+    });
   } catch (error) {
     throwFormattedError(error);
   }
@@ -97,6 +78,7 @@ export async function getTotp() {
       });
       return data;
     }
+
     if (!store.tokens.accessToken) {
       throw new Error(`getTotp() was called without a JWT access token.`);
     }

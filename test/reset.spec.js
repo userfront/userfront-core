@@ -7,7 +7,8 @@ import {
   idTokenUserDefaults,
   mockWindow,
 } from "./config/utils.js";
-import { setCookiesAndTokens, removeAllCookies } from "../src/cookies.js";
+import { removeAllCookies } from "../src/cookies.js";
+import { setCookiesAndTokens } from "../src/authentication.js";
 import {
   sendResetLink,
   updatePassword,

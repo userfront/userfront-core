@@ -1,4 +1,5 @@
-import { authenticationData, getMfaHeaders } from "../../src/authentication.js";
+import { authenticationData } from "../../src/authentication.js";
+import { getMfaHeaders } from "../../src/mfa.js";
 
 /**
  * Assert that authenticationData matches the secondFactors
@@ -14,13 +15,6 @@ export function assertAuthenticationDataMatches(response) {
   expect(authenticationData.firstFactorToken).toEqual(
     response.data.firstFactorToken
   );
-}
-
-export function assertNoUser(user) {
-  const userFields = Object.values(user).filter(
-    (val) => typeof val !== "function"
-  );
-  expect(userFields).toEqual([]);
 }
 
 export const pkceParams = (codeChallenge) =>

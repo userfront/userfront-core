@@ -1,11 +1,8 @@
 import { get, post } from "./api.js";
 import { store } from "./store.js";
 import { throwFormattedError } from "./utils.js";
-import {
-  isMfaRequired,
-  getMfaHeaders,
-  handleLoginResponse,
-} from "./authentication.js";
+import { handleLoginResponse } from "./authentication.js";
+import { isMfaRequired, getMfaHeaders } from "./mfa.js";
 import { getPkceRequestQueryParams } from "./pkce.js";
 
 /**
@@ -33,6 +30,8 @@ export async function loginWithTotp({
   phoneNumber,
   redirect,
   handleUpstreamResponse,
+  handleMfaRequired,
+  handlePkceRequired,
   handleTokens,
   handleRedirect,
 } = {}) {
@@ -61,6 +60,8 @@ export async function loginWithTotp({
       data,
       redirect,
       handleUpstreamResponse,
+      handleMfaRequired,
+      handlePkceRequired,
       handleTokens,
       handleRedirect,
     });
@@ -77,6 +78,7 @@ export async function getTotp() {
       });
       return data;
     }
+
     if (!store.tokens.accessToken) {
       throw new Error(`getTotp() was called without a JWT access token.`);
     }

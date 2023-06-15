@@ -1,7 +1,8 @@
 import { post, put } from "./api.js";
 import { store } from "./store.js";
 import { throwFormattedError } from "./utils.js";
-import { getMfaHeaders, handleLoginResponse } from "./authentication.js";
+import { handleLoginResponse } from "./authentication.js";
+import { getMfaHeaders } from "./mfa.js";
 import { getPkceRequestQueryParams } from "./pkce.js";
 
 /**
@@ -80,6 +81,8 @@ export async function loginWithVerificationCode({
   phoneNumber,
   redirect,
   handleUpstreamResponse,
+  handleMfaRequired,
+  handlePkceRequired,
   handleTokens,
   handleRedirect,
 } = {}) {
@@ -110,6 +113,8 @@ export async function loginWithVerificationCode({
       data,
       redirect,
       handleUpstreamResponse,
+      handleMfaRequired,
+      handlePkceRequired,
       handleTokens,
       handleRedirect,
     });

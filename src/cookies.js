@@ -1,7 +1,6 @@
 import Cookies from "js-cookie";
 import { store } from "./store.js";
-import { exchange } from "./refresh.js";
-import { setTokensFromCookies, unsetTokens } from "./tokens.js";
+import { unsetTokens } from "./tokens.js";
 
 /**
  * Set a cookie value based on the given options.
@@ -65,22 +64,4 @@ export function removeAllCookies() {
   removeCookie(store.tokens.idTokenName);
   removeCookie(store.tokens.refreshTokenName);
   unsetTokens();
-}
-
-/**
- * Set the cookies from a tokens object, and add to the local store.
- * @param {Object} tokens
- */
-export function setCookiesAndTokens(tokens) {
-  setCookie(tokens.access.value, tokens.access.cookieOptions, "access");
-  setCookie(tokens.id.value, tokens.id.cookieOptions, "id");
-  if (tokens.refresh && tokens.refresh.value) {
-    setCookie(tokens.refresh.value, tokens.refresh.cookieOptions, "refresh");
-  }
-  setTokensFromCookies();
-}
-
-export async function defaultHandleTokens(tokens, data) {
-  setCookiesAndTokens(tokens);
-  await exchange(data);
 }

@@ -1,26 +1,26 @@
 import { post, put } from "./api.js";
-import { setCookiesAndTokens } from "./cookies.js";
+import { setCookiesAndTokens } from "./authentication.js";
 import { store } from "./store.js";
 import { getQueryAttr, defaultHandleRedirect } from "./url.js";
 import { throwFormattedError } from "./utils.js";
-import { exchange } from "./refresh.js";
-import {
-  getMfaHeaders,
-  handleMfaRequired,
-  handleLoginResponse,
-  clearMfa,
-} from "./authentication.js";
-import { getPkceRequestQueryParams, redirectWithPkce } from "./pkce.js";
+import { handleLoginResponse } from "./authentication.js";
+import { getMfaHeaders } from "./mfa.js";
+import { getPkceRequestQueryParams } from "./pkce.js";
 
 /**
  * Register a new user with username, name, email, and password.
  * Redirect the browser after successful signup based on the redirectTo value returned.
- * @param {String} username
- * @param {String} name
- * @param {String} email
- * @param {String} password
- * @param {Object} userData - alias for the user.data object, since "data" is used in the response
- * @param {String} redirect - do not redirect if false, or redirect to a specific path
+ * @property {String} username
+ * @property {String} name
+ * @property {String} email
+ * @property {String} password
+ * @property {Object} userData - alias for the user.data object, since "data" is used in the response
+ * @property {String} redirect - do not redirect if false, or redirect to a specific path
+ * @property {Function} handleUpstreamResponse
+ * @property {Function} handleMfaRequired
+ * @property {Function} handlePkceRequired
+ * @property {Function} handleTokens
+ * @property {Function} handleRedirect
  */
 export async function signupWithPassword({
   username,
@@ -30,6 +30,8 @@ export async function signupWithPassword({
   userData,
   redirect,
   handleUpstreamResponse,
+  handleMfaRequired,
+  handlePkceRequired,
   handleTokens,
   handleRedirect,
 } = {}) {
@@ -55,6 +57,8 @@ export async function signupWithPassword({
       data,
       redirect,
       handleUpstreamResponse,
+      handleMfaRequired,
+      handlePkceRequired,
       handleTokens,
       handleRedirect,
     });
@@ -66,15 +70,19 @@ export async function signupWithPassword({
 /**
  * Log a user in with email/username and password.
  * Redirect the browser after successful login based on the redirectTo value returned.
- * @param {Object} params
- * @param {string} params.email The user's email. One of email/username/emailOrUsername should be present.
- * @param {string} params.username The user's username. One of email/username/emailOrUsername should be present.
- * @param {string} params.emailOrUsername Either the user's email or username. One of email/username/emailOrUsername should be present.
- * @param {string} params.password
- * @param {string | boolean} params.redirect
+ * @property {String} email The user's email. One of email/username/emailOrUsername should be present.
+ * @property {String} username The user's username. One of email/username/emailOrUsername should be present.
+ * @property {String} emailOrUsername Either the user's email or username. One of email/username/emailOrUsername should be present.
+ * @property {String} password
+ * @property {String|Boolean} redirect
  *  URL to redirect to after login, or false to suppress redirect. Otherwise, redirects to the after-login path set on the server.
- * @param {object} params.options
- * @param {boolean} params.options.noResetEmail
+ * @property {Function} handleUpstreamResponse
+ * @property {Function} handleMfaRequired
+ * @property {Function} handlePkceRequired
+ * @property {Function} handleTokens
+ * @property {Function} handleRedirect
+ * @property {Object} options
+ * @property {Boolean} options.noResetEmail
  *  By default, Userfront sends a password reset email if a user without a password tries to log in with a password.
  *  Set options.noResetEmail = true to override this behavior and return an error instead.
  *
@@ -86,6 +94,8 @@ export async function loginWithPassword({
   password,
   redirect,
   handleUpstreamResponse,
+  handleMfaRequired,
+  handlePkceRequired,
   handleTokens,
   handleRedirect,
   options,
@@ -111,6 +121,8 @@ export async function loginWithPassword({
       data,
       redirect,
       handleUpstreamResponse,
+      handleMfaRequired,
+      handlePkceRequired,
       handleTokens,
       handleRedirect,
     });

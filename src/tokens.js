@@ -3,6 +3,8 @@ import { store } from "./store.js";
 import { setUser, unsetUser } from "./user.js";
 import { refresh } from "./refresh.js";
 import { isJwtLocallyValid } from "./utils.js";
+import { setCookiesAndTokens } from "./authentication.js";
+import { exchange } from "./refresh.js";
 
 store.tokens = store.tokens || {};
 store.tokens.refresh = refresh;
@@ -76,6 +78,17 @@ export function isAccessTokenLocallyValid() {
  */
 export function isRefreshTokenLocallyValid() {
   return isJwtLocallyValid(store.tokens.refreshToken);
+}
+
+/**
+ * Set the cookies and store.tokens based on a tokens object
+ * @property {Object} tokens An object containing JWT access, refresh, and ID tokens
+ * @property {Object} data The response object from the API
+ * @returns
+ */
+export async function defaultHandleTokens(tokens, data) {
+  setCookiesAndTokens(tokens);
+  await exchange(data);
 }
 
 /**

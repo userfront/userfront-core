@@ -21,7 +21,7 @@ import { user } from "./user.js";
 import "./user.methods.js";
 import { refresh } from "./refresh.js";
 import { apiUrl } from "./constants.js";
-import { resetMfa } from "./authentication.js";
+import { resetMfa } from "./mfa.js";
 
 let initCallbacks = [];
 

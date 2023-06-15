@@ -1,4 +1,4 @@
-import { setCookiesAndTokens } from "./cookies.js";
+import { setCookiesAndTokens } from "./authentication.js";
 
 export const iframeOrigin = "https://auth.userfront.net";
 const iframeId = "uf-auth-frame";

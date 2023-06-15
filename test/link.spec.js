@@ -12,7 +12,6 @@ import {
 } from "./config/utils.js";
 import {
   assertAuthenticationDataMatches,
-  assertNoUser,
   mfaHeaders,
   noMfaHeaders,
   pkceParams,
@@ -22,15 +21,14 @@ import {
   loginWithLink,
   sendPasswordlessLink,
 } from "../src/link.js";
-import { exchange } from "../src/refresh.js";
 import { defaultHandleRedirect } from "../src/url.js";
-import { defaultHandleTokens } from "../src/cookies.js";
+import { defaultHandleTokens } from "../src/tokens.js";
 import * as Pkce from "../src/pkce.js";
 
 jest.mock("../src/api.js");
 jest.mock("../src/refresh.js");
 jest.mock("../src/url.js");
-jest.mock("../src/cookies.js");
+jest.mock("../src/tokens.js");
 jest.mock("../src/pkce.js");
 
 mockWindow({
@@ -294,12 +292,11 @@ describe("loginWithLink", () => {
     expect(defaultHandleTokens).toHaveBeenCalledWith(data.tokens, data);
 
     // Should not call defaultHandleRedirect
-    expect(defaultHandleRedirect).toHaveBeenCalledWith(false, data);
+    expect(defaultHandleRedirect).not.toHaveBeenCalled();
   });
 
   it("should handle an MFA Required response", async () => {
-    exchange.mockClear();
-
+    // Mock the API response
     api.put.mockImplementationOnce(() => mockMfaRequiredResponse);
 
     const payload = {
@@ -321,10 +318,9 @@ describe("loginWithLink", () => {
     // Should have updated the MFA service state
     assertAuthenticationDataMatches(mockMfaRequiredResponse);
 
-    // Should not have set the user object, called exchange, or redirected
-    assertNoUser(Userfront.user);
-    expect(exchange).not.toHaveBeenCalled();
-    expect(window.location.assign).not.toHaveBeenCalled();
+    // Should not have set the user object or redirected
+    expect(defaultHandleRedirect).not.toHaveBeenCalled();
+    expect(defaultHandleTokens).not.toHaveBeenCalled();
 
     // Should have returned MFA options & firstFactorToken
     expect(data).toEqual(mockMfaRequiredResponse.data);
@@ -333,7 +329,6 @@ describe("loginWithLink", () => {
   it("should include the firstFactorToken if this is the second factor", async () => {
     // Set up the MFA service
     setMfaRequired();
-    exchange.mockClear();
     api.put.mockImplementationOnce(() => mockResponse);
     const payload = {
       token: "some-token",
@@ -412,9 +407,10 @@ describe("loginWithLink", () => {
       expect(data).toEqual(mockPkceRequiredResponse.data);
 
       // Should have requested PKCE redirect with the correct params
-      expect(Pkce.redirectWithPkce).toHaveBeenCalledWith(
+      expect(Pkce.defaultHandlePkceRequired).toHaveBeenCalledWith(
+        data.authorizationCode,
         data.redirectTo,
-        data.authorizationCode
+        data
       );
     });
   });

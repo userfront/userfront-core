@@ -1,30 +1,30 @@
 import Userfront from "../src/index.js";
 import api from "../src/api.js";
 import { unsetUser } from "../src/user.js";
+import { store } from "../src/store.js";
 import {
   createAccessToken,
   createIdToken,
   createRefreshToken,
-  idTokenUserDefaults,
   createMfaRequiredResponse,
   setMfaRequired,
 } from "./config/utils.js";
 import {
   assertAuthenticationDataMatches,
-  assertNoUser,
   mfaHeaders,
   noMfaHeaders,
   pkceParams,
 } from "./config/assertions.js";
 import { setCookie, removeAllCookies } from "../src/cookies.js";
+import { defaultHandleTokens, setTokensFromCookies } from "../src/tokens.js";
 import { defaultHandleRedirect } from "../src/url.js";
 import { loginWithTotp } from "../src/totp.js";
-import { exchange } from "../src/refresh.js";
 import * as Pkce from "../src/pkce.js";
 
 jest.mock("../src/api.js");
 jest.mock("../src/refresh.js");
 jest.mock("../src/url.js");
+jest.mock("../src/tokens.js");
 jest.mock("../src/pkce.js");
 
 const tenantId = "abcd9876";
@@ -89,18 +89,11 @@ describe("loginWithTotp()", () => {
     // Should return the correct value
     expect(data).toEqual(mockResponseCopy.data);
 
-    // Should have called exchange() with the API's response
-    expect(exchange).toHaveBeenCalledWith(mockResponseCopy.data);
+    // Should call defaultHandleTokens correctly
+    expect(defaultHandleTokens).toHaveBeenCalledWith(data.tokens, data);
 
-    // Should have set the user object
-    expect(Userfront.user.email).toEqual(newAttrs.email);
-    expect(Userfront.user.username).toEqual(newAttrs.username);
-
-    // Should redirect correctly
-    expect(defaultHandleRedirect).toHaveBeenCalledWith(
-      mockResponseCopy.data.redirectTo,
-      mockResponseCopy.data
-    );
+    // Should call defaultHandleRedirect correctly
+    expect(defaultHandleRedirect).toHaveBeenCalledWith(data.redirectTo, data);
   });
 
   it("should login with backupCode", async () => {
@@ -135,18 +128,11 @@ describe("loginWithTotp()", () => {
     // Should return the correct value
     expect(data).toEqual(mockResponseCopy.data);
 
-    // Should have called exchange() with the API's response
-    expect(exchange).toHaveBeenCalledWith(mockResponseCopy.data);
+    // Should call defaultHandleTokens correctly
+    expect(defaultHandleTokens).toHaveBeenCalledWith(data.tokens, data);
 
-    // Should have set the user object
-    expect(Userfront.user.email).toEqual(newAttrs.email);
-    expect(Userfront.user.username).toEqual(newAttrs.username);
-
-    // Should redirect correctly
-    expect(defaultHandleRedirect).toHaveBeenCalledWith(
-      mockResponseCopy.data.redirectTo,
-      mockResponseCopy.data
-    );
+    // Should call defaultHandleRedirect correctly
+    expect(defaultHandleRedirect).toHaveBeenCalledWith(data.redirectTo, data);
   });
 
   it("should login with explicit redirect", async () => {
@@ -177,18 +163,11 @@ describe("loginWithTotp()", () => {
     // Should return the correct value
     expect(data).toEqual(mockResponse.data);
 
-    // Should have called exchange() with the API's response
-    expect(exchange).toHaveBeenCalledWith(mockResponse.data);
+    // Should call defaultHandleTokens correctly
+    expect(defaultHandleTokens).toHaveBeenCalledWith(data.tokens, data);
 
-    // Should have set the user object
-    expect(Userfront.user.email).toEqual(idTokenUserDefaults.email);
-    expect(Userfront.user.userId).toEqual(idTokenUserDefaults.userId);
-
-    // Should redirect correctly
-    expect(defaultHandleRedirect).toHaveBeenCalledWith(
-      redirect,
-      mockResponse.data
-    );
+    // Should call defaultHandleRedirect correctly
+    expect(defaultHandleRedirect).toHaveBeenCalledWith(redirect, data);
   });
 
   it("should login with redirect = false", async () => {
@@ -217,18 +196,11 @@ describe("loginWithTotp()", () => {
     // Should return the correct value
     expect(data).toEqual(mockResponse.data);
 
-    // Should have called exchange() with the API's response
-    expect(exchange).toHaveBeenCalledWith(mockResponse.data);
+    // Should call defaultHandleTokens correctly
+    expect(defaultHandleTokens).toHaveBeenCalledWith(data.tokens, data);
 
-    // Should have set the user object
-    expect(Userfront.user.email).toEqual(idTokenUserDefaults.email);
-    expect(Userfront.user.userId).toEqual(idTokenUserDefaults.userId);
-
-    // Should redirect correctly
-    expect(defaultHandleRedirect).toHaveBeenCalledWith(
-      false,
-      mockResponse.data
-    );
+    // Should not call defaultHandleRedirect
+    expect(defaultHandleRedirect).not.toHaveBeenCalled();
   });
 
   it("should handle an MFA Required response", async () => {
@@ -258,7 +230,7 @@ describe("loginWithTotp()", () => {
     assertAuthenticationDataMatches(mockMfaRequiredResponse);
 
     // Should not have set the user object or redirected
-    assertNoUser(Userfront.user);
+    expect(defaultHandleTokens).not.toHaveBeenCalled();
     expect(defaultHandleRedirect).not.toHaveBeenCalled();
 
     // Should have returned MFA options & firstFactorToken
@@ -339,7 +311,7 @@ describe("loginWithTotp()", () => {
         userId: 123,
         totpCode: "123456",
       };
-      await loginWithTotp({
+      const data = await loginWithTotp({
         redirect: false,
         ...payload,
       });
@@ -354,10 +326,12 @@ describe("loginWithTotp()", () => {
         pkceParams("code")
       );
 
-      // Should have requested redirect with the correct params
-      const params = Pkce.redirectWithPkce.mock.lastCall;
-      expect(params[0]).toEqual("my-app:/login");
-      expect(params[1]).toEqual("auth-code");
+      // Should have requested PKCE redirect with the correct params
+      expect(Pkce.defaultHandlePkceRequired).toHaveBeenCalledWith(
+        data.authorizationCode,
+        data.redirectTo,
+        data
+      );
     });
   });
 });
@@ -376,9 +350,10 @@ describe("user.getTotp()", () => {
 
   beforeEach(() => {
     Userfront.init(tenantId);
-    // Log the user in
-    setCookie(accessToken, { secure: "true", sameSite: "Lax" }, "access");
     jest.resetAllMocks();
+    // Log the user in
+    store.tokens.accessToken = accessToken;
+    setCookie(accessToken, { secure: "true", sameSite: "Lax" }, "access");
   });
 
   it("should request the user's TOTP information", async () => {
@@ -417,6 +392,7 @@ describe("user.getTotp()", () => {
   it("should throw an error if the user is not logged in", async () => {
     // Log the user out
     removeAllCookies();
+    store.tokens.accessToken = undefined;
 
     // Call user.getTotp()
     expect(() => Userfront.user.getTotp()).rejects.toThrowError(

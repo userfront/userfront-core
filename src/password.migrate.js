@@ -1,24 +1,26 @@
 import { post } from "./api.js";
 import { store } from "./store.js";
 import { throwFormattedError } from "./utils.js";
-import { getMfaHeaders, handleLoginResponse } from "./authentication.js";
+import { handleLoginResponse } from "./authentication.js";
+import { getMfaHeaders } from "./mfa.js";
 import { getPkceRequestQueryParams } from "./pkce.js";
 
 /**
  * Log a user in with email/username and password using the password/migrate endpoint.
  * Redirect the browser after successful login based on the redirectTo value returned.
- * @param {Object} params
- * @param {string} params.email The user's email. One of email/username/emailOrUsername should be present.
- * @param {string} params.username The user's username. One of email/username/emailOrUsername should be present.
- * @param {string} params.emailOrUsername Either the user's email or username. One of email/username/emailOrUsername should be present.
- * @param {string} params.password
- * @param {string | boolean} params.redirect
+ * @property {String} email The user's email. One of email/username/emailOrUsername should be present.
+ * @property {String} username The user's username. One of email/username/emailOrUsername should be present.
+ * @property {String} emailOrUsername Either the user's email or username. One of email/username/emailOrUsername should be present.
+ * @property {String} password
+ * @property {String|Boolean} redirect
  *  URL to redirect to after login, or false to suppress redirect. Otherwise, redirects to the after-login path set on the server.
- * @param {function} params.handleUpstreamResponse Function to run after receiving response, but before handling tokens
- * @param {function} params.handleTokens Function to run after handling upstream response, but before redirection
- * @param {function} params.handleRedirect Function to run after handling tokens
- * @param {object} params.options
- * @param {boolean} params.options.noResetEmail
+ * @property {Function} handleUpstreamResponse
+ * @property {Function} handleMfaRequired
+ * @property {Function} handlePkceRequired
+ * @property {Function} handleTokens
+ * @property {Function} handleRedirect
+ * @property {Object} options
+ * @property {Boolean} options.noResetEmail
  *  By default, Userfront sends a password reset email if a user without a password tries to log in with a password.
  *  Set options.noResetEmail = true to override this behavior and return an error instead.
  *
@@ -30,6 +32,8 @@ export async function loginWithPasswordMigrate({
   password,
   redirect,
   handleUpstreamResponse,
+  handleMfaRequired,
+  handlePkceRequired,
   handleTokens,
   handleRedirect,
   options,
@@ -57,6 +61,8 @@ export async function loginWithPasswordMigrate({
       data,
       redirect,
       handleUpstreamResponse,
+      handleMfaRequired,
+      handlePkceRequired,
       handleTokens,
       handleRedirect,
     });

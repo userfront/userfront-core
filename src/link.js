@@ -2,21 +2,29 @@ import { post, put } from "./api.js";
 import { store } from "./store.js";
 import { getQueryAttr } from "./url.js";
 import { throwFormattedError } from "./utils.js";
-import { getMfaHeaders, handleLoginResponse } from "./authentication.js";
+import { handleLoginResponse } from "./authentication.js";
+import { getMfaHeaders } from "./mfa.js";
 import { getPkceRequestQueryParams } from "./pkce.js";
 
 /**
  * Log a user in with a token/uuid combo passed into the function or
  * in the URL querystring. ?token=...&uuid=...
- * @param {String} token
- * @param {UUID} uuid
- * @param {String} redirect - do not redirect if false, or redirect to given path
+ * @property {String} token
+ * @property {UUID} uuid
+ * @property {String} redirect - do not redirect if false, or redirect to given path
+ * @property {Function} handleUpstreamResponse
+ * @property {Function} handleMfaRequired
+ * @property {Function} handlePkceRequired
+ * @property {Function} handleTokens
+ * @property {Function} handleRedirect
  */
 export async function loginWithLink({
   token,
   uuid,
   redirect,
   handleUpstreamResponse,
+  handleMfaRequired,
+  handlePkceRequired,
   handleTokens,
   handleRedirect,
 } = {}) {
@@ -43,6 +51,8 @@ export async function loginWithLink({
       data,
       redirect,
       handleUpstreamResponse,
+      handleMfaRequired,
+      handlePkceRequired,
       handleTokens,
       handleRedirect,
     });

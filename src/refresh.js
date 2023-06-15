@@ -1,6 +1,6 @@
 import Cookies from "js-cookie";
 import { get } from "./api.js";
-import { setCookiesAndTokens } from "./cookies.js";
+import { setCookiesAndTokens } from "./authentication.js";
 import { store } from "./store.js";
 // import { getIframe, postMessageAsPromise } from "./iframe.js";
 import { throwFormattedError } from "./utils.js";

@@ -1,7 +1,6 @@
 import { store } from "./store.js";
-import { setCookiesAndTokens } from "./cookies.js";
+import { defaultHandleTokens } from "./cookies.js";
 import { defaultHandleRedirect, getQueryAttr } from "./url.js";
-import { exchange } from "./refresh.js";
 import { redirectWithPkce } from "./pkce.js";
 
 // Data specific to the MFA service
@@ -137,8 +136,7 @@ export async function handleLoginResponse({
     if (typeof handleTokens === "function") {
       await handleTokens(data.tokens, data);
     } else {
-      setCookiesAndTokens(data.tokens);
-      await exchange(data);
+      await defaultHandleTokens(data.tokens, data);
     }
   }
 

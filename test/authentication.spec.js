@@ -1,16 +1,24 @@
 import Userfront from "../src/index.js";
-import api from "../src/api.js";
+import { mockWindow } from "./config/utils.js";
 import {
   authenticationData,
   setFirstFactors,
   isMfaRequired,
   handleMfaRequired,
+  handleLoginResponse,
   getMfaHeaders,
   clearMfa,
   resetMfa,
 } from "../src/authentication.js";
+import * as Pkce from "../src/pkce.js";
 
 jest.mock("../src/api.js");
+jest.mock("../src/pkce.js");
+
+mockWindow({
+  origin: "https://example.com",
+  href: "https://example.com/login",
+});
 
 const blankAuthenticationData = {
   ...authenticationData,
@@ -19,6 +27,7 @@ const blankAuthenticationData = {
 describe("Authentication service", () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    window.location.href = `https://example.com/login`;
     for (const key in authenticationData) {
       authenticationData[key] = blankAuthenticationData[key];
     }
@@ -121,10 +130,13 @@ describe("Authentication service", () => {
           channel: "sms",
         },
       ]);
-      expect(authenticationData.firstFactorToken).toEqual("uf_test_first_factor_207a4d56ce7e40bc9dafb0918fb6599a")
+      expect(authenticationData.firstFactorToken).toEqual(
+        "uf_test_first_factor_207a4d56ce7e40bc9dafb0918fb6599a"
+      );
     });
     it("should overwrite the firstFactorToken on sequential successful first factor logins", () => {
-      const firstFactorToken1 = "uf_test_first_factor_207a4d56ce7e40bc9dafb0918fb6599a"
+      const firstFactorToken1 =
+        "uf_test_first_factor_207a4d56ce7e40bc9dafb0918fb6599a";
       const mockResponse1 = {
         message: "MFA required",
         isMfaRequired: true,
@@ -148,7 +160,8 @@ describe("Authentication service", () => {
       };
       handleMfaRequired(mockResponse1);
       expect(authenticationData.firstFactorToken).toEqual(firstFactorToken1);
-      const firstFactorToken2 = "uf_test_first_factor_12345d56ce7e4ae3677ea0918fbabcde"
+      const firstFactorToken2 =
+        "uf_test_first_factor_12345d56ce7e4ae3677ea0918fbabcde";
       const mockResponse2 = {
         message: "MFA required",
         isMfaRequired: true,
@@ -171,8 +184,82 @@ describe("Authentication service", () => {
         },
       };
       handleMfaRequired(mockResponse2);
-      expect(authenticationData.firstFactorToken).toEqual(firstFactorToken2)
-    })
+      expect(authenticationData.firstFactorToken).toEqual(firstFactorToken2);
+    });
+  });
+
+  describe("handleLoginResponse()", () => {
+    describe("redirection", () => {
+      it("should redirect to redirect argument when present", async () => {
+        const redirect = "/argument";
+        window.location.href = `https://example.com/login?redirect=/redirect-query`; // should ignore
+        await handleLoginResponse({
+          data: {
+            redirectTo: "/data", // should ignore
+          },
+          redirect,
+        });
+
+        // Should have redirected correctly
+        expect(window.location.assign).toHaveBeenCalledWith(redirect);
+      });
+
+      it("should redirect to querystring redirect when other redirect argument is not present", async () => {
+        const redirectQuery = "/redirect-query";
+        window.location.href = `https://example.com/login?redirect=${redirectQuery}`;
+        await handleLoginResponse({
+          data: {
+            redirectTo: "/data", // should ignore
+          },
+          redirect: undefined,
+        });
+
+        // Should have redirected correctly
+        expect(window.location.assign).toHaveBeenCalledWith(redirectQuery);
+      });
+
+      it("should redirect to data.redirectTo when other redirect methods are not present", async () => {
+        const redirectTo = "/data";
+        await handleLoginResponse({
+          data: {
+            redirectTo,
+          },
+          redirect: undefined,
+        });
+
+        // Should have redirected correctly
+        expect(window.location.assign).toHaveBeenCalledWith(redirectTo);
+      });
+
+      it("should not redirect when redirect=false", async () => {
+        window.location.href = `https://example.com/login?redirect=/redirect-query`; // should ignore
+        await handleLoginResponse({
+          data: {
+            redirectTo: "/data", // should ignore
+          },
+          redirect: false,
+        });
+
+        // Should have redirected correctly
+        expect(window.location.assign).not.toHaveBeenCalled();
+      });
+    });
+
+    it(`should handle "PKCE required" response`, async () => {
+      const data = {
+        message: "PKCE required",
+        authorizationCode: "auth-code",
+        redirectTo: "my-app:/login",
+      };
+
+      await handleLoginResponse({ data });
+
+      // Should have requested PKCE redirect with the correct params
+      expect(Pkce.redirectWithPkce).toHaveBeenCalledWith(
+        data.redirectTo,
+        data.authorizationCode
+      );
+    });
   });
 
   describe("getMfaHeaders()", () => {

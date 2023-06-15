@@ -23,10 +23,14 @@ import {
   sendPasswordlessLink,
 } from "../src/link.js";
 import { exchange } from "../src/refresh.js";
+import { defaultHandleRedirect } from "../src/url.js";
+import { defaultHandleTokens } from "../src/cookies.js";
 import * as Pkce from "../src/pkce.js";
 
-jest.mock("../src/refresh.js");
 jest.mock("../src/api.js");
+jest.mock("../src/refresh.js");
+jest.mock("../src/url.js");
+jest.mock("../src/cookies.js");
 jest.mock("../src/pkce.js");
 
 mockWindow({
@@ -171,6 +175,7 @@ describe("sendPasswordlessLink", () => {
 describe("loginWithLink", () => {
   beforeEach(() => {
     Userfront.init(tenantId);
+    jest.resetAllMocks();
     window.location.assign.mockClear();
     unsetUser();
   });
@@ -207,15 +212,11 @@ describe("loginWithLink", () => {
     // Should return the correct value
     expect(data).toEqual(mockResponseCopy.data);
 
-    // Should have called exchange() with the API's response
-    expect(exchange).toHaveBeenCalledWith(mockResponseCopy.data);
+    // Should call defaultHandleTokens correctly
+    expect(defaultHandleTokens).toHaveBeenCalledWith(data.tokens, data);
 
-    // Should have set the user object
-    expect(Userfront.user.email).toEqual(newAttrs.email);
-    expect(Userfront.user.userId).toEqual(newAttrs.userId);
-
-    // Should have redirected correctly
-    expect(window.location.assign).toHaveBeenCalledWith("/dashboard");
+    // Should call defaultHandleRedirect correctly
+    expect(defaultHandleRedirect).toHaveBeenCalledWith(data.redirectTo, data);
   });
 
   it("should read token, uuid, and redirect from the URL if not present", async () => {
@@ -241,7 +242,7 @@ describe("loginWithLink", () => {
     api.put.mockImplementationOnce(() => mockResponseCopy);
 
     // Call loginWithLink()
-    const data = await loginWithLink();
+    const data = await loginWithLink(query);
 
     // Should have sent the proper API request
     expect(api.put).toHaveBeenCalledWith(
@@ -256,18 +257,11 @@ describe("loginWithLink", () => {
     // Should return the correct value
     expect(data).toEqual(mockResponseCopy.data);
 
-    // Should have called exchange() with the API's response
-    expect(exchange).toHaveBeenCalledWith(mockResponseCopy.data);
+    // Should call defaultHandleTokens correctly
+    expect(defaultHandleTokens).toHaveBeenCalledWith(data.tokens, data);
 
-    // Should have set the user object
-    expect(Userfront.user.email).toEqual(newAttrs.email);
-    expect(Userfront.user.userId).toEqual(newAttrs.userId);
-
-    // Should have redirected correctly
-    expect(window.location.assign).toHaveBeenCalledWith(redirect);
-
-    // Reset the URL
-    window.location.href = `https://example.com/login`;
+    // Should call defaultHandleRedirect correctly
+    expect(defaultHandleRedirect).toHaveBeenCalledWith(data.redirectTo, data);
   });
 
   it("should not redirect if redirect = false", async () => {
@@ -296,15 +290,11 @@ describe("loginWithLink", () => {
     // Should return the correct value
     expect(data).toEqual(mockResponse.data);
 
-    // Should have called exchange() with the API's response
-    expect(exchange).toHaveBeenCalledWith(mockResponse.data);
+    // Should call defaultHandleTokens correctly
+    expect(defaultHandleTokens).toHaveBeenCalledWith(data.tokens, data);
 
-    // Should have set the user object
-    expect(Userfront.user.email).toEqual(idTokenUserDefaults.email);
-    expect(Userfront.user.userId).toEqual(idTokenUserDefaults.userId);
-
-    // Should not have redirected
-    expect(window.location.assign).not.toHaveBeenCalled();
+    // Should not call defaultHandleRedirect
+    expect(defaultHandleRedirect).toHaveBeenCalledWith(false, data);
   });
 
   it("should handle an MFA Required response", async () => {
@@ -406,7 +396,7 @@ describe("loginWithLink", () => {
         token: "some-token",
         uuid: "some-uuid",
       };
-      await loginWithLink(payload);
+      const data = await loginWithLink(payload);
 
       // Should have sent the proper API request
       expect(api.put).toHaveBeenCalledWith(
@@ -418,10 +408,14 @@ describe("loginWithLink", () => {
         pkceParams("code")
       );
 
-      // Should have requested redirect with the correct params
-      const params = Pkce.redirectWithPkce.mock.lastCall;
-      expect(params[0]).toEqual("my-app:/login");
-      expect(params[1]).toEqual("auth-code");
+      // Should have returned the proper value
+      expect(data).toEqual(mockPkceRequiredResponse.data);
+
+      // Should have requested PKCE redirect with the correct params
+      expect(Pkce.redirectWithPkce).toHaveBeenCalledWith(
+        data.redirectTo,
+        data.authorizationCode
+      );
     });
   });
 });

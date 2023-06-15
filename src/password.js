@@ -29,6 +29,9 @@ export async function signupWithPassword({
   password,
   userData,
   redirect,
+  handleUpstreamResponse,
+  handleTokens,
+  handleRedirect,
 } = {}) {
   try {
     const { data } = await post(
@@ -46,29 +49,15 @@ export async function signupWithPassword({
         params: getPkceRequestQueryParams(),
       }
     );
-    if (data.tokens) {
-      clearMfa();
-      setCookiesAndTokens(data.tokens);
-      await exchange(data);
-      defaultHandleRedirect(redirect, data);
-      return data;
-    } else if (data.firstFactorToken) {
-      handleMfaRequired(data);
-      return data;
-    } else if (data.authorizationCode) {
-      const url = redirect || data.redirectTo;
-      if (url) {
-        redirectWithPkce(url, data.authorizationCode);
-      } else {
-        // We can't exchange the authorizationCode for tokens, because we don't have the verifier code
-        // that matches our challenge code.
-        throw new Error(
-          "Received a PKCE (mobile auth) response from the server, but no redirect was provided. Please set the redirect to the app that initiated the request."
-        );
-      }
-    } else {
-      throw new Error("Please try again.");
-    }
+
+    // Handle the API response to the login request
+    return handleLoginResponse({
+      data,
+      redirect,
+      handleUpstreamResponse,
+      handleTokens,
+      handleRedirect,
+    });
   } catch (error) {
     throwFormattedError(error);
   }

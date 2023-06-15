@@ -1,5 +1,6 @@
 import Cookies from "js-cookie";
 import { store } from "./store.js";
+import { exchange } from "./refresh.js";
 import { setTokensFromCookies, unsetTokens } from "./tokens.js";
 
 /**
@@ -77,4 +78,9 @@ export function setCookiesAndTokens(tokens) {
     setCookie(tokens.refresh.value, tokens.refresh.cookieOptions, "refresh");
   }
   setTokensFromCookies();
+}
+
+export async function defaultHandleTokens(tokens, data) {
+  setCookiesAndTokens(tokens);
+  await exchange(data);
 }

@@ -150,6 +150,8 @@ export declare function signup({
   channel,
   redirect,
   handleUpstreamResponse,
+  handleMfaRequired,
+  handlePkceRequired,
   handleTokens,
   handleRedirect,
 }: {
@@ -163,6 +165,8 @@ export declare function signup({
   channel?: "sms" | "email";
   redirect?: string | boolean;
   handleUpstreamResponse?: function;
+  handleMfaRequired?: function;
+  handlePkceRequired?: function;
   handleTokens?: function;
   handleRedirect?: function;
 }): Promise<SignupResponse>;
@@ -191,6 +195,8 @@ export declare function login({
   // Other
   redirect,
   handleUpstreamResponse,
+  handleMfaRequired,
+  handlePkceRequired,
   handleTokens,
   handleRedirect,
   options,
@@ -211,6 +217,8 @@ export declare function login({
   channel?: "sms" | "email";
   redirect?: string | boolean;
   handleUpstreamResponse?: function;
+  handleMfaRequired?: function;
+  handlePkceRequired?: function;
   handleTokens?: function;
   handleRedirect?: function;
   options?: object;

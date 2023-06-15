@@ -7,15 +7,20 @@ import { setupPkce } from "./pkce.js";
 /**
  * Register a user via the provided method. This method serves to call other
  * methods, depending on the "method" parameter passed in.
- * @param {String} method
- * @param {String} email
- * @param {String} username
- * @param {String} phoneNumber
- * @param {String} name
- * @param {Object} data - Object for custom user fields
- * @param {String} password
- * @param {String} channel "sms" or "email"
- * @param {String} redirect - do not redirect if false, or redirect to given path
+ * @property {String} method
+ * @property {String} email
+ * @property {String} username
+ * @property {String} phoneNumber
+ * @property {String} name
+ * @property {Object} data - Object for custom user fields
+ * @property {String} password
+ * @property {String} channel "sms" or "email"
+ * @property {String} redirect - do not redirect if false, or redirect to given path
+ * @property {Function} handleUpstreamResponse
+ * @property {Function} handleMfaRequired
+ * @property {Function} handlePkceRequired
+ * @property {Function} handleTokens
+ * @property {Function} handleRedirect
  */
 export async function signup({
   method,
@@ -27,6 +32,11 @@ export async function signup({
   password,
   channel,
   redirect,
+  handleUpstreamResponse,
+  handleMfaRequired,
+  handlePkceRequired,
+  handleTokens,
+  handleRedirect,
 } = {}) {
   setupPkce();
   if (!method) {
@@ -48,6 +58,11 @@ export async function signup({
         password,
         userData: data,
         redirect,
+        handleUpstreamResponse,
+        handleMfaRequired,
+        handlePkceRequired,
+        handleTokens,
+        handleRedirect,
       });
     case "passwordless":
       return sendPasswordlessLink({ email, name, username, userData: data });

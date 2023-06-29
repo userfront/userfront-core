@@ -34,7 +34,7 @@ export function setFirstFactors(authentication) {
  * Check if MFA is required for the ongoing signup or login flow.
  * @returns {Boolean} true if MFA is currently required
  */
-export function isMfaRequired() {
+export function isFirstFactorTokenPresent() {
   return !!authenticationData.firstFactorToken;
 }
 
@@ -46,7 +46,7 @@ export function isMfaRequired() {
  * @param {Object} data
  */
 export function defaultHandleMfaRequired(firstFactorToken, data) {
-  if (!data.isMfaRequired) {
+  if (!data.isFirstFactorTokenPresent) {
     // If we've logged in or signed up successfully,
     // clear the MFA service state.
     if (data.message === "OK") {

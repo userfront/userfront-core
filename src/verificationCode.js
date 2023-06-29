@@ -2,7 +2,7 @@ import { post, put } from "./api.js";
 import { store } from "./store.js";
 import { throwFormattedError } from "./utils.js";
 import { handleLoginResponse } from "./authentication.js";
-import { getMfaHeaders } from "./mfa.js";
+import { getMfaHeaders, isFirstFactorTokenPresent } from "./mfa.js";
 import { getPkceRequestQueryParams } from "./pkce.js";
 
 /**
@@ -12,9 +12,17 @@ import { getPkceRequestQueryParams } from "./pkce.js";
  * @property {String} email
  */
 function enforceChannel({ channel, phoneNumber, email }) {
+  // Enforce valid channels
   if (channel !== "sms" && channel !== "email") {
     throw new Error("Invalid channel");
   }
+
+  // Do not require phoneNumber or email when firstFactorToken is included
+  if (isFirstFactorTokenPresent()) {
+    return;
+  }
+
+  // Check that phoneNumber or email are present if needed
   if (channel === "sms" && !phoneNumber) {
     throw new Error(`SMS verification code requires "phoneNumber"`);
   } else if (channel === "email" && !email) {

@@ -2,7 +2,7 @@ import { get, post } from "./api.js";
 import { store } from "./store.js";
 import { throwFormattedError } from "./utils.js";
 import { handleLoginResponse } from "./authentication.js";
-import { isMfaRequired, getMfaHeaders } from "./mfa.js";
+import { isFirstFactorTokenPresent, getMfaHeaders } from "./mfa.js";
 import { getPkceRequestQueryParams } from "./pkce.js";
 
 /**
@@ -72,7 +72,7 @@ export async function loginWithTotp({
 
 export async function getTotp() {
   try {
-    if (isMfaRequired()) {
+    if (isFirstFactorTokenPresent()) {
       const { data } = await get(`/auth/totp`, {
         headers: getMfaHeaders(),
       });

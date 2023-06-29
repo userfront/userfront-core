@@ -4,7 +4,7 @@ import { authenticationData } from "../src/authentication.js";
 import {
   setFirstFactors,
   defaultHandleMfaRequired,
-  isMfaRequired,
+  isFirstFactorTokenPresent,
   getMfaHeaders,
   clearMfa,
   resetMfa,
@@ -48,7 +48,7 @@ describe("MFA service", () => {
     it("should set the MFA service state if it is an MFA Required response", () => {
       const mockResponse = {
         message: "MFA required",
-        isMfaRequired: true,
+        isFirstFactorTokenPresent: true,
         firstFactorToken:
           "uf_test_first_factor_207a4d56ce7e40bc9dafb0918fb6599a",
         authentication: {
@@ -88,7 +88,7 @@ describe("MFA service", () => {
         "uf_test_first_factor_207a4d56ce7e40bc9dafb0918fb6599a";
       const mockResponse1 = {
         message: "MFA required",
-        isMfaRequired: true,
+        isFirstFactorTokenPresent: true,
         firstFactorToken: firstFactorToken1,
         authentication: {
           firstFactor: {
@@ -113,7 +113,7 @@ describe("MFA service", () => {
         "uf_test_first_factor_12345d56ce7e4ae3677ea0918fbabcde";
       const mockResponse2 = {
         message: "MFA required",
-        isMfaRequired: true,
+        isFirstFactorTokenPresent: true,
         firstFactorToken: firstFactorToken2,
         authentication: {
           firstFactor: {
@@ -175,14 +175,14 @@ describe("MFA service", () => {
     });
   });
 
-  describe("isMfaRequired()", () => {
+  describe("isFirstFactorTokenPresent()", () => {
     it("should return true if MFA is currently required", () => {
       authenticationData.firstFactorToken = "uf_live_first_factor_sometoken";
-      expect(isMfaRequired()).toEqual(true);
+      expect(isFirstFactorTokenPresent()).toEqual(true);
     });
     it("should return false if MFA is not currently required", () => {
       authenticationData.firstFactorToken = "";
-      expect(isMfaRequired()).toEqual(false);
+      expect(isFirstFactorTokenPresent()).toEqual(false);
     });
   });
 

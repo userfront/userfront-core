@@ -58,7 +58,7 @@ describe("init() method with domain option", () => {
         authentication: {
           firstFactors: [],
           secondFactors: [],
-          isMfaRequired: false,
+          isFirstFactorTokenPresent: false,
           isEnabled: false,
         },
       },

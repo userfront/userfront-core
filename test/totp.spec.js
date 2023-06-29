@@ -244,7 +244,6 @@ describe("loginWithTotp()", () => {
 
     // Call loginWithTotp()
     const payload = {
-      userId: 123,
       totpCode: "123456",
     };
     await loginWithTotp({

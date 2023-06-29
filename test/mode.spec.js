@@ -60,7 +60,7 @@ describe("Mode tests", () => {
           authentication: {
             firstFactors: [{ channel: "email", strategy: "password" }],
             secondFactors: [],
-            isMfaRequired: false,
+            isFirstFactorTokenPresent: false,
             isEnabled: true,
           },
         },
@@ -89,7 +89,7 @@ describe("Mode tests", () => {
           authentication: {
             firstFactors: [{ channel: "email", strategy: "password" }],
             secondFactors: [],
-            isMfaRequired: false,
+            isFirstFactorTokenPresent: false,
             isEnabled: true,
           },
         },
@@ -118,7 +118,7 @@ describe("Mode tests", () => {
           authentication: {
             firstFactors: [{ channel: "email", strategy: "password" }],
             secondFactors: [],
-            isMfaRequired: false,
+            isFirstFactorTokenPresent: false,
             isEnabled: true,
           },
         },
@@ -147,7 +147,7 @@ describe("Mode tests", () => {
           authentication: {
             firstFactors: [{ channel: "email", strategy: "password" }],
             secondFactors: [],
-            isMfaRequired: false,
+            isFirstFactorTokenPresent: false,
             isEnabled: true,
           },
         },

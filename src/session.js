@@ -3,7 +3,7 @@ import {
   isRefreshTokenLocallyValid,
 } from "./tokens.js";
 import { authenticationData } from "./authentication.js";
-import { isMfaRequired, clearMfa } from "./mfa.js";
+import { isFirstFactorTokenPresent, clearMfa } from "./mfa.js";
 import { refresh } from "./refresh.js";
 
 /**
@@ -42,7 +42,7 @@ export async function getSession() {
   const isLoggedIn = await getIsLoggedIn();
   return {
     isLoggedIn,
-    needsSecondFactor: isMfaRequired(),
+    needsSecondFactor: isFirstFactorTokenPresent(),
     firstFactors: authenticationData.firstFactors,
     secondFactors: authenticationData.secondFactors,
     resetMfaState: clearMfa,

@@ -7,7 +7,7 @@
  * This is *mostly* intended as a smoke test, to make sure changes don't break NextJS compatibility.
  * New tests should always go in init.spec.js, and may be duplicated here. Some tests don't make
  * sense for the Node environment, so they're not present here.
- * 
+ *
  * Reference on Jest environment overrides: https://jestjs.io/docs/configuration#testenvironment-string
  */
 
@@ -71,7 +71,7 @@ describe("init() method in Node/SSR environment (should not crash)", () => {
           authentication: {
             firstFactors: [],
             secondFactors: [],
-            isMfaRequired: false,
+            isFirstFactorTokenPresent: false,
             isEnabled: false,
           },
         },
@@ -198,4 +198,4 @@ describe("init() method in Node/SSR environment (should not crash)", () => {
       });
     });
   });
-})
+});

@@ -142,11 +142,6 @@ describe("sendVerificationCode()", () => {
 
     const payload = {
       channel: "sms",
-      phoneNumber: "+15558769098",
-      email: "user@example.com",
-      username: "new-by-sms",
-      name: "New User",
-      data: { attr: "custom-data" },
     };
 
     // Call sendVerificationCode()
@@ -369,7 +364,6 @@ describe("loginWithVerificationCode()", () => {
     // Call loginWithVerificationCode()
     const payload = {
       channel: "sms",
-      phoneNumber: "+15558769912",
       verificationCode: "123467",
     };
     await loginWithVerificationCode(payload);
@@ -380,7 +374,6 @@ describe("loginWithVerificationCode()", () => {
       {
         tenantId,
         channel: payload.channel,
-        phoneNumber: payload.phoneNumber,
         verificationCode: payload.verificationCode,
       },
       mfaHeaders

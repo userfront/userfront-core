@@ -46,7 +46,7 @@ export function isFirstFactorTokenPresent() {
  * @param {Object} data
  */
 export function defaultHandleMfaRequired(firstFactorToken, data) {
-  if (!data.isFirstFactorTokenPresent) {
+  if (!data.isMfaRequired) {
     // If we've logged in or signed up successfully,
     // clear the MFA service state.
     if (data.message === "OK") {

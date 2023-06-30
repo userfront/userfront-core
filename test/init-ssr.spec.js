@@ -71,8 +71,6 @@ describe("init() method in Node/SSR environment (should not crash)", () => {
           authentication: {
             firstFactors: [],
             secondFactors: [],
-            isFirstFactorTokenPresent: false,
-            isEnabled: false,
           },
         },
       });

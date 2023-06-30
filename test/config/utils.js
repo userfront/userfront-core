@@ -153,7 +153,7 @@ export function createMfaRequiredResponse({
   const response = {
     mode: mode || "live",
     message: "MFA required",
-    isFirstFactorTokenPresent: true,
+    isMfaRequired: true,
     firstFactorToken: createFirstFactorToken(),
     authentication: {
       firstFactor: _firstFactor,

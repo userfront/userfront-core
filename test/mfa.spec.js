@@ -48,7 +48,7 @@ describe("MFA service", () => {
     it("should set the MFA service state if it is an MFA Required response", () => {
       const mockResponse = {
         message: "MFA required",
-        isFirstFactorTokenPresent: true,
+        isMfaRequired: true,
         firstFactorToken:
           "uf_test_first_factor_207a4d56ce7e40bc9dafb0918fb6599a",
         authentication: {
@@ -88,7 +88,7 @@ describe("MFA service", () => {
         "uf_test_first_factor_207a4d56ce7e40bc9dafb0918fb6599a";
       const mockResponse1 = {
         message: "MFA required",
-        isFirstFactorTokenPresent: true,
+        isMfaRequired: true,
         firstFactorToken: firstFactorToken1,
         authentication: {
           firstFactor: {
@@ -113,7 +113,7 @@ describe("MFA service", () => {
         "uf_test_first_factor_12345d56ce7e4ae3677ea0918fbabcde";
       const mockResponse2 = {
         message: "MFA required",
-        isFirstFactorTokenPresent: true,
+        isMfaRequired: true,
         firstFactorToken: firstFactorToken2,
         authentication: {
           firstFactor: {

@@ -44,10 +44,10 @@ describe("utils", () => {
       );
     });
     // Property-based test for DEV-228 (accents are modified in user's name upon login) is fixed
-    it("should correctly decode a JWT containing Unicode characters (excluding surrogate pairs)", () => {
+    it("should correctly decode a JWT containing characters from the full Unicode space", () => {
       fc.assert(
         fc.property(
-          fc.unicodeString({ minLength: 1, maxLength: 100 })
+          fc.fullUnicodeString({ minLength: 1, maxLength: 100 })
             .map((str) => JSON.parse(JSON.stringify({ str })).str),
           (name) => {
             const token = createIdToken({ name });
@@ -56,7 +56,7 @@ describe("utils", () => {
           }
         )
       );
-    });
+    })
     // Example-based test for DEV-228
     it("should correctly decode a JWT containing the string 'foo bår'", () => {
       const name = "foo bãr";

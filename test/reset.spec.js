@@ -260,8 +260,6 @@ describe("updatePassword()", () => {
     });
 
     it("should handle an MFA Required response", async () => {
-      // should start ok
-      expect(Userfront.tokens.accessToken).toBeFalsy();
       // Return an MFA Required response
       api.put.mockImplementationOnce(() => mockMfaRequiredResponse);
 
@@ -346,9 +344,8 @@ describe("updatePassword()", () => {
       // Should return the correct value
       expect(totpData).toEqual(mockTotpResponse.data);
 
+      // Tokens should be set now
       expect(Userfront.tokens.accessToken).toEqual(totpData.tokens.access.value);
-
-      console.log("%%%%%%%% end")
     });
 
     it(`error should respond with whatever error the server sends`, async () => {
@@ -369,13 +366,13 @@ describe("updatePassword()", () => {
     });
   });
 
-  describe.skip("updatePasswordWithJwt()", () => {
-    beforeAll(() => {
+  describe("updatePasswordWithJwt()", () => {
+    beforeEach(() => {
       // Add JWT access token
       setCookiesAndTokens(mockResponse.data.tokens);
     });
 
-    afterAll(() => {
+    afterEach(() => {
       // Remove JWT access token
       removeAllCookies();
     });

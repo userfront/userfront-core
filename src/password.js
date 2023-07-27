@@ -160,6 +160,11 @@ export async function sendResetLink(email) {
  * @property {String} uuid
  * @property {String} token
  * @property {String} redirect
+ * @property {Function} handleUpstreamResponse - 
+ * @property {Function} handleMfaRequired
+ * @property {Function} handlePkceRequired
+ * @property {Function} handleTokens
+ * @property {Function} handleRedirect
  * @returns
  */
 export async function updatePassword({
@@ -169,11 +174,26 @@ export async function updatePassword({
   uuid,
   token,
   redirect,
+  handleUpstreamResponse,
+  handleMfaRequired,
+  handlePkceRequired,
+  handleTokens,
+  handleRedirect,
 }) {
   switch (method) {
     // Allow for explicit setting of method
     case "link":
-      return updatePasswordWithLink({ uuid, token, password, redirect });
+      return updatePasswordWithLink({
+        uuid,
+        token,
+        password,
+        redirect,
+        handleUpstreamResponse,
+        handleMfaRequired,
+        handlePkceRequired,
+        handleTokens,
+        handleRedirect,
+      });
     case "jwt":
       return updatePasswordWithJwt({ password, existingPassword });
     default:
@@ -181,7 +201,17 @@ export async function updatePassword({
       token = token || getQueryAttr("token");
       uuid = uuid || getQueryAttr("uuid");
       if (uuid && token) {
-        return updatePasswordWithLink({ uuid, token, password, redirect });
+        return updatePasswordWithLink({
+          uuid,
+          token,
+          password,
+          redirect,
+          handleUpstreamResponse,
+          handleMfaRequired,
+          handlePkceRequired,
+          handleTokens,
+          handleRedirect,
+        });
       } else if (store.tokens.accessToken) {
         return updatePasswordWithJwt({ password, existingPassword });
       } else {
@@ -199,6 +229,11 @@ export async function updatePasswordWithLink({
   token,
   password,
   redirect,
+  handleUpstreamResponse,
+  handleMfaRequired,
+  handlePkceRequired,
+  handleTokens,
+  handleRedirect,
 }) {
   try {
     token = token || getQueryAttr("token");
@@ -210,15 +245,15 @@ export async function updatePasswordWithLink({
       token,
       password,
     });
-    if (data.tokens) {
-      setCookiesAndTokens(data.tokens);
-      defaultHandleRedirect(redirect, data);
-      return data;
-    } else {
-      throw new Error(
-        "There was a problem resetting your password. Please try again."
-      );
-    }
+    return handleLoginResponse({
+      data,
+      redirect,
+      handleUpstreamResponse,
+      handleMfaRequired,
+      handlePkceRequired,
+      handleTokens,
+      handleRedirect,
+    });
   } catch (error) {
     throwFormattedError(error);
   }

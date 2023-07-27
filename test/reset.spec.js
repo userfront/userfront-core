@@ -5,6 +5,7 @@ import {
   createIdToken,
   createRefreshToken,
   idTokenUserDefaults,
+  createMfaRequiredResponse,
   mockWindow,
 } from "./config/utils.js";
 import { removeAllCookies } from "../src/cookies.js";
@@ -16,6 +17,9 @@ import {
   updatePasswordWithLink,
   updatePasswordWithJwt,
 } from "../src/password.js";
+import { unsetTokens } from "../src/tokens.js";
+import { loginWithTotp } from "../src/totp.js";
+import { assertAuthenticationDataMatches, mfaHeaders } from "./config/assertions.js";
 
 jest.mock("../src/api.js");
 
@@ -38,6 +42,14 @@ const mockResponse = {
     redirectTo: "/dashboard",
   },
 };
+
+// Mock "MFA Required" API response
+const mockMfaRequiredResponse = createMfaRequiredResponse({
+  firstFactor: {
+    strategy: "password",
+    channel: "email",
+  },
+});
 
 describe("sendResetLink()", () => {
   beforeEach(() => {
@@ -74,6 +86,7 @@ describe("updatePassword()", () => {
     jest.resetAllMocks();
     // Remove token and uuid from the URL
     window.location.href = "https://example.com/reset";
+    unsetTokens();
   });
 
   describe("No method set (method is inferred)", () => {
@@ -246,6 +259,95 @@ describe("updatePassword()", () => {
       expect(window.location.assign).not.toHaveBeenCalled();
     });
 
+    it("should handle an MFA Required response", async () => {
+      // Return an MFA Required response
+      api.put.mockImplementationOnce(() => mockMfaRequiredResponse);
+
+      const payload = {
+        token: "token",
+        uuid: "uuid",
+        password: "password"
+      };
+
+      // Send the request
+      const data = await updatePasswordWithLink({ ...payload });
+
+      // Should have update the MFA service state
+      assertAuthenticationDataMatches(mockMfaRequiredResponse);
+
+      // Should not have set the user object or redirected
+      expect(Userfront.tokens.accessToken).toBeFalsy();
+      expect(window.location.assign).not.toHaveBeenCalled();
+
+      // Should have returned MFA options & firstFactorToken
+      expect(data).toEqual(mockMfaRequiredResponse.data);
+    });
+
+    it("should handle an MFA Required response followed by a second factor", async () => {
+      // Return an MFA Required response
+      api.put.mockImplementationOnce(() => mockMfaRequiredResponse);
+
+      const payload = {
+        token: "token",
+        uuid: "uuid",
+        password: "password"
+      };
+
+      // Send the request
+      const data = await updatePasswordWithLink({ ...payload });
+
+      // Should have update the MFA service state
+      assertAuthenticationDataMatches(mockMfaRequiredResponse);
+
+      // Should not have set the user object or redirected
+      expect(Userfront.tokens.accessToken).toBeFalsy();
+      expect(window.location.assign).not.toHaveBeenCalled();
+
+      // Should have returned MFA options & firstFactorToken
+      expect(data).toEqual(mockMfaRequiredResponse.data);
+
+      // Mock TOTP login response
+      const mockTotpResponse = {
+        data: {
+          tokens: {
+            access: { value: createAccessToken() },
+            id: { value: createIdToken() },
+            refresh: { value: createRefreshToken() },
+          },
+          nonce: "nonce-value",
+          redirectTo: "/dashboard",
+        },
+      };
+
+      // Return a success response for TOTP second factor
+      api.post.mockImplementationOnce(() => mockTotpResponse);
+
+      // Call loginWithTotp() as second factor
+      const totpPayload = {
+        totpCode: "123456",
+      };
+      const totpData = await loginWithTotp({
+        redirect: false,
+        ...totpPayload,
+      });
+
+      // Should have sent the proper API request
+      expect(api.post).toHaveBeenCalledWith(
+        `/auth/totp`,
+        {
+          tenantId,
+          ...totpPayload,
+        },
+        mfaHeaders
+      );
+
+      // Should return the correct value
+      expect(totpData).toEqual(mockTotpResponse.data);
+
+      // Tokens should be set now
+      expect(Userfront.tokens.accessToken).toEqual(totpData.tokens.access.value);
+    });
+
     it(`error should respond with whatever error the server sends`, async () => {
       // Mock the API response
       const mockResponse = {
@@ -265,12 +367,12 @@ describe("updatePassword()", () => {
   });
 
   describe("updatePasswordWithJwt()", () => {
-    beforeAll(() => {
+    beforeEach(() => {
       // Add JWT access token
       setCookiesAndTokens(mockResponse.data.tokens);
     });
 
-    afterAll(() => {
+    afterEach(() => {
       // Remove JWT access token
       removeAllCookies();
     });

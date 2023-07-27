@@ -281,10 +281,6 @@ export async function updatePasswordWithJwt({ password, existingPassword }) {
       }
     );
 
-    if (typeof handleUpstreamResponse === "function") {
-      await handleUpstreamResponse(data.upstreamResponse, data);
-    }
-
     return data;
   } catch (error) {
     throwFormattedError(error);

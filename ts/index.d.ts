@@ -304,3 +304,5 @@ export declare function sendVerificationCode({
   username?: string;
   data?: object;
 }): Promise<VerificationCodeResponse>;
+
+export declare function build(options: { toolId: string });

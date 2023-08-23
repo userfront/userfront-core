@@ -12,7 +12,8 @@ interface User {
   image?: string;
   data?: object;
   username?: string;
-  confirmedAt?: string;
+  isEmailConfirmed?: boolean;
+  isPhoneNumberConfirmed?: boolean;
   isConfirmed?: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -25,6 +26,7 @@ interface User {
   updatePassword?: function;
   getTotp?: function;
   hasRole?: function;
+  confirmedAt?: string; // Deprecated
 }
 export declare const user: User;
 
@@ -70,15 +72,17 @@ interface SignupResponse {
   image?: string;
   locked?: boolean;
   data?: object;
+  isEmailConfirmed?: boolean;
+  isPhoneNumberConfirmed?: boolean;
   isConfirmed?: boolean;
   lastActiveAt?: string;
   lastMessagedAt?: string;
-  confirmedAt?: string;
   createdAt?: string;
   updatedAt?: string;
   tenant?: object;
   authorization?: object;
-  uuid?: string; // deprecated
+  confirmedAt?: string; // Deprecated
+  uuid?: string; // Deprecated
   // Response
   tokens?: TokensObject;
   redirectTo?: string;

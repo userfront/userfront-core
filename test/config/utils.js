@@ -13,16 +13,20 @@ export const defaultIdTokenProperties = [
   "userId",
   "tenantId",
   "userUuid",
-  "isConfirmed",
-  "name",
   "email",
   "phoneNumber",
+  "name",
   "username",
   "image",
   "data",
-  "confirmedAt",
+  "isEmailConfirmed",
+  "isPhoneNumberConfirmed",
+  "confirmedEmailAt",
+  "confirmedPhoneNumberAt",
+  "isMfaRequired",
   "createdAt",
   "updatedAt",
+  "isConfirmed", // Deprecated
 ];
 
 // Properties on both tokens
@@ -32,7 +36,9 @@ const sharedTokenProperties = {
     userId: 33,
     tenantId: "abcd1234",
     userUuid: "c38d7119-4dca-403c-bc3c-a008c5115b5c",
-    isConfirmed: true,
+    isEmailConfirmed: true,
+    isPhoneNumberConfirmed: false,
+    isConfirmed: true, // Deprecated
   },
   token: {
     sessionId: "7b794d68-dc94-4829-bd68-596c5d2693b5",
@@ -53,6 +59,7 @@ export const accessTokenUserDefaults = {
 export const idTokenUserDefaults = {
   name: "John Doe",
   email: "johndoe@example.com",
+  phoneNumber: "+15558912810",
   username: "johndoe",
   image: "https://example.com/profile-image.png",
   data: {
@@ -66,7 +73,9 @@ export const idTokenUserDefaults = {
       lastLogin: `${new Date()}`,
     },
   },
-  confirmedAt: `${new Date()}`,
+  isMfaRequired: false,
+  confirmedEmailAt: `${new Date()}`,
+  confirmedPhoneNumberAt: `${new Date()}`,
   createdAt: `${new Date()}`,
   updatedAt: `${new Date()}`,
   ...sharedTokenProperties.user,
@@ -169,6 +178,8 @@ export function createMfaRequiredResponse({
     mode: mode || "live",
     message: "MFA required",
     isMfaRequired: true,
+    isEmailConfirmed: true,
+    isPhoneNumberConfirmed: false,
     firstFactorToken: createFirstFactorToken(),
     authentication: {
       firstFactor: _firstFactor,

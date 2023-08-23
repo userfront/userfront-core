@@ -20,14 +20,18 @@ export function setUser() {
     "name",
     "image",
     "data",
-    "confirmedAt",
     "createdAt",
     "updatedAt",
     "mode",
     "userId",
     "userUuid",
     "tenantId",
-    "isConfirmed",
+    "isEmailConfirmed",
+    "isPhoneNumberConfirmed",
+    "confirmedEmailAt",
+    "confirmedPhoneNumberAt",
+    "isMfaRequired",
+    "isConfirmed", // Deprecated
   ];
   for (const prop of propsToDefine) {
     if (prop === "update") return;

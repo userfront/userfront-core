@@ -76,7 +76,6 @@ interface SignupResponse {
   isPhoneNumberConfirmed?: boolean;
   isConfirmed?: boolean;
   lastActiveAt?: string;
-  lastMessagedAt?: string;
   createdAt?: string;
   updatedAt?: string;
   tenant?: object;

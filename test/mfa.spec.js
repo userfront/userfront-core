@@ -49,6 +49,8 @@ describe("MFA service", () => {
       const mockResponse = {
         message: "MFA required",
         isMfaRequired: true,
+        isEmailConfirmed: true,
+        isPhoneNumberConfirmed: false,
         firstFactorToken:
           "uf_test_first_factor_207a4d56ce7e40bc9dafb0918fb6599a",
         authentication: {
@@ -89,6 +91,8 @@ describe("MFA service", () => {
       const mockResponse1 = {
         message: "MFA required",
         isMfaRequired: true,
+        isEmailConfirmed: true,
+        isPhoneNumberConfirmed: false,
         firstFactorToken: firstFactorToken1,
         authentication: {
           firstFactor: {
@@ -114,6 +118,8 @@ describe("MFA service", () => {
       const mockResponse2 = {
         message: "MFA required",
         isMfaRequired: true,
+        isEmailConfirmed: true,
+        isPhoneNumberConfirmed: false,
         firstFactorToken: firstFactorToken2,
         authentication: {
           firstFactor: {

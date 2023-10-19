@@ -1,31 +1,44 @@
 import { store } from "./store.js";
 import { getQueryAttr } from "./url.js";
 
-export function getProviderLink({ provider, redirect }) {
+export function getProviderLink({ provider, redirect, providerId }) {
   if (!provider) throw new Error("Missing provider");
   if (!store.tenantId) throw new Error("Missing tenantId");
+  if (provider === "custom sso" && !providerId) {
+    throw new Error('method: "custom" requires "providerId" argument');
+  }
 
-  let url = `${store.baseUrl}auth/${provider}/login?tenant_id=${store.tenantId}&origin=${window.location.origin}`;
+  const providerType = provider === "custom sso" ? "custom" : provider;
+
+  const url = new URL(`${store.baseUrl}auth/${providerType}/login`);
+  url.searchParams.append("origin", window.location.origin);
+  url.searchParams.append("tenant_id", store.tenantId);
+
+  if (providerType === "custom") {
+    url.searchParams.append("provider_id", providerId);
+  }
 
   let redirectTo = redirect || getQueryAttr("redirect");
   if (redirect === false) {
     redirectTo = typeof document === "object" && document.location.pathname;
   }
   if (redirectTo) {
-    url += `&redirect=${encodeURIComponent(redirectTo)}`;
+    url.searchParams.append("redirect", redirectTo);
   }
 
-  return url;
+  // https://api.userfront.com/v0/auth/linkedin/login?tenant_id=abcdefg&origin=https%3A%2F%2Fexample.com&redirect=%2Fdashboard
+  return url.toString();
 }
 
 /**
  * Log in or register a user via SSO provider.
  * Redirect the browser after successful authentication and 302 redirect from server.
  * @param {String} provider Name of SSO provider
- * @param {String} redirect - do not redirect if false, or redirect to given path
+ * @param {String} [redirect] - do not redirect if false, or redirect to given path
+ * @param {String} [providerId] Provider ID of custom provider (only required for `{ provider: 'custom sso' }`)
  */
-export function signonWithSso({ provider, redirect }) {
+export function signonWithSso({ provider, redirect, providerId }) {
   if (!provider) throw new Error("Missing provider");
-  const url = getProviderLink({ provider, redirect });
+  const url = getProviderLink({ provider, redirect, providerId });
   window.location.assign(url);
 }

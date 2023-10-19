@@ -30,15 +30,73 @@ describe("SSO", () => {
       window.location.assign.mockClear();
     });
 
-    it.each(providers)("with each provider", (provider) => {
+    it.each(providers)("with each social provider", (provider) => {
       signonWithSso({ provider });
 
       expect(window.location.assign).toHaveBeenCalledTimes(1);
       expect(window.location.assign).toHaveBeenCalledWith(
         `https://api.userfront.com/v0/auth/${provider}/login?` +
+          `origin=${encodeURIComponent(window.location.origin)}&` +
           `tenant_id=${tenantId}&` +
-          `origin=${window.location.origin}&` +
           `redirect=${encodeURIComponent(getQueryAttr("redirect"))}`
+      );
+    });
+
+    it.each(providers)(
+      "redirects to social SSO provider location with redirect=false to not redirect after signup/login",
+      (provider) => {
+        signonWithSso({ provider, redirect: false });
+
+        expect(window.location.assign).toHaveBeenCalledTimes(1);
+        expect(window.location.assign).toHaveBeenCalledWith(
+          `https://api.userfront.com/v0/auth/${provider}/login?` +
+            `origin=${encodeURIComponent(window.location.origin)}&` +
+            `tenant_id=${tenantId}&` +
+            `redirect=${encodeURIComponent("/")}`
+        );
+      }
+    );
+
+    it("redirects to custom SSO provider location", () => {
+      const providerId = "fake-provider-id";
+      signonWithSso({ provider: "custom sso", providerId });
+
+      expect(window.location.assign).toHaveBeenCalledTimes(1);
+      expect(window.location.assign).toHaveBeenCalledWith(
+        `https://api.userfront.com/v0/auth/custom/login?` +
+          `origin=${encodeURIComponent(window.location.origin)}&` +
+          `tenant_id=${tenantId}&` +
+          `provider_id=${providerId}&` +
+          `redirect=${encodeURIComponent(getQueryAttr("redirect"))}`
+      );
+    });
+
+    it("redirects to custom SSO provider location with redirect", () => {
+      const providerId = "fake-provider-id";
+      const redirect = "/redirect-path";
+      signonWithSso({ provider: "custom sso", providerId, redirect });
+
+      expect(window.location.assign).toHaveBeenCalledTimes(1);
+      expect(window.location.assign).toHaveBeenCalledWith(
+        `https://api.userfront.com/v0/auth/custom/login?` +
+          `origin=${encodeURIComponent(window.location.origin)}&` +
+          `tenant_id=${tenantId}&` +
+          `provider_id=${providerId}&` +
+          `redirect=${encodeURIComponent(redirect)}`
+      );
+    });
+
+    it("redirects to custom SSO provider location with redirect=false to not redirect after signup/login", () => {
+      const providerId = "fake-provider-id";
+      signonWithSso({ provider: "custom sso", providerId, redirect: false });
+
+      expect(window.location.assign).toHaveBeenCalledTimes(1);
+      expect(window.location.assign).toHaveBeenCalledWith(
+        `https://api.userfront.com/v0/auth/custom/login?` +
+          `origin=${encodeURIComponent(window.location.origin)}&` +
+          `tenant_id=${tenantId}&` +
+          `provider_id=${providerId}&` +
+          `redirect=${encodeURIComponent("/")}`
       );
     });
   });

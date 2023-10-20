@@ -76,7 +76,7 @@ export async function login({
     case "linkedin":
     case "okta":
       return signonWithSso({ provider: method, redirect });
-    case "custom sso":
+    case "custom":
       return signonWithSso({ provider: method, redirect, providerId });
     case "password":
       return loginWithPassword({

@@ -119,15 +119,15 @@ describe("login()", () => {
     });
   });
 
-  describe(`{ method: "custom sso" }`, () => {
+  describe(`{ method: "custom" }`, () => {
     it(`should call signonWithSso() with provider ID`, () => {
       // Call login with the custom provider's ID
       const providerId = "fake-provider-id";
-      Userfront.login({ method: "custom sso", providerId });
+      Userfront.login({ method: "custom", providerId });
 
       // Assert that signonWithSso was called correctly
       expect(signonWithSso).toHaveBeenCalledWith({
-        provider: "custom sso",
+        provider: "custom",
         providerId,
       });
     });
@@ -136,11 +136,11 @@ describe("login()", () => {
       // Call login with the custom provider's ID & redirect
       const providerId = "fake-provider-id-1";
       const redirect = "/custom-path";
-      Userfront.login({ method: "custom sso", redirect, providerId });
+      Userfront.login({ method: "custom", redirect, providerId });
 
       // Assert that signonWithSso was called correctly
       expect(signonWithSso).toHaveBeenCalledWith({
-        provider: "custom sso",
+        provider: "custom",
         redirect,
         providerId,
       });

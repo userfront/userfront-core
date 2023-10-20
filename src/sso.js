@@ -2,19 +2,21 @@ import { store } from "./store.js";
 import { getQueryAttr } from "./url.js";
 
 export function getProviderLink({ provider, redirect, providerId }) {
-  if (!provider) throw new Error("Missing provider");
-  if (!store.tenantId) throw new Error("Missing tenantId");
-  if (provider === "custom sso" && !providerId) {
-    throw new Error('method: "custom" requires "providerId" argument');
+  if (!provider) {
+    throw new Error("Missing provider");
+  }
+  if (!store.tenantId) {
+    throw new Error("Missing tenantId");
+  }
+  if (provider === "custom" && !providerId) {
+    throw new Error("Missing providerId");
   }
 
-  const providerType = provider === "custom sso" ? "custom" : provider;
-
-  const url = new URL(`${store.baseUrl}auth/${providerType}/login`);
+  const url = new URL(`${store.baseUrl}auth/${provider}/login`);
   url.searchParams.append("origin", window.location.origin);
   url.searchParams.append("tenant_id", store.tenantId);
 
-  if (providerType === "custom") {
+  if (provider === "custom") {
     url.searchParams.append("provider_id", providerId);
   }
 

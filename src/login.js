@@ -24,7 +24,8 @@ import { setupPkce } from "./pkce.js";
  * @property {String} backupCode
  * @property {String} channel "sms" or "email"
  * @property {String} verificationCode
- * @property {String | Boolean} redirect - do not redirect if false, or redirect to given path
+ * @property {String} providerId ID of custom SSO provider
+ * @property {String|Boolean} redirect - do not redirect if false, or redirect to given path
  * @property {Function} handleUpstreamResponse
  * @property {Function} handleMfaRequired
  * @property {Function} handlePkceRequired
@@ -51,6 +52,8 @@ export async function login({
   // Verification code
   channel,
   verificationCode,
+  // Custom SSO
+  providerId,
   // Other
   redirect,
   handleUpstreamResponse,
@@ -73,6 +76,8 @@ export async function login({
     case "linkedin":
     case "okta":
       return signonWithSso({ provider: method, redirect });
+    case "custom":
+      return signonWithSso({ provider: method, redirect, providerId });
     case "password":
       return loginWithPassword({
         email,

@@ -15,6 +15,7 @@ import { setupPkce } from "./pkce.js";
  * @property {Object} data - Object for custom user fields
  * @property {String} password
  * @property {String} channel "sms" or "email"
+ * @property {String} providerId ID of custom SSO provider
  * @property {String} redirect - do not redirect if false, or redirect to given path
  * @property {Function} handleUpstreamResponse
  * @property {Function} handleMfaRequired
@@ -30,7 +31,11 @@ export async function signup({
   name,
   data,
   password,
+  // Verification code
   channel,
+  // Custom SSO
+  providerId,
+  // Misc.
   redirect,
   handleUpstreamResponse,
   handleMfaRequired,
@@ -51,6 +56,8 @@ export async function signup({
     case "linkedin":
     case "okta":
       return signonWithSso({ provider: method, redirect });
+    case "custom":
+      return signonWithSso({ provider: method, redirect, providerId });
     case "password":
       return signupWithPassword({
         username,

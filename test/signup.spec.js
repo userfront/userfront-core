@@ -86,6 +86,34 @@ describe("signup()", () => {
     });
   });
 
+  describe(`{ method: "custom" }`, () => {
+    it(`should call signonWithSso() with provider ID`, () => {
+      // Call signup with the custom provider's ID
+      const providerId = "fake-provider-id";
+      Userfront.signup({ method: "custom", providerId });
+
+      // Assert that signonWithSso was called correctly
+      expect(signonWithSso).toHaveBeenCalledWith({
+        provider: "custom",
+        providerId,
+      });
+    });
+
+    it(`should call signonWithSso() with redirect`, () => {
+      // Call signup with the custom provider's ID & redirect
+      const providerId = "fake-provider-id-1";
+      const redirect = "/custom-path";
+      Userfront.signup({ method: "custom", redirect, providerId });
+
+      // Assert that signonWithSso was called correctly
+      expect(signonWithSso).toHaveBeenCalledWith({
+        provider: "custom",
+        redirect,
+        providerId,
+      });
+    });
+  });
+
   describe(`{ method: "passwordless" }`, () => {
     it(`should call sendPasswordlessLink()`, () => {
       const email = "user@example.com";

@@ -2,7 +2,7 @@
 export declare function init(tenantId: string, options?: object): Promise<void>;
 
 // addInitCallback()
-export declare function addInitCallback(callback: function): void;
+export declare function addInitCallback(callback: Function): void;
 
 // user
 interface User {
@@ -22,10 +22,10 @@ interface User {
   userId?: number;
   userUuid?: string;
   // methods
-  update?: function;
-  updatePassword?: function;
-  getTotp?: function;
-  hasRole?: function;
+  update?: Function;
+  updatePassword?: Function;
+  getTotp?: Function;
+  hasRole?: Function;
   confirmedAt?: string; // Deprecated
 }
 export declare const user: User;
@@ -36,7 +36,7 @@ interface Tokens {
   accessTokenName: string;
   idToken: string;
   idTokenName: string;
-  refresh: function;
+  refresh: Function;
 }
 export declare const tokens: Tokens;
 
@@ -44,7 +44,7 @@ export declare const tokens: Tokens;
 interface Mode {
   value: "live" | "test";
   reason?: string;
-  setMode?: function;
+  setMode?: Function;
 }
 export declare const mode: Mode;
 
@@ -167,11 +167,11 @@ export declare function signup({
   password?: string;
   channel?: "sms" | "email";
   redirect?: string | boolean;
-  handleUpstreamResponse?: function;
-  handleMfaRequired?: function;
-  handlePkceRequired?: function;
-  handleTokens?: function;
-  handleRedirect?: function;
+  handleUpstreamResponse?: Function;
+  handleMfaRequired?: Function;
+  handlePkceRequired?: Function;
+  handleTokens?: Function;
+  handleRedirect?: Function;
 }): Promise<SignupResponse>;
 
 // login()
@@ -219,11 +219,11 @@ export declare function login({
   verificationCode?: string;
   channel?: "sms" | "email";
   redirect?: string | boolean;
-  handleUpstreamResponse?: function;
-  handleMfaRequired?: function;
-  handlePkceRequired?: function;
-  handleTokens?: function;
-  handleRedirect?: function;
+  handleUpstreamResponse?: Function;
+  handleMfaRequired?: Function;
+  handlePkceRequired?: Function;
+  handleTokens?: Function;
+  handleRedirect?: Function;
   options?: object;
 }): Promise<LoginResponse>;
 

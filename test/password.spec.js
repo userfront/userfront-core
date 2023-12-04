@@ -79,9 +79,8 @@ describe("signupWithPassword()", () => {
 
     // Should have sent the proper API request
     expect(api.post).toHaveBeenCalledWith(
-      `/auth/create`,
+      `/tenants/${tenantId}/auth/create`,
       {
-        tenantId,
         email: payload.email,
         name: payload.name,
         data: payload.userData,
@@ -114,9 +113,8 @@ describe("signupWithPassword()", () => {
 
     // Should have sent the proper API request
     expect(api.post).toHaveBeenCalledWith(
-      `/auth/create`,
+      `/tenants/${tenantId}/auth/create`,
       {
-        tenantId,
         email: payload.email,
         password: payload.password,
       },
@@ -157,11 +155,8 @@ describe("signupWithPassword()", () => {
 
     // Should have sent the proper API request
     expect(api.post).toHaveBeenCalledWith(
-      `/auth/create`,
-      {
-        tenantId,
-        ...payload,
-      },
+      `/tenants/${tenantId}/auth/create`,
+      payload,
       noMfaHeaders
     );
 
@@ -207,9 +202,8 @@ describe("signupWithPassword()", () => {
 
     // Should have sent the correct API request
     expect(api.post).toHaveBeenCalledWith(
-      `/auth/create`,
+      `/tenants/${tenantId}/auth/create`,
       {
-        tenantId,
         email: payload.email,
         password: payload.password,
       },
@@ -239,9 +233,8 @@ describe("signupWithPassword()", () => {
 
     // Should have sent the correct API request, with MFA headers
     expect(api.post).toHaveBeenCalledWith(
-      `/auth/create`,
+      `/tenants/${tenantId}/auth/create`,
       {
-        tenantId,
         email: payload.email,
         password: payload.password,
       },
@@ -271,11 +264,8 @@ describe("loginWithPassword()", () => {
 
       // Should have sent the proper API request
       expect(api.post).toHaveBeenCalledWith(
-        `/auth/basic`,
-        {
-          tenantId,
-          ...payload,
-        },
+        `/tenants/${tenantId}/auth/basic`,
+        payload,
         noMfaHeaders
       );
 
@@ -313,9 +303,8 @@ describe("loginWithPassword()", () => {
 
       // Should have sent the proper API request
       expect(api.post).toHaveBeenCalledWith(
-        `/auth/basic`,
+        `/tenants/${tenantId}/auth/basic`,
         {
-          tenantId,
           emailOrUsername: payload.email,
           password: payload.password,
         },
@@ -347,11 +336,8 @@ describe("loginWithPassword()", () => {
 
       // Should have sent the proper API request
       expect(api.post).toHaveBeenCalledWith(
-        `/auth/basic`,
-        {
-          tenantId,
-          ...payload,
-        },
+        `/tenants/${tenantId}/auth/basic`,
+        payload,
         noMfaHeaders
       );
 
@@ -381,9 +367,8 @@ describe("loginWithPassword()", () => {
 
       // Should have sent the proper API request
       expect(api.post).toHaveBeenCalledWith(
-        `/auth/basic`,
+        `/tenants/${tenantId}/auth/basic`,
         {
-          tenantId,
           ...payload,
           options: {
             noResetEmail: true,
@@ -425,9 +410,8 @@ describe("loginWithPassword()", () => {
 
       // Should have sent the correct API request
       expect(api.post).toHaveBeenCalledWith(
-        `/auth/basic`,
+        `/tenants/${tenantId}/auth/basic`,
         {
-          tenantId,
           emailOrUsername: payload.email,
           password: payload.password,
         },
@@ -457,9 +441,8 @@ describe("loginWithPassword()", () => {
 
       // Should have sent the correct API request, with MFA headers
       expect(api.post).toHaveBeenCalledWith(
-        `/auth/basic`,
+        `/tenants/${tenantId}/auth/basic`,
         {
-          tenantId,
           emailOrUsername: payload.email,
           password: payload.password,
         },
@@ -482,11 +465,8 @@ describe("loginWithPassword()", () => {
 
       // Should have sent the proper API request
       expect(api.post).toHaveBeenCalledWith(
-        `/auth/basic`,
-        {
-          tenantId,
-          ...payload,
-        },
+        `/tenants/${tenantId}/auth/basic`,
+        payload,
         noMfaHeaders
       );
 
@@ -518,11 +498,8 @@ describe("loginWithPassword()", () => {
 
       // Should have sent the proper API request
       expect(api.post).toHaveBeenCalledWith(
-        `/auth/basic`,
-        {
-          tenantId,
-          ...payload,
-        },
+        `/tenants/${tenantId}/auth/basic`,
+        payload,
         noMfaHeaders
       );
 
@@ -568,9 +545,8 @@ describe("loginWithPassword()", () => {
 
         // Should have sent the proper API request
         expect(api.post).toHaveBeenCalledWith(
-          `/auth/create`,
+          `/tenants/${tenantId}/auth/create`,
           {
-            tenantId,
             email: payload.email,
             password: payload.password,
           },
@@ -592,9 +568,8 @@ describe("loginWithPassword()", () => {
 
         // Should have sent the proper API request
         expect(api.post).toHaveBeenCalledWith(
-          `/auth/create`,
+          `/tenants/${tenantId}/auth/create`,
           {
-            tenantId,
             email: payload.email,
             password: payload.password,
           },
@@ -624,11 +599,8 @@ describe("loginWithPassword()", () => {
 
         // Should have sent the proper API request
         expect(api.post).toHaveBeenCalledWith(
-          `/auth/basic`,
-          {
-            tenantId,
-            ...payload,
-          },
+          `/tenants/${tenantId}/auth/basic`,
+          payload,
           pkceParams("code")
         );
       });
@@ -647,11 +619,8 @@ describe("loginWithPassword()", () => {
 
         // Should have sent the proper API request
         expect(api.post).toHaveBeenCalledWith(
-          `/auth/basic`,
-          {
-            tenantId,
-            ...payload,
-          },
+          `/tenants/${tenantId}/auth/basic`,
+          payload,
           pkceParams("code")
         );
 

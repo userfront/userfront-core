@@ -40,7 +40,6 @@ export async function loginWithPasswordMigrate({
 }) {
   try {
     const body = {
-      tenantId: store.tenantId,
       emailOrUsername: email || username || emailOrUsername,
       password,
     };
@@ -49,12 +48,17 @@ export async function loginWithPasswordMigrate({
         noResetEmail: true,
       };
     }
+    const { tenantId } = store;
 
     // Make the request to password/migrate
-    const { data } = await post(`/auth/password/migrate`, body, {
-      headers: getMfaHeaders(),
-      params: getPkceRequestQueryParams(),
-    });
+    const { data } = await post(
+      `/tenants/${tenantId}/auth/password/migrate`,
+      body,
+      {
+        headers: getMfaHeaders(),
+        params: getPkceRequestQueryParams(),
+      }
+    );
 
     // Handle the API response to the login request
     return handleLoginResponse({

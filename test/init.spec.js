@@ -87,14 +87,13 @@ describe("init() method with domain option", () => {
     expect(axios.defaults.headers.common["x-application-id"]).toEqual(url);
     expect(axios.defaults.headers.common["x-origin"]).toEqual(url);
     expect(axios.post).toHaveBeenCalledWith(
-      "https://api.userfront.com/v0/auth/create",
+      `https://api.userfront.com/v0/tenants/${tenantId}/auth/create`,
       {
         email,
         password,
         username: undefined,
         name: undefined,
         data: undefined,
-        tenantId,
       },
       noMfaHeaders
     );
@@ -114,11 +113,10 @@ describe("init() method with domain option", () => {
     expect(axios.defaults.headers.common["x-origin"]).toEqual(url);
 
     expect(axios.post).toHaveBeenCalledWith(
-      "https://api.userfront.com/v0/auth/basic",
+      `https://api.userfront.com/v0/tenants/${tenantId}/auth/basic`,
       {
         emailOrUsername: email,
         password,
-        tenantId,
       },
       noMfaHeaders
     );

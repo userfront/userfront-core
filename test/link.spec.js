@@ -81,8 +81,7 @@ describe("sendLoginLink", () => {
     const data = await sendLoginLink(mockResponse.data.result.email);
 
     // Should have sent the proper API request
-    expect(api.post).toHaveBeenCalledWith(`/auth/link`, {
-      tenantId,
+    expect(api.post).toHaveBeenCalledWith(`/tenants/${tenantId}/auth/link`, {
       email: mockResponse.data.result.email,
     });
 
@@ -143,10 +142,10 @@ describe("sendPasswordlessLink", () => {
     });
 
     // Should have sent the proper API request
-    expect(api.post).toHaveBeenCalledWith(`/auth/link`, {
-      tenantId,
-      ...payload,
-    });
+    expect(api.post).toHaveBeenCalledWith(
+      `/tenants/${tenantId}/auth/link`,
+      payload
+    );
 
     // Should have returned the response exactly
     expect(data).toEqual(mockResponse.data);
@@ -199,11 +198,8 @@ describe("loginWithLink", () => {
 
     // Should have sent the proper API request
     expect(api.put).toHaveBeenCalledWith(
-      `/auth/link`,
-      {
-        tenantId,
-        ...payload,
-      },
+      `/tenants/${tenantId}/auth/link`,
+      payload,
       noMfaHeaders
     );
 
@@ -244,11 +240,8 @@ describe("loginWithLink", () => {
 
     // Should have sent the proper API request
     expect(api.put).toHaveBeenCalledWith(
-      `/auth/link`,
-      {
-        tenantId,
-        ...query,
-      },
+      `/tenants/${tenantId}/auth/link`,
+      query,
       noMfaHeaders
     );
 
@@ -277,11 +270,8 @@ describe("loginWithLink", () => {
 
     // Should have sent the proper API request
     expect(api.put).toHaveBeenCalledWith(
-      `/auth/link`,
-      {
-        tenantId,
-        ...payload,
-      },
+      `/tenants/${tenantId}/auth/link`,
+      payload,
       noMfaHeaders
     );
 
@@ -307,11 +297,8 @@ describe("loginWithLink", () => {
 
     // Should have sent the proper API request
     expect(api.put).toHaveBeenCalledWith(
-      `/auth/link`,
-      {
-        tenantId,
-        ...payload,
-      },
+      `/tenants/${tenantId}/auth/link`,
+      payload,
       noMfaHeaders
     );
 
@@ -338,11 +325,8 @@ describe("loginWithLink", () => {
 
     // Should have send the correct API request, with MFA headers attached
     expect(api.put).toHaveBeenCalledWith(
-      "/auth/link",
-      {
-        tenantId,
-        ...payload,
-      },
+      `/tenants/${tenantId}/auth/link`,
+      payload,
       mfaHeaders
     );
   });
@@ -371,11 +355,8 @@ describe("loginWithLink", () => {
 
       // Should have sent the proper API request
       expect(api.put).toHaveBeenCalledWith(
-        `/auth/link`,
-        {
-          tenantId,
-          ...payload,
-        },
+        `/tenants/${tenantId}/auth/link`,
+        payload,
         pkceParams("code")
       );
     });
@@ -395,11 +376,8 @@ describe("loginWithLink", () => {
 
       // Should have sent the proper API request
       expect(api.put).toHaveBeenCalledWith(
-        `/auth/link`,
-        {
-          tenantId,
-          ...payload,
-        },
+        `/tenants/${tenantId}/auth/link`,
+        payload,
         pkceParams("code")
       );
 

@@ -54,8 +54,10 @@ export async function sendVerificationCode({
       email,
     });
 
+    const { tenantId } = store;
+
     const { data: res } = await post(
-      `/auth/code`,
+      `/tenants/${tenantId}/auth/code`,
       {
         channel,
         email,
@@ -63,7 +65,6 @@ export async function sendVerificationCode({
         name,
         username,
         data,
-        tenantId: store.tenantId,
       },
       {
         headers: getMfaHeaders(),
@@ -101,14 +102,14 @@ export async function loginWithVerificationCode({
       email,
     });
 
+    const { tenantId } = store;
     const { data } = await put(
-      `/auth/code`,
+      `/tenants/${tenantId}/auth/code`,
       {
         channel,
         verificationCode,
         email,
         phoneNumber,
-        tenantId: store.tenantId,
       },
       {
         headers: getMfaHeaders(),

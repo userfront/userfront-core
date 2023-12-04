@@ -19,7 +19,10 @@ import {
 } from "../src/password.js";
 import { unsetTokens } from "../src/tokens.js";
 import { loginWithTotp } from "../src/totp.js";
-import { assertAuthenticationDataMatches, mfaHeaders } from "./config/assertions.js";
+import {
+  assertAuthenticationDataMatches,
+  mfaHeaders,
+} from "./config/assertions.js";
 
 jest.mock("../src/api.js");
 
@@ -100,10 +103,10 @@ describe("updatePassword()", () => {
       await updatePassword(options);
 
       // Should have sent the proper API request
-      expect(api.put).toHaveBeenCalledWith(`/auth/reset`, {
-        tenantId,
-        ...options,
-      });
+      expect(api.put).toHaveBeenCalledWith(
+        `/tenants/${tenantId}/auth/reset`,
+        options
+      );
 
       // Should have redirected the page
       expect(window.location.assign).toHaveBeenCalledWith(
@@ -127,8 +130,7 @@ describe("updatePassword()", () => {
       await updatePassword(options);
 
       // Should have sent the proper API request
-      expect(api.put).toHaveBeenCalledWith(`/auth/reset`, {
-        tenantId,
+      expect(api.put).toHaveBeenCalledWith(`/tenants/${tenantId}/auth/reset`, {
         token: "aaaaa",
         uuid: "bbbbb",
         ...options,
@@ -156,11 +158,8 @@ describe("updatePassword()", () => {
 
       // Should have sent the proper API request
       expect(api.put).toHaveBeenCalledWith(
-        `/auth/basic`,
-        {
-          tenantId,
-          ...options,
-        },
+        `/tenants/${tenantId}/auth/basic`,
+        options,
         {
           headers: {
             Authorization: `Bearer ${mockResponse.data.tokens.access.value}`,
@@ -184,10 +183,10 @@ describe("updatePassword()", () => {
       await updatePasswordWithLink(options);
 
       // Should have sent the proper API request
-      expect(api.put).toHaveBeenCalledWith(`/auth/reset`, {
-        tenantId,
-        ...options,
-      });
+      expect(api.put).toHaveBeenCalledWith(
+        `/tenants/${tenantId}/auth/reset`,
+        options
+      );
 
       // Should have redirected the page
       expect(window.location.assign).toHaveBeenCalledWith(
@@ -219,10 +218,10 @@ describe("updatePassword()", () => {
       await updatePasswordWithLink({ ...options, redirect: targetPath });
 
       // Should have sent the proper API request
-      expect(api.put).toHaveBeenCalledWith(`/auth/reset`, {
-        tenantId,
-        ...options,
-      });
+      expect(api.put).toHaveBeenCalledWith(
+        `/tenants/${tenantId}/auth/reset`,
+        options
+      );
 
       // Should have set the user object
       expect(Userfront.user.email).toEqual(newUserAttrs.email);
@@ -246,10 +245,10 @@ describe("updatePassword()", () => {
       await updatePasswordWithLink({ ...options, redirect: false });
 
       // Should have sent the proper API request
-      expect(api.put).toHaveBeenCalledWith(`/auth/reset`, {
-        tenantId,
-        ...options,
-      });
+      expect(api.put).toHaveBeenCalledWith(
+        `/tenants/${tenantId}/auth/reset`,
+        options
+      );
 
       // Should have set the user object
       expect(Userfront.user.email).toEqual(idTokenUserDefaults.email);
@@ -266,7 +265,7 @@ describe("updatePassword()", () => {
       const payload = {
         token: "token",
         uuid: "uuid",
-        password: "password"
+        password: "password",
       };
 
       // Send the request
@@ -290,7 +289,7 @@ describe("updatePassword()", () => {
       const payload = {
         token: "token",
         uuid: "uuid",
-        password: "password"
+        password: "password",
       };
 
       // Send the request
@@ -333,11 +332,8 @@ describe("updatePassword()", () => {
 
       // Should have sent the proper API request
       expect(api.post).toHaveBeenCalledWith(
-        `/auth/totp`,
-        {
-          tenantId,
-          ...totpPayload,
-        },
+        `/tenants/${tenantId}/auth/totp`,
+        totpPayload,
         mfaHeaders
       );
 
@@ -345,7 +341,9 @@ describe("updatePassword()", () => {
       expect(totpData).toEqual(mockTotpResponse.data);
 
       // Tokens should be set now
-      expect(Userfront.tokens.accessToken).toEqual(totpData.tokens.access.value);
+      expect(Userfront.tokens.accessToken).toEqual(
+        totpData.tokens.access.value
+      );
     });
 
     it(`error should respond with whatever error the server sends`, async () => {
@@ -391,11 +389,8 @@ describe("updatePassword()", () => {
 
       // Should have sent the proper API request
       expect(api.put).toHaveBeenCalledWith(
-        `/auth/basic`,
-        {
-          tenantId,
-          ...options,
-        },
+        `/tenants/${tenantId}/auth/basic`,
+        options,
         {
           headers: {
             Authorization: `Bearer ${mockResponse.data.tokens.access.value}`,

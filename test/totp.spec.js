@@ -78,11 +78,8 @@ describe("loginWithTotp()", () => {
 
     // Should have sent the proper API request
     expect(api.post).toHaveBeenCalledWith(
-      `/auth/totp`,
-      {
-        tenantId,
-        ...payload,
-      },
+      `/tenants/${tenantId}/auth/totp`,
+      payload,
       noMfaHeaders
     );
 
@@ -117,11 +114,8 @@ describe("loginWithTotp()", () => {
 
     // Should have sent the proper API request
     expect(api.post).toHaveBeenCalledWith(
-      `/auth/totp`,
-      {
-        tenantId,
-        ...payload,
-      },
+      `/tenants/${tenantId}/auth/totp`,
+      payload,
       noMfaHeaders
     );
 
@@ -152,11 +146,8 @@ describe("loginWithTotp()", () => {
 
     // Should have sent the proper API request
     expect(api.post).toHaveBeenCalledWith(
-      `/auth/totp`,
-      {
-        tenantId,
-        ...payload,
-      },
+      `/tenants/${tenantId}/auth/totp`,
+      payload,
       noMfaHeaders
     );
 
@@ -185,11 +176,8 @@ describe("loginWithTotp()", () => {
 
     // Should have sent the proper API request
     expect(api.post).toHaveBeenCalledWith(
-      `/auth/totp`,
-      {
-        tenantId,
-        ...payload,
-      },
+      `/tenants/${tenantId}/auth/totp`,
+      payload,
       noMfaHeaders
     );
 
@@ -218,11 +206,8 @@ describe("loginWithTotp()", () => {
 
     // Should have sent the proper API request
     expect(api.post).toHaveBeenCalledWith(
-      `/auth/totp`,
-      {
-        tenantId,
-        ...payload,
-      },
+      `/tenants/${tenantId}/auth/totp`,
+      payload,
       noMfaHeaders
     );
 
@@ -253,11 +238,8 @@ describe("loginWithTotp()", () => {
 
     // Should have sent the proper API request
     expect(api.post).toHaveBeenCalledWith(
-      `/auth/totp`,
-      {
-        tenantId,
-        ...payload,
-      },
+      `/tenants/${tenantId}/auth/totp`,
+      payload,
       mfaHeaders
     );
   });
@@ -289,11 +271,8 @@ describe("loginWithTotp()", () => {
 
       // Should have sent the proper API request
       expect(api.post).toHaveBeenCalledWith(
-        `/auth/totp`,
-        {
-          tenantId,
-          ...payload,
-        },
+        `/tenants/${tenantId}/auth/totp`,
+        payload,
         pkceParams("code")
       );
     });
@@ -317,11 +296,8 @@ describe("loginWithTotp()", () => {
 
       // Should have sent the proper API request
       expect(api.post).toHaveBeenCalledWith(
-        `/auth/totp`,
-        {
-          tenantId,
-          ...payload,
-        },
+        `/tenants/${tenantId}/auth/totp`,
+        payload,
         pkceParams("code")
       );
 

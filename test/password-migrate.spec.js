@@ -89,11 +89,8 @@ describe("loginWithPasswordMigrate()", () => {
 
       // Should have sent the proper API request
       expect(api.post).toHaveBeenCalledWith(
-        `/auth/password/migrate`,
-        {
-          tenantId,
-          ...payload,
-        },
+        `/tenants/${tenantId}/auth/password/migrate`,
+        payload,
         noMfaHeaders
       );
 
@@ -124,9 +121,8 @@ describe("loginWithPasswordMigrate()", () => {
 
       // Should have sent the proper API request
       expect(api.post).toHaveBeenCalledWith(
-        `/auth/password/migrate`,
+        `/tenants/${tenantId}/auth/password/migrate`,
         {
-          tenantId,
           emailOrUsername: payload.emailOrUsername,
           password: payload.password,
         },
@@ -173,9 +169,8 @@ describe("loginWithPasswordMigrate()", () => {
 
       // Should have sent the proper API request
       expect(api.post).toHaveBeenCalledWith(
-        `/auth/password/migrate`,
+        `/tenants/${tenantId}/auth/password/migrate`,
         {
-          tenantId,
           emailOrUsername: payload.email,
           password: payload.password,
         },
@@ -208,11 +203,8 @@ describe("loginWithPasswordMigrate()", () => {
 
       // Should have sent the proper API request
       expect(api.post).toHaveBeenCalledWith(
-        `/auth/password/migrate`,
-        {
-          tenantId,
-          ...payload,
-        },
+        `/tenants/${tenantId}/auth/password/migrate`,
+        payload,
         noMfaHeaders
       );
 
@@ -242,9 +234,8 @@ describe("loginWithPasswordMigrate()", () => {
 
       // Should have sent the proper API request
       expect(api.post).toHaveBeenCalledWith(
-        `/auth/password/migrate`,
+        `/tenants/${tenantId}/auth/password/migrate`,
         {
-          tenantId,
           ...payload,
           options: {
             noResetEmail: true,
@@ -286,9 +277,8 @@ describe("loginWithPasswordMigrate()", () => {
 
       // Should have sent the correct API request
       expect(api.post).toHaveBeenCalledWith(
-        `/auth/password/migrate`,
+        `/tenants/${tenantId}/auth/password/migrate`,
         {
-          tenantId,
           emailOrUsername: payload.email,
           password: payload.password,
         },
@@ -318,9 +308,8 @@ describe("loginWithPasswordMigrate()", () => {
 
       // Should have sent the correct API request, with MFA headers
       expect(api.post).toHaveBeenCalledWith(
-        `/auth/password/migrate`,
+        `/tenants/${tenantId}/auth/password/migrate`,
         {
-          tenantId,
           emailOrUsername: payload.email,
           password: payload.password,
         },
@@ -345,11 +334,8 @@ describe("loginWithPasswordMigrate()", () => {
 
         // Should have sent the proper API request
         expect(api.post).toHaveBeenCalledWith(
-          `/auth/password/migrate`,
-          {
-            tenantId,
-            ...payload,
-          },
+          `/tenants/${tenantId}/auth/password/migrate`,
+          payload,
           pkceParams("code")
         );
       });
@@ -368,11 +354,8 @@ describe("loginWithPasswordMigrate()", () => {
 
         // Should have sent the proper API request
         expect(api.post).toHaveBeenCalledWith(
-          `/auth/password/migrate`,
-          {
-            tenantId,
-            ...payload,
-          },
+          `/tenants/${tenantId}/auth/password/migrate`,
+          payload,
           pkceParams("code")
         );
 

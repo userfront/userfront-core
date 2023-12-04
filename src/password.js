@@ -36,10 +36,10 @@ export async function signupWithPassword({
   handleRedirect,
 } = {}) {
   try {
+    const { tenantId } = store;
     const { data } = await post(
-      `/auth/create`,
+      `/tenants/${tenantId}/auth/create`,
       {
-        tenantId: store.tenantId,
         username,
         name,
         email,
@@ -102,7 +102,6 @@ export async function loginWithPassword({
 }) {
   try {
     const body = {
-      tenantId: store.tenantId,
       emailOrUsername: email || username || emailOrUsername,
       password,
     };
@@ -111,7 +110,8 @@ export async function loginWithPassword({
         noResetEmail: true,
       };
     }
-    const { data } = await post(`/auth/basic`, body, {
+    const { tenantId } = store;
+    const { data } = await post(`/tenants/${tenantId}/auth/basic`, body, {
       headers: getMfaHeaders(),
       params: getPkceRequestQueryParams(),
     });
@@ -137,9 +137,9 @@ export async function loginWithPassword({
  */
 export async function sendResetLink(email) {
   try {
-    const { data } = await post(`/auth/reset/link`, {
+    const { tenantId } = store;
+    const { data } = await post(`/tenants/${tenantId}/auth/reset/link`, {
       email,
-      tenantId: store.tenantId,
     });
     return data;
   } catch (error) {
@@ -160,7 +160,7 @@ export async function sendResetLink(email) {
  * @property {String} uuid
  * @property {String} token
  * @property {String} redirect
- * @property {Function} handleUpstreamResponse - 
+ * @property {Function} handleUpstreamResponse -
  * @property {Function} handleMfaRequired
  * @property {Function} handlePkceRequired
  * @property {Function} handleTokens
@@ -239,8 +239,8 @@ export async function updatePasswordWithLink({
     token = token || getQueryAttr("token");
     uuid = uuid || getQueryAttr("uuid");
     if (!token || !uuid) throw new Error("Missing token or uuid");
-    const { data } = await put(`/auth/reset`, {
-      tenantId: store.tenantId,
+    const { tenantId } = store;
+    const { data } = await put(`/tenants/${tenantId}/auth/reset`, {
       uuid,
       token,
       password,
@@ -267,10 +267,10 @@ export async function updatePasswordWithJwt({ password, existingPassword }) {
       );
     }
 
+    const { tenantId } = store;
     const { data } = await put(
-      `/auth/basic`,
+      `/tenants/${tenantId}/auth/basic`,
       {
-        tenantId: store.tenantId,
         password,
         existingPassword,
       },

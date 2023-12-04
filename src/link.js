@@ -33,12 +33,13 @@ export async function loginWithLink({
     uuid = uuid || getQueryAttr("uuid");
     if (!token || !uuid) return;
 
+    const { tenantId } = store;
+
     const { data } = await put(
-      "/auth/link",
+      `/tenants/${tenantId}/auth/link`,
       {
         token,
         uuid,
-        tenantId: store.tenantId,
       },
       {
         headers: getMfaHeaders(),
@@ -67,9 +68,10 @@ export async function loginWithLink({
  */
 export async function sendLoginLink(email) {
   try {
-    const { data } = await post(`/auth/link`, {
+    const { tenantId } = store;
+
+    const { data } = await post(`/tenants/${tenantId}/auth/link`, {
       email,
-      tenantId: store.tenantId,
     });
     return data;
   } catch (error) {
@@ -89,13 +91,14 @@ export async function sendPasswordlessLink({
   options,
 }) {
   try {
-    const { data } = await post(`/auth/link`, {
+    const { tenantId } = store;
+
+    const { data } = await post(`/tenants/${tenantId}/auth/link`, {
       email,
       name,
       username,
       data: userData,
       options,
-      tenantId: store.tenantId,
     });
     return data;
   } catch (error) {

@@ -36,8 +36,9 @@ export async function loginWithTotp({
   handleRedirect,
 } = {}) {
   try {
+    const { tenantId } = store;
     const { data } = await post(
-      `/auth/totp`,
+      `/tenants/${tenantId}/auth/totp`,
       {
         totpCode,
         backupCode,
@@ -47,7 +48,6 @@ export async function loginWithTotp({
         email,
         username,
         phoneNumber,
-        tenantId: store.tenantId,
       },
       {
         headers: getMfaHeaders(),

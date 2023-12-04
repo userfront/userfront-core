@@ -63,11 +63,8 @@ describe("sendVerificationCode()", () => {
 
     // Should have sent the proper API request
     expect(api.post).toHaveBeenCalledWith(
-      `/auth/code`,
-      {
-        tenantId,
-        ...payload,
-      },
+      `/tenants/${tenantId}/auth/code`,
+      payload,
       noMfaHeaders
     );
 
@@ -86,11 +83,8 @@ describe("sendVerificationCode()", () => {
 
     // Should have sent the proper API request
     expect(api.post).toHaveBeenCalledWith(
-      `/auth/code`,
-      {
-        tenantId,
-        ...payload,
-      },
+      `/tenants/${tenantId}/auth/code`,
+      payload,
       noMfaHeaders
     );
 
@@ -149,11 +143,8 @@ describe("sendVerificationCode()", () => {
 
     // Should have sent the proper API request with MFA headers
     expect(api.post).toHaveBeenCalledWith(
-      `/auth/code`,
-      {
-        tenantId,
-        ...payload,
-      },
+      `/tenants/${tenantId}/auth/code`,
+      payload,
       mfaHeaders
     );
 
@@ -215,11 +206,8 @@ describe("loginWithVerificationCode()", () => {
 
     // Should have sent the proper API request
     expect(api.put).toHaveBeenCalledWith(
-      `/auth/code`,
-      {
-        tenantId,
-        ...payload,
-      },
+      `/tenants/${tenantId}/auth/code`,
+      payload,
       noMfaHeaders
     );
 
@@ -256,9 +244,8 @@ describe("loginWithVerificationCode()", () => {
 
     // Should have sent the proper API request
     expect(api.put).toHaveBeenCalledWith(
-      `/auth/code`,
+      `/tenants/${tenantId}/auth/code`,
       {
-        tenantId,
         channel: payload.channel,
         email: payload.email,
         verificationCode: payload.verificationCode,
@@ -299,9 +286,8 @@ describe("loginWithVerificationCode()", () => {
 
     // Should have sent the proper API request
     expect(api.put).toHaveBeenCalledWith(
-      `/auth/code`,
+      `/tenants/${tenantId}/auth/code`,
       {
-        tenantId,
         channel: payload.channel,
         phoneNumber: payload.phoneNumber,
         verificationCode: payload.verificationCode,
@@ -333,9 +319,8 @@ describe("loginWithVerificationCode()", () => {
 
     // Should have sent the proper API request
     expect(api.put).toHaveBeenCalledWith(
-      `/auth/code`,
+      `/tenants/${tenantId}/auth/code`,
       {
-        tenantId,
         channel: payload.channel,
         phoneNumber: payload.phoneNumber,
         verificationCode: payload.verificationCode,
@@ -370,9 +355,8 @@ describe("loginWithVerificationCode()", () => {
 
     // Should have sent the proper API request
     expect(api.put).toHaveBeenCalledWith(
-      `/auth/code`,
+      `/tenants/${tenantId}/auth/code`,
       {
-        tenantId,
         channel: payload.channel,
         verificationCode: payload.verificationCode,
       },
@@ -447,11 +431,8 @@ describe("loginWithVerificationCode()", () => {
 
       // Should have sent the proper API request
       expect(api.put).toHaveBeenCalledWith(
-        `/auth/code`,
-        {
-          tenantId,
-          ...payload,
-        },
+        `/tenants/${tenantId}/auth/code`,
+        payload,
         pkceParams("code")
       );
     });
@@ -484,11 +465,8 @@ describe("loginWithVerificationCode()", () => {
 
       // Should have sent the proper API request
       expect(api.put).toHaveBeenCalledWith(
-        `/auth/code`,
-        {
-          tenantId,
-          ...payload,
-        },
+        `/tenants/${tenantId}/auth/code`,
+        payload,
         pkceParams("code")
       );
 

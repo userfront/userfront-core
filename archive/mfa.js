@@ -55,8 +55,9 @@ export async function sendMfaCode({
   }
 
   try {
-    const { data } = await post(`/auth/mfa`, {
-      tenantId: store.tenantId,
+    const { tenantId } = store;
+
+    const { data } = await post(`/tenants/${tenantId}/auth/mfa`, {
       firstFactorCode,
       strategy,
       channel,
@@ -86,8 +87,8 @@ export async function loginWithMfa({
   }
 
   try {
-    const { data } = await put(`/auth/mfa`, {
-      tenantId: store.tenantId,
+    const { tenantId } = store;
+    const { data } = await put(`/tenants/${tenantId}/auth/mfa`, {
       firstFactorCode,
       verificationCode,
     });

@@ -145,5 +145,13 @@ describe("logout", () => {
         mockResponse.data
       );
     });
+
+    it("should remove cookies even if there is no access token in the store", async () => {
+      Userfront.store.tokens.accessToken = null;
+      await logout();
+      expect(Cookies.get(`access.${tenantId}`)).toBeFalsy();
+      expect(Cookies.get(`id.${tenantId}`)).toBeFalsy();
+      expect(Cookies.get(`refresh.${tenantId}`)).toBeFalsy();
+    })
   });
 });

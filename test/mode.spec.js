@@ -178,6 +178,21 @@ describe("Mode tests", () => {
       expect(Userfront.mode.reason).toEqual("domain");
       expect(authenticationData.firstFactors).toEqual([]);
     });
+
+    it("Should default to test mode if the API call errors", async () => {
+      window.location = new URL("https://example.com/login");
+
+      Userfront.init(tenantId);
+      
+      api.get.mockRejectedValue({
+        status: 500
+      });
+
+      await setMode();
+      expect(api.get).toHaveBeenCalledWith(`/tenants/${tenantId}/mode`);
+      expect(Userfront.store.mode).toEqual("test");
+      expect(Userfront.mode.value).toEqual("test");
+    })
   });
 });
 

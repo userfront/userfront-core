@@ -183,7 +183,7 @@ describe("User", () => {
   });
 
   describe("user.hasRole()", () => {
-    beforeAll(() => {
+    beforeEach(() => {
       const authorization = {
         [tenantId]: {
           roles: ["custom role", "admin"],
@@ -230,6 +230,16 @@ describe("User", () => {
         false
       );
     });
+
+    it("should indicate no role set if access token is not set", () => {
+      Userfront.store.tokens.accessToken = null;
+      expect(Userfront.user.hasRole("admin", { tenantId: "jklm9876" })).toEqual(false);
+    });
+
+    it("should indicate no role set if tenant ID is not set", () => {
+      Userfront.store.tenantId = null;
+      expect(Userfront.user.hasRole("admin", { tenantId: "jklm9876" })).toEqual(false);
+    })
   });
 
   describe("user.updatePassword()", () => {

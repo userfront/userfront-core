@@ -179,6 +179,23 @@ describe("MFA service", () => {
       expect(() => {
         setFirstFactors({ firstFactors: ["corrupt", "data"] });
       }).not.toThrow();
+
+      Userfront.store.tenantId = null;
+      const goodAuthentication = {
+        firstFactors: [
+          {
+            channel: "email",
+            strategy: "password",
+          },
+          {
+            channel: "email",
+            strategy: "link",
+          },
+        ],
+      };
+      expect(() => {
+        setFirstFactors(goodAuthentication)
+      }).not.toThrow();
     });
   });
 

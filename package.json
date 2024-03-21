@@ -45,7 +45,6 @@
     "@babel/preset-env": "^7.12.7",
     "@vitest/coverage-v8": "^1.4.0",
     "babel-loader": "^8.2.1",
-    "babel-plugin-rewire": "^1.2.0",
     "fast-check": "^3.11.0",
     "jsonwebtoken": "^9.0.1",
     "microbundle": "^0.15.1",

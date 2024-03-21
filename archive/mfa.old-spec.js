@@ -9,7 +9,6 @@ import {
   mockWindow,
 } from "../test/config/utils.js";
 import { sendMfaCode, sendSms, loginWithMfa } from "./mfa.js";
-import { exchange } from "../src/refresh.js";
 
 vi.mock("../src/api.js");
 vi.mock("../src/refresh.js");
@@ -245,9 +244,6 @@ describe("loginWithMfa", () => {
 
     // Should have returned the proper value
     expect(data).toEqual(mockLoginResponse.data);
-
-    // Should have called exchange() with the API's response
-    expect(exchange).toHaveBeenCalledWith(mockLoginResponse.data);
 
     // Should have set the user object
     expect(Userfront.user.email).toEqual(idTokenUserDefaults.email);

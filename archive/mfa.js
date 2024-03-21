@@ -1,7 +1,6 @@
 import { setCookiesAndTokens } from "../src/cookies.js";
 import { store } from "../src/store.js";
 import { handleRedirect } from "../src/url.js";
-import { exchange } from "../src/refresh.js";
 import { throwFormattedError } from "../src/utils.js";
 import { post, put } from "../src/api.js";
 
@@ -94,7 +93,6 @@ export async function loginWithMfa({
     });
 
     setCookiesAndTokens(data.tokens);
-    await exchange(data);
     handleRedirect({ redirect, data });
     return data;
   } catch (error) {

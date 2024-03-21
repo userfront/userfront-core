@@ -11,7 +11,8 @@ export default defineConfig({
     globals: true,
     coverage: {
       reporter: ["text"],
-      reportOnFailure: true
+      reportOnFailure: true,
+      include: ["src/**"]
     }
   }
 })

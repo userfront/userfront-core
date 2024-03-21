@@ -1,3 +1,5 @@
+import { vi } from "vitest";
+
 import Cookies from "js-cookie";
 import Userfront from "../src/index.js";
 import api from "../src/api.js";
@@ -11,7 +13,7 @@ import {
 import { refresh } from "../src/refresh.js";
 import { setCookiesAndTokens } from "../src/authentication.js";
 
-jest.mock("../src/api.js");
+vi.mock("../src/api.js");
 
 const tenantId = "abcd4321";
 const mockAccessToken = createAccessToken();
@@ -39,7 +41,7 @@ describe("refresh with basic method", () => {
 
   afterEach(() => {
     resetStore(Userfront);
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   it("should send a refresh request and set cookies with response", async () => {
@@ -99,7 +101,7 @@ describe("refresh with basic method", () => {
 
   it("should handle a non-200 response by logging an error", async () => {
     // Mock console.warn
-    console.warn = jest.fn();
+    console.warn = vi.fn();
 
     api.get.mockResolvedValue({
       status: 401,
@@ -116,7 +118,7 @@ describe("refresh with basic method", () => {
     // Call refresh()
     await refresh();
 
-    jest.mock("../src/cookies.js");
+    vi.mock("../src/cookies.js");
 
     expect(api.get).toHaveBeenCalledWith("/auth/refresh", {
       headers: {
@@ -137,7 +139,7 @@ describe("refresh with basic method", () => {
 
     api.get.mockResolvedValue({});
 
-    global.console = { warn: jest.fn() };
+    global.console = { warn: vi.fn() };
     await Userfront.refresh();
 
     expect(console.warn).toHaveBeenCalledWith(

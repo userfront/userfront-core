@@ -1,3 +1,5 @@
+import { vi } from "vitest";
+
 import Userfront from "../src/index.js";
 import api from "../src/api.js";
 import { unsetUser } from "../src/user.js";
@@ -21,11 +23,11 @@ import { defaultHandleRedirect } from "../src/url.js";
 import { loginWithTotp } from "../src/totp.js";
 import * as Pkce from "../src/pkce.js";
 
-jest.mock("../src/api.js");
-jest.mock("../src/refresh.js");
-jest.mock("../src/url.js");
-jest.mock("../src/tokens.js");
-jest.mock("../src/pkce.js");
+vi.mock("../src/api.js");
+vi.mock("../src/refresh.js");
+vi.mock("../src/url.js");
+vi.mock("../src/tokens.js");
+vi.mock("../src/pkce.js");
 
 const tenantId = "abcd9876";
 
@@ -53,7 +55,7 @@ describe("loginWithTotp()", () => {
 
   beforeEach(() => {
     Userfront.init(tenantId);
-    jest.resetAllMocks();
+    vi.resetAllMocks();
     unsetUser();
   });
 
@@ -325,7 +327,7 @@ describe("user.getTotp()", () => {
 
   beforeEach(() => {
     Userfront.init(tenantId);
-    jest.resetAllMocks();
+    vi.resetAllMocks();
     // Log the user in
     store.tokens.accessToken = accessToken;
     setCookie(accessToken, { secure: "true", sameSite: "Lax" }, "access");

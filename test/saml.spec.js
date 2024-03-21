@@ -1,3 +1,5 @@
+import { vi } from "vitest";
+
 import Cookies from "js-cookie";
 import Userfront from "../src/index.js";
 import api from "../src/api.js";
@@ -13,7 +15,7 @@ import { login } from "../src/login.js";
 import { logout } from "../src/logout.js";
 import { unsetTokens } from "../src/tokens.js";
 
-jest.mock("../src/api.js");
+vi.mock("../src/api.js");
 
 const tenantId = "abcd9876";
 const mockAccessToken = createAccessToken();
@@ -55,7 +57,7 @@ describe("completeSamlLogin()", () => {
 
   it(`should return warning if store.tokens.accessToken isn't defined`, async () => {
     unsetTokens();
-    console.warn = jest.fn();
+    console.warn = vi.fn();
 
     expect(console.warn).not.toHaveBeenCalled();
     await login({ method: "saml" });

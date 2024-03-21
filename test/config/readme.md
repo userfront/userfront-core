@@ -9,7 +9,7 @@ const signonWithSso = Userfront.__get__("signonWithSso");
 We can also set a function like so:
 
 ```js
-const mockFn = jest.fn();
+const mockFn = vi.fn();
 Userfront.__set__("verifyToken", mockFn);
 ```
 

@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import Userfront from "../src/index.js";
 import api from "../src/api.js";
 import {
@@ -10,8 +11,8 @@ import {
 import { sendMfaCode, sendSms, loginWithMfa } from "./mfa.js";
 import { exchange } from "../src/refresh.js";
 
-jest.mock("../src/api.js");
-jest.mock("../src/refresh.js");
+vi.mock("../src/api.js");
+vi.mock("../src/refresh.js");
 
 const tenantId = "abcd9876";
 const firstFactorCode = "204a8def-651c-4ab2-9ca0-1e3fca9e280a";

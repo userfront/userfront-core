@@ -1,3 +1,5 @@
+import { vi } from "vitest";
+
 import Cookies from "js-cookie";
 
 import Userfront from "../src/index.js";
@@ -8,8 +10,8 @@ import { defaultHandleRedirect } from "../src/url.js";
 import { createAccessToken, mockWindow } from "./config/utils.js";
 import { store as pkceStore } from "../src/pkce.js";
 
-jest.mock("../src/api.js");
-jest.mock("../src/cookies.js");
+vi.mock("../src/api.js");
+vi.mock("../src/cookies.js");
 
 const tenantId = "abcdefg";
 Userfront.init(tenantId);
@@ -22,7 +24,7 @@ mockWindow({
 describe("defaultHandleRedirect()", () => {
   beforeEach(() => {
     window.location.href = "https://example.com/login";
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   it("should redirect to a given path", () => {
@@ -92,7 +94,7 @@ describe("redirectIfLoggedIn()", () => {
   });
 
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   afterEach(() => {
@@ -243,7 +245,7 @@ describe("redirectIfLoggedOut()", () => {
   });
 
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   afterEach(() => {

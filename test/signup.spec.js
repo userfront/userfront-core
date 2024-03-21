@@ -1,3 +1,5 @@
+import { vi } from "vitest";
+
 import Userfront from "../src/index.js";
 import { signup } from "../src/signup.js";
 import { signupWithPassword } from "../src/password.js";
@@ -7,18 +9,18 @@ import { sendVerificationCode } from "../src/verificationCode.js";
 import { defaultHandleRedirect } from "../src/url.js";
 
 // Mock all methods to be called
-jest.mock("../src/password.js");
-jest.mock("../src/link.js");
-jest.mock("../src/sso.js");
-jest.mock("../src/verificationCode.js");
-jest.mock("../src/url.js");
+vi.mock("../src/password.js");
+vi.mock("../src/link.js");
+vi.mock("../src/sso.js");
+vi.mock("../src/verificationCode.js");
+vi.mock("../src/url.js");
 
 const tenantId = "abcd9876";
 
 describe("signup()", () => {
   beforeEach(() => {
     Userfront.init(tenantId);
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   it(`{ method: undefined } should throw an error`, () => {

@@ -1,3 +1,5 @@
+import { vi } from "vitest";
+
 import Userfront from "../src/index.js";
 import api from "../src/api";
 import { setCookie } from "../src/cookies.js";
@@ -13,14 +15,14 @@ import {
   defaultIdTokenProperties,
 } from "./config/utils.js";
 
-jest.mock("../src/api.js");
-jest.mock("../src/refresh.js");
-console.warn = jest.fn();
+vi.mock("../src/api.js");
+vi.mock("../src/refresh.js");
+console.warn = vi.fn();
 
 const tenantId = "hijk9876";
 
 describe("User", () => {
-  beforeAll(async () => {
+  beforeAll(() => {
     // Set the factory access and ID tokens as cookies
     Userfront.store.tenantId = tenantId;
     setCookie(
@@ -29,19 +31,21 @@ describe("User", () => {
       "access"
     );
     setCookie(createIdToken(), { secure: "true", sameSite: "Lax" }, "id");
-
-    return Promise.resolve();
   });
 
   beforeEach(() => {
     Userfront.init(tenantId);
+
+    const u = Userfront;
   });
 
-  afterEach(jest.resetAllMocks);
+  afterEach(() => vi.resetAllMocks());
 
   describe("user object", () => {
     it("should get user's information", () => {
       const defaultUserValues = idTokenUserDefaults;
+
+      const u = Userfront.user;
 
       // Assert primary values were set correctly
       for (const prop in defaultUserValues) {

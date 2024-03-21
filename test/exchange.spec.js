@@ -13,7 +13,7 @@ describe("exchange method", () => {
 
   // TODO re-enable tests below once iframe is re-established
 
-  xit("should send correct options into iframe", async () => {
+  it.skip("should send correct options into iframe", async () => {
     // Initialize the library
     Userfront.init(tenantId);
 

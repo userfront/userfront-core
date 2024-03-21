@@ -1,9 +1,11 @@
+import { vi } from "vitest";
+
 import Userfront from "../src/index.js";
 import api from "../src/api.js";
 import { isTestHostname, setMode, setModeSync } from "../src/mode.js";
 import { authenticationData } from "../src/authentication.js";
 
-jest.mock("../src/api.js");
+vi.mock("../src/api.js");
 
 const tenantId = "abcd4321";
 
@@ -180,9 +182,11 @@ describe("Mode tests", () => {
 });
 
 describe("isTestHostname", () => {
-  expect(isTestHostname("example.com")).toEqual(false);
-  expect(isTestHostname("another.one.org")).toEqual(false);
-  expect(isTestHostname("localhost:3000")).toEqual(true);
-  expect(isTestHostname("192.168.1.1")).toEqual(true);
-  expect(isTestHostname("10.0.0.1")).toEqual(true);
+  it("should work", () => {
+    expect(isTestHostname("example.com")).toEqual(false);
+    expect(isTestHostname("another.one.org")).toEqual(false);
+    expect(isTestHostname("localhost:3000")).toEqual(true);
+    expect(isTestHostname("192.168.1.1")).toEqual(true);
+    expect(isTestHostname("10.0.0.1")).toEqual(true);
+  });
 });

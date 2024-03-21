@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import axios from "axios";
 import {
   createAccessToken,
@@ -14,7 +15,7 @@ import { apiUrl } from "../src/constants.js";
 const tenantId = "abcd5432";
 const domain = "com.example.myapp";
 
-jest.mock("axios");
+vi.mock("axios");
 
 describe("init() method with domain option", () => {
   beforeEach(() => {
@@ -44,7 +45,7 @@ describe("init() method with domain option", () => {
 
   afterEach(() => {
     resetStore(Userfront);
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   it("should include the x-application-id and x-origin headers for mode", async () => {
@@ -221,8 +222,8 @@ describe("addInitCallback() method", () => {
 
   it("should add callbacks that are fired when Userfront.init(tenantId) is called", () => {
     const tenantId = "a9b8c7d6";
-    const callbackA = jest.fn();
-    const callbackB = jest.fn();
+    const callbackA = vi.fn();
+    const callbackB = vi.fn();
 
     // Add callbacks
     Userfront.addInitCallback(callbackA);
@@ -238,7 +239,7 @@ describe("addInitCallback() method", () => {
     expect(callbackB).toHaveBeenCalledWith({ tenantId });
 
     // Calling Userfront.init() again should not call the callbacks again
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     Userfront.init(tenantId);
 
     expect(callbackA).not.toHaveBeenCalled();

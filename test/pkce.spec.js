@@ -3,23 +3,23 @@ import * as Pkce from "../src/pkce.js";
 const NOW = Date.now();
 const FUTURE = (NOW + 1000 * 60 * 5).toString(); // 5 minutes from now
 const PAST = (NOW - 1000 * 60 * 5).toString(); // 5 minutes ago
-jest.useFakeTimers({ now: NOW });
+vi.useFakeTimers({ now: NOW });
 
 let localStorageData = {};
 
 describe("PKCE service", () => {
   beforeEach(() => {
-    global.Storage.prototype.setItem = jest.fn((key, value) => {
+    global.Storage.prototype.setItem = vi.fn((key, value) => {
       localStorageData[key] = value;
     });
-    global.Storage.prototype.getItem = jest.fn((key) => localStorageData[key]);
-    global.Storage.prototype.removeItem = jest.fn(
+    global.Storage.prototype.getItem = vi.fn((key) => localStorageData[key]);
+    global.Storage.prototype.removeItem = vi.fn(
       (key) => delete localStorageData[key]
     );
     Pkce.store.codeChallenge = "";
   });
   afterAll(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe("readPkceDataFromLocalStorage()", () => {

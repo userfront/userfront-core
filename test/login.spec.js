@@ -1,3 +1,5 @@
+import { vi } from "vitest";
+
 import Userfront from "../src/index.js";
 
 import { login } from "../src/login.js";
@@ -11,21 +13,21 @@ import { completeSamlLogin } from "../src/saml.js";
 import { defaultHandleRedirect } from "../src/url.js";
 
 // Mock all methods to be called
-jest.mock("../src/password.js");
-jest.mock("../src/password.migrate.js");
-jest.mock("../src/link.js");
-jest.mock("../src/sso.js");
-jest.mock("../src/totp.js");
-jest.mock("../src/verificationCode.js");
-jest.mock("../src/saml.js");
-jest.mock("../src/url.js");
+vi.mock("../src/password.js");
+vi.mock("../src/password.migrate.js");
+vi.mock("../src/link.js");
+vi.mock("../src/sso.js");
+vi.mock("../src/totp.js");
+vi.mock("../src/verificationCode.js");
+vi.mock("../src/saml.js");
+vi.mock("../src/url.js");
 
 const tenantId = "abcd9876";
 
 describe("login()", () => {
   beforeEach(() => {
     Userfront.init(tenantId);
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   it(`{ method: undefined } should throw an error`, () => {
@@ -39,9 +41,9 @@ describe("login()", () => {
     it(`should call loginWithPassword()`, () => {
       const email = "user@example.com";
       const password = "some-password123";
-      const handleUpstreamResponse = jest.fn();
-      const handleTokens = jest.fn();
-      const handleRedirect = jest.fn();
+      const handleUpstreamResponse = vi.fn();
+      const handleTokens = vi.fn();
+      const handleRedirect = vi.fn();
       const combos = [
         { email, password },
         { username: "user-name", password },
@@ -68,9 +70,9 @@ describe("login()", () => {
     it(`should call loginWithPasswordMigrate()`, () => {
       const email = "user@example.com";
       const password = "some-password123";
-      const handleUpstreamResponse = jest.fn();
-      const handleTokens = jest.fn();
-      const handleRedirect = jest.fn();
+      const handleUpstreamResponse = vi.fn();
+      const handleTokens = vi.fn();
+      const handleRedirect = vi.fn();
       const combos = [
         { email, password },
         { username: "user-name", password },
@@ -179,9 +181,9 @@ describe("login()", () => {
     it(`should call loginWithLink()`, () => {
       const token = "some-token";
       const uuid = "some-uuid";
-      const handleUpstreamResponse = jest.fn();
-      const handleTokens = jest.fn();
-      const handleRedirect = jest.fn();
+      const handleUpstreamResponse = vi.fn();
+      const handleTokens = vi.fn();
+      const handleRedirect = vi.fn();
       const combos = [
         { token, uuid },
         { token, uuid, handleUpstreamResponse },
@@ -230,9 +232,9 @@ describe("login()", () => {
   });
 
   describe(`{ method: "verificationCode" }`, () => {
-    const handleUpstreamResponse = jest.fn();
-    const handleTokens = jest.fn();
-    const handleRedirect = jest.fn();
+    const handleUpstreamResponse = vi.fn();
+    const handleTokens = vi.fn();
+    const handleRedirect = vi.fn();
     const combos = [
       {
         channel: "sms",

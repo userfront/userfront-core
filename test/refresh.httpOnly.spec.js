@@ -1,3 +1,5 @@
+import { vi } from "vitest";
+
 import { resetStore } from "./config/utils.js";
 import Userfront from "../src/index.js";
 
@@ -5,10 +7,10 @@ import { getIframe, triageEvent, resolvers } from "../src/iframe.js";
 import { refresh } from "../src/refresh.js";
 import { setCookiesAndTokens } from "../src/authentication.js";
 
-jest.mock("../src/authentication.js", () => {
+vi.mock("../src/authentication.js", () => {
   return {
     __esModule: true,
-    setCookiesAndTokens: jest.fn(),
+    setCookiesAndTokens: vi.fn(),
   };
 });
 
@@ -22,7 +24,7 @@ const tenantId = "abcd4321";
  * SSL certificates while in live mode.
  */
 
-xdescribe("refresh with httpOnly method", () => {
+describe.skip("refresh with httpOnly method", () => {
   afterEach(() => {
     resetStore(Userfront);
     setCookiesAndTokens.mockClear();
@@ -30,7 +32,7 @@ xdescribe("refresh with httpOnly method", () => {
 
   // TODO re-enable tests below once iframe is re-established
 
-  xit("should send correct options into iframe", async () => {
+  it.skip("should send correct options into iframe", async () => {
     // Initialize the library
     Userfront.init(tenantId);
 
@@ -58,7 +60,7 @@ xdescribe("refresh with httpOnly method", () => {
     });
   });
 
-  xit("should set tokens correctly based on iframe response", async () => {
+  it.skip("should set tokens correctly based on iframe response", async () => {
     // Initialize the library
     Userfront.init(tenantId);
 
@@ -94,7 +96,7 @@ xdescribe("refresh with httpOnly method", () => {
     Userfront.init(tenantId);
 
     // Mock console.warn
-    console.warn = jest.fn();
+    console.warn = vi.fn();
 
     // Mock fire an iframe refresh response
     const event = {

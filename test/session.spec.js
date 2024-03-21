@@ -1,3 +1,5 @@
+import { vi } from "vitest";
+
 import Cookies from "js-cookie";
 import Userfront from "../src/index.js";
 import api from "../src/api.js";
@@ -10,8 +12,8 @@ import {
 import * as Refresh from "../src/refresh.js";
 import { store } from "../src/store.js";
 
-jest.mock("../src/refresh.js");
-jest.mock("../src/api.js");
+vi.mock("../src/refresh.js");
+vi.mock("../src/api.js");
 
 const tenantId = "abcd4321";
 const mockAccessToken = createAccessToken();
@@ -55,7 +57,7 @@ describe("Userfront session helpers", () => {
 
   describe("getSession()", () => {
     afterEach(() => {
-      jest.resetAllMocks();
+      vi.resetAllMocks();
     });
 
     it("should return true when access token is present and not expired", async () => {

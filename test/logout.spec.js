@@ -1,3 +1,5 @@
+import { vi } from "vitest";
+
 import Cookies from "js-cookie";
 
 import Userfront from "../src/index.js";
@@ -7,8 +9,8 @@ import { logout } from "../src/logout.js";
 import { defaultHandleRedirect } from "../src/url.js";
 import { createAccessToken, createIdToken } from "./config/utils.js";
 
-jest.mock("../src/api.js");
-jest.mock("../src/url.js");
+vi.mock("../src/api.js");
+vi.mock("../src/url.js");
 
 const tenantId = "abcd9876";
 const mockAccessToken = createAccessToken();
@@ -27,7 +29,7 @@ describe("logout", () => {
     Cookies.set(`id.${tenantId}`, mockIdToken, {});
     Cookies.set(`access.${tenantId}`, mockAccessToken, {});
     Userfront.init(tenantId);
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   describe("basic logout (non-httpOnly)", () => {
@@ -147,8 +149,8 @@ describe("logout", () => {
   });
 
   // TODO re-enable tests below once iframe is re-established
-  xdescribe("httpOnly token logout", () => {
-    xit("should send a request to the iframe (which clears its own refresh cookie), then clear the access and ID token cookies, then redirect", async () => {
+  describe.skip("httpOnly token logout", () => {
+    it.skip("should send a request to the iframe (which clears its own refresh cookie), then clear the access and ID token cookies, then redirect", async () => {
       const redirectPath = "/login";
       const redirectTo = `https://example.com${redirectPath}`;
 
@@ -197,7 +199,7 @@ describe("logout", () => {
       iframe.contentWindow.removeEventListener("message", mockEventListener);
     });
 
-    xit("should remove cookies and redirect to root if iframe fails", async () => {
+    it.skip("should remove cookies and redirect to root if iframe fails", async () => {
       // Mock the iframe response to input
       const iframe = getIframe();
       let messageId;

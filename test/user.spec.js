@@ -35,8 +35,6 @@ describe("User", () => {
 
   beforeEach(() => {
     Userfront.init(tenantId);
-
-    const u = Userfront;
   });
 
   afterEach(() => vi.resetAllMocks());
@@ -44,8 +42,6 @@ describe("User", () => {
   describe("user object", () => {
     it("should get user's information", () => {
       const defaultUserValues = idTokenUserDefaults;
-
-      const u = Userfront.user;
 
       // Assert primary values were set correctly
       for (const prop in defaultUserValues) {

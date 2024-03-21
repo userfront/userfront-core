@@ -118,13 +118,15 @@ describe("refresh with basic method", () => {
     // Call refresh()
     await refresh();
 
-    vi.mock("../src/cookies.js");
+    const cookiesMock = vi.fn(setCookiesAndTokens);
 
     expect(api.get).toHaveBeenCalledWith("/auth/refresh", {
       headers: {
         authorization: `Bearer ${mockRefreshToken}`,
       },
     });
+
+    cookiesMock.mockRestore();
 
     // Assert that the tokens and cookies are properly set
     expect(setCookiesAndTokens).not.toHaveBeenCalled;

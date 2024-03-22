@@ -9,14 +9,11 @@
   "scripts": {
     "test": "vitest run --coverage",
     "test:watch": "vitest watch",
-    "build": "npm run build:standard && npm run build:ie11 && npm run ts:copy",
-    "build:standard": "microbundle && microbundle -f modern --external none",
-    "build:ie11": "patch-package && COMPAT=ie11 microbundle -o build/userfront-core.ie11.umd.js --external none --no-pkg-main -f umd ; patch-package --reverse",
+    "build": "rollup --config && npm run ts:copy",
     "pub": "npm publish",
     "pub:beta": "npm publish --tag beta",
     "reinstall": "rm -rf node_modules && rm package-lock.json && npm install",
-    "ts:copy": "cp ts/index.d.ts build/userfront-core.d.ts; cp ts/index.d.ts build/userfront-core.modern.d.ts; cp ts/index.d.ts build/userfront-core.module.d.ts; cp ts/index.d.ts build/userfront-core.umd.d.ts",
-    "watch": "microbundle watch --external none && npm run ts:copy"
+    "ts:copy": "cp ts/index.d.ts build/userfront-core.d.ts; cp ts/index.d.ts build/userfront-core.modern.d.ts; cp ts/index.d.ts build/userfront-core.module.d.ts; cp ts/index.d.ts build/userfront-core.umd.d.ts"
   },
   "repository": {
     "type": "git",
@@ -41,15 +38,13 @@
     "js-cookie": "^2.2.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.12.8",
-    "@babel/preset-env": "^7.12.7",
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
     "@vitest/coverage-v8": "^1.4.0",
-    "babel-loader": "^8.2.1",
     "fast-check": "^3.11.0",
     "jsonwebtoken": "^9.0.1",
-    "microbundle": "^0.15.1",
-    "patch-package": "^6.5.0",
-    "promise-polyfill": "^8.2.3",
+    "rollup": "^4.13.0",
     "typescript": "5.4.3",
     "vitest": "^1.4.0"
   }

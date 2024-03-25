@@ -10,7 +10,7 @@ export default defineConfig({
     },
     globals: true,
     coverage: {
-      reporter: ["text"],
+      reporter: ["text", "json-summary", "json"],
       reportOnFailure: true,
       include: ["src/**"]
     }

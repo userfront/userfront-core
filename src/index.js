@@ -16,7 +16,6 @@ import { sendLoginLink } from "./link.js";
 import { sendVerificationCode } from "./verificationCode";
 import { logout } from "./logout.js";
 import { mode, setMode, setModeSync } from "./mode.js";
-// import { setIframe } from "./iframe.js";
 import { user } from "./user.js";
 import "./user.methods.js";
 import { refresh } from "./refresh.js";
@@ -47,7 +46,6 @@ function init(tenantId, opts = {}) {
   }
 
   setTokenNames();
-  // setIframe(); // TODO re-enable when iframe is needed
   setTokensFromCookies();
 
   // Estimate the mode synchronously with local data.

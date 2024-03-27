@@ -216,7 +216,7 @@ export function mockWindow({ origin, href }) {
   // https://stackoverflow.com/a/54477957
   delete window.location;
   window.location = {
-    assign: jest.fn(),
+    assign: vi.fn(),
     origin,
     href,
   };

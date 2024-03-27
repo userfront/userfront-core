@@ -1,9 +1,11 @@
+import { vi } from "vitest";
+
 import Userfront from "../src/index.js";
 import api from "../src/api.js";
 import { isTestHostname, setMode, setModeSync } from "../src/mode.js";
 import { authenticationData } from "../src/authentication.js";
 
-jest.mock("../src/api.js");
+vi.mock("../src/api.js");
 
 const tenantId = "abcd4321";
 
@@ -176,13 +178,30 @@ describe("Mode tests", () => {
       expect(Userfront.mode.reason).toEqual("domain");
       expect(authenticationData.firstFactors).toEqual([]);
     });
+
+    it("Should default to test mode if the API call errors", async () => {
+      window.location = new URL("https://example.com/login");
+
+      Userfront.init(tenantId);
+      
+      api.get.mockRejectedValue({
+        status: 500
+      });
+
+      await setMode();
+      expect(api.get).toHaveBeenCalledWith(`/tenants/${tenantId}/mode`);
+      expect(Userfront.store.mode).toEqual("test");
+      expect(Userfront.mode.value).toEqual("test");
+    })
   });
 });
 
 describe("isTestHostname", () => {
-  expect(isTestHostname("example.com")).toEqual(false);
-  expect(isTestHostname("another.one.org")).toEqual(false);
-  expect(isTestHostname("localhost:3000")).toEqual(true);
-  expect(isTestHostname("192.168.1.1")).toEqual(true);
-  expect(isTestHostname("10.0.0.1")).toEqual(true);
+  it("should work", () => {
+    expect(isTestHostname("example.com")).toEqual(false);
+    expect(isTestHostname("another.one.org")).toEqual(false);
+    expect(isTestHostname("localhost:3000")).toEqual(true);
+    expect(isTestHostname("192.168.1.1")).toEqual(true);
+    expect(isTestHostname("10.0.0.1")).toEqual(true);
+  });
 });

@@ -1,3 +1,5 @@
+import { vi } from "vitest";
+
 import Userfront from "../src/index.js";
 import api from "../src/api.js";
 import {
@@ -24,7 +26,7 @@ import {
   mfaHeaders,
 } from "./config/assertions.js";
 
-jest.mock("../src/api.js");
+vi.mock("../src/api.js");
 
 const tenantId = "abcd9876";
 
@@ -86,7 +88,7 @@ describe("resetPassword()", () => {
 describe("updatePassword()", () => {
   beforeEach(() => {
     Userfront.init(tenantId);
-    jest.resetAllMocks();
+    vi.resetAllMocks();
     // Remove token and uuid from the URL
     window.location.href = "https://example.com/reset";
     unsetTokens();

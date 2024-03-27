@@ -3,23 +3,23 @@ import * as Pkce from "../src/pkce.js";
 const NOW = Date.now();
 const FUTURE = (NOW + 1000 * 60 * 5).toString(); // 5 minutes from now
 const PAST = (NOW - 1000 * 60 * 5).toString(); // 5 minutes ago
-jest.useFakeTimers({ now: NOW });
+vi.useFakeTimers({ now: NOW });
 
 let localStorageData = {};
 
 describe("PKCE service", () => {
   beforeEach(() => {
-    global.Storage.prototype.setItem = jest.fn((key, value) => {
+    global.Storage.prototype.setItem = vi.fn((key, value) => {
       localStorageData[key] = value;
     });
-    global.Storage.prototype.getItem = jest.fn((key) => localStorageData[key]);
-    global.Storage.prototype.removeItem = jest.fn(
+    global.Storage.prototype.getItem = vi.fn((key) => localStorageData[key]);
+    global.Storage.prototype.removeItem = vi.fn(
       (key) => delete localStorageData[key]
     );
     Pkce.store.codeChallenge = "";
   });
-  afterAll(() => {
-    jest.restoreAllMocks();
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   describe("readPkceDataFromLocalStorage()", () => {
@@ -49,7 +49,7 @@ describe("PKCE service", () => {
       expect(localStorageData["uf_pkce_code_challenge"]).toEqual(
         "test-challenge"
       );
-      expect(localStorageData["uf_pkce_code_challenge_expiresAt"]).toEqual(
+      expect(localStorageData["uf_pkce_code_challenge_expiresAt"].toString()).toEqual(
         FUTURE
       );
     });
@@ -78,7 +78,7 @@ describe("PKCE service", () => {
     });
   });
 
-  describe.only("setupPkce", () => {
+  describe("setupPkce", () => {
     beforeEach(() => {
       window.history.pushState({}, "Title", "/login");
     });
@@ -162,22 +162,28 @@ describe("PKCE service", () => {
     it("should return a URLSearchParams with code_challenge if one is present", () => {
       Pkce.store.codeChallenge = "another-challenge";
       const params = Pkce.getPkceRequestQueryParams();
-      expect(params.get("code_challenge")).toEqual("another-challenge");
+      expect(params["code_challenge"]).toEqual("another-challenge");
     });
 
     it("should return an empty URLSearchParams with code_challenge if one is not present", () => {
       Pkce.store.codeChallenge = "";
       const params = Pkce.getPkceRequestQueryParams();
-      expect(params.has("code_challenge")).toBeFalsy();
+      expect(params["code_challenge"]).toBeFalsy();
     });
   });
 
   describe("defaultHandlePkceRequired", () => {
+    beforeEach(() => {
+      vi.stubGlobal("location", { assign: vi.fn() });
+    });
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    })
     it("should redirect if PKCE is in use and and authorization code is returned", () => {
       Pkce.store.codeChallenge = "test-challenge";
       Pkce.defaultHandlePkceRequired(
-        "https://www.example.com/redirect",
-        "auth-code"
+        "auth-code",
+        "https://www.example.com/redirect"
       );
       expect(window.location.assign).toHaveBeenCalledWith(
         "https://www.example.com/redirect?authorization_code=auth-code"

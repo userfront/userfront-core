@@ -4,7 +4,6 @@ import { setUser, unsetUser } from "./user.js";
 import { refresh } from "./refresh.js";
 import { isJwtLocallyValid } from "./utils.js";
 import { setCookiesAndTokens } from "./authentication.js";
-import { exchange } from "./refresh.js";
 
 store.tokens = store.tokens || {};
 store.tokens.refresh = refresh;
@@ -88,7 +87,6 @@ export function isRefreshTokenLocallyValid() {
  */
 export async function defaultHandleTokens(tokens, data) {
   setCookiesAndTokens(tokens);
-  await exchange(data);
 }
 
 /**

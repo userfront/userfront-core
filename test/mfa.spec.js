@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import Userfront from "../src/index.js";
 import { mockWindow } from "./config/utils.js";
 import { authenticationData } from "../src/authentication.js";
@@ -10,8 +11,8 @@ import {
   resetMfa,
 } from "../src/mfa.js";
 
-jest.mock("../src/api.js");
-jest.mock("../src/pkce.js");
+vi.mock("../src/api.js");
+vi.mock("../src/pkce.js");
 
 mockWindow({
   origin: "https://example.com",
@@ -24,7 +25,7 @@ const blankAuthenticationData = {
 
 describe("MFA service", () => {
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
     window.location.href = `https://example.com/login`;
     for (const key in authenticationData) {
       authenticationData[key] = blankAuthenticationData[key];
@@ -177,6 +178,23 @@ describe("MFA service", () => {
       }).not.toThrow();
       expect(() => {
         setFirstFactors({ firstFactors: ["corrupt", "data"] });
+      }).not.toThrow();
+
+      Userfront.store.tenantId = null;
+      const goodAuthentication = {
+        firstFactors: [
+          {
+            channel: "email",
+            strategy: "password",
+          },
+          {
+            channel: "email",
+            strategy: "link",
+          },
+        ],
+      };
+      expect(() => {
+        setFirstFactors(goodAuthentication)
       }).not.toThrow();
     });
   });

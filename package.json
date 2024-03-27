@@ -7,16 +7,14 @@
   "module": "build/userfront-core.module.js",
   "unpkg": "build/userfront-core.umd.js",
   "scripts": {
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "build": "npm run build:standard && npm run build:ie11 && npm run ts:copy",
-    "build:standard": "microbundle && microbundle -f modern --external none",
-    "build:ie11": "patch-package && COMPAT=ie11 microbundle -o build/userfront-core.ie11.umd.js --external none --no-pkg-main -f umd ; patch-package --reverse",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "coverage": "vitest run --coverage",
+    "build": "rollup --config && npm run ts:copy",
     "pub": "npm publish",
     "pub:beta": "npm publish --tag beta",
     "reinstall": "rm -rf node_modules && rm package-lock.json && npm install",
-    "ts:copy": "cp ts/index.d.ts build/userfront-core.d.ts; cp ts/index.d.ts build/userfront-core.modern.d.ts; cp ts/index.d.ts build/userfront-core.module.d.ts; cp ts/index.d.ts build/userfront-core.umd.d.ts",
-    "watch": "microbundle watch --external none && npm run ts:copy"
+    "ts:copy": "cp ts/index.d.ts build/userfront-core.d.ts; cp ts/index.d.ts build/userfront-core.modern.d.ts; cp ts/index.d.ts build/userfront-core.module.d.ts; cp ts/index.d.ts build/userfront-core.umd.d.ts"
   },
   "repository": {
     "type": "git",
@@ -37,23 +35,19 @@
   },
   "homepage": "https://github.com/userfront/userfront-core#readme",
   "dependencies": {
-    "axios": "^1.6.2",
-    "js-cookie": "^2.2.1"
+    "axios": "1.6.8",
+    "js-cookie": "2.2.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.12.8",
-    "@babel/preset-env": "^7.12.7",
-    "@types/jest": "^29.4.0",
-    "babel-jest": "^26.6.3",
-    "babel-loader": "^8.2.1",
-    "babel-plugin-rewire": "^1.2.0",
-    "fast-check": "^3.11.0",
-    "jest": "^29.4.3",
-    "jest-environment-jsdom": "^29.4.3",
-    "jsonwebtoken": "^9.0.1",
-    "microbundle": "^0.15.1",
-    "patch-package": "^6.5.0",
-    "promise-polyfill": "^8.2.3",
-    "typescript": "^3.9.9"
+    "@rollup/plugin-commonjs": "25.0.7",
+    "@rollup/plugin-node-resolve": "15.2.3",
+    "@rollup/plugin-terser": "0.4.4",
+    "@vitest/coverage-v8": "1.4.0",
+    "fast-check": "3.16.0",
+    "jsdom": "^24.0.0",
+    "jsonwebtoken": "9.0.2",
+    "rollup": "4.13.0",
+    "typescript": "5.4.3",
+    "vitest": "1.4.0"
   }
 }

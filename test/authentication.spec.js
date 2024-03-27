@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { mockWindow } from "./config/utils.js";
 import {
   authenticationData,
@@ -6,9 +7,9 @@ import {
 import { defaultHandleMfaRequired } from "../src/mfa.js";
 import { defaultHandlePkceRequired } from "../src/pkce.js";
 
-jest.mock("../src/api.js");
-jest.mock("../src/mfa.js");
-jest.mock("../src/pkce.js");
+vi.mock("../src/api.js");
+vi.mock("../src/mfa.js");
+vi.mock("../src/pkce.js");
 
 mockWindow({
   origin: "https://example.com",
@@ -21,7 +22,7 @@ const blankAuthenticationData = {
 
 describe("Authentication service", () => {
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
     window.location.href = `https://example.com/login`;
     for (const key in authenticationData) {
       authenticationData[key] = blankAuthenticationData[key];
@@ -104,6 +105,27 @@ describe("Authentication service", () => {
           data
         );
       });
+      it("should call a custom handlePkceRequired function", async () => {
+        const fn = vi.fn();
+
+        const payload = {
+          data: {
+            message: "PKCE required",
+            authorizationCode: "auth-code",
+            redirectTo: "my-app:/login",
+          },
+          handlePkceRequired: fn
+        };
+
+        const data = await handleLoginResponse(payload);
+
+        // Should have called the custom function with the correct params
+        expect(fn).toHaveBeenCalledWith(
+          data.authorizationCode,
+          data.redirectTo,
+          data
+        );
+      })
     });
 
     describe("MFA", () => {
@@ -120,6 +142,26 @@ describe("Authentication service", () => {
 
         // Should called the defaultHandleMfaRequired handler
         expect(defaultHandleMfaRequired).toHaveBeenCalledWith(
+          data.firstFactorToken,
+          data
+        );
+      });
+      it("should call a custom handleMfaRequired function", async () => {
+        const fn = vi.fn();
+
+        const payload = {
+          data: {
+            message: "MFA required",
+            firstFactorToken: "uf_factor",
+            authentication: {},
+          },
+          handleMfaRequired: fn
+        };
+
+        const data = await handleLoginResponse(payload);
+
+        // Should have called the custom function with the correct params
+        expect(fn).toHaveBeenCalledWith(
           data.firstFactorToken,
           data
         );

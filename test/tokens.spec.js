@@ -1,3 +1,5 @@
+import { vi } from "vitest";
+
 import Cookies from "js-cookie";
 import Userfront from "../src/index.js";
 import {
@@ -9,7 +11,7 @@ import {
 import * as Refresh from "../src/refresh.js";
 import { store } from "../src/store.js";
 
-jest.mock("../src/refresh.js");
+vi.mock("../src/refresh.js");
 
 const tenantId = "abcd4321";
 const mockAccessToken = createAccessToken();

@@ -11,6 +11,7 @@
  * Reference on Jest environment overrides: https://jestjs.io/docs/configuration#testenvironment-string
  */
 
+import { vi } from "vitest";
 import axios from "axios";
 import {
   createAccessToken,
@@ -26,7 +27,7 @@ import { apiUrl } from "../src/constants.js";
 const tenantId = "abcd5432";
 const domain = "com.example.myapp";
 
-jest.mock("axios");
+vi.mock("axios");
 
 describe("init() method in Node/SSR environment (should not crash)", () => {
   describe("init() method with domain option", () => {
@@ -57,7 +58,7 @@ describe("init() method in Node/SSR environment (should not crash)", () => {
 
     afterEach(() => {
       resetStore(Userfront);
-      jest.resetAllMocks();
+      vi.resetAllMocks();
     });
 
     it("should include the x-application-id and x-origin headers for mode", async () => {

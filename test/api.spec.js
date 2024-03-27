@@ -1,8 +1,9 @@
+import { vi } from "vitest";
 import axios from "axios";
 import Userfront from "../src/index.js";
 import { get, post, put } from "../src/api.js";
 
-jest.mock("axios");
+vi.mock("axios");
 
 const tenantId = "abcd9876";
 Userfront.init(tenantId);
@@ -22,7 +23,7 @@ describe("API methods", () => {
     Userfront.init(tenantId);
   });
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   describe("get", () => {

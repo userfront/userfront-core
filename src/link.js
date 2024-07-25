@@ -11,6 +11,7 @@ import { getPkceRequestQueryParams } from "./pkce.js";
  * in the URL querystring. ?token=...&uuid=...
  * @property {String} token
  * @property {UUID} uuid
+ * @property {string} linkType the type of link being used
  * @property {String} redirect - do not redirect if false, or redirect to given path
  * @property {Function} handleUpstreamResponse
  * @property {Function} handleMfaRequired
@@ -21,6 +22,7 @@ import { getPkceRequestQueryParams } from "./pkce.js";
 export async function loginWithLink({
   token,
   uuid,
+  linkType,
   redirect,
   handleUpstreamResponse,
   handleMfaRequired,
@@ -40,6 +42,7 @@ export async function loginWithLink({
       {
         token,
         uuid,
+        linkType,
       },
       {
         headers: getMfaHeaders(),

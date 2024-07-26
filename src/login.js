@@ -46,6 +46,7 @@ export async function login({
   // Link
   token,
   uuid,
+  linkType,
   // Totp
   totpCode,
   backupCode,
@@ -112,6 +113,7 @@ export async function login({
       return loginWithLink({
         token,
         uuid,
+        linkType,
         redirect,
         handleUpstreamResponse,
         handleMfaRequired,

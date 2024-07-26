@@ -45,6 +45,11 @@ function init(tenantId, opts = {}) {
     axios.defaults.headers.common["x-origin"] = url;
   }
 
+  axios.defaults.headers.common["x-userfront-source"] = "core-js";
+  if (opts.userfrontSource) {
+    axios.defaults.headers.common["x-userfront-source"] = opts.userfrontSource;
+  }
+
   setTokenNames();
   setTokensFromCookies();
 

@@ -40,7 +40,6 @@ export function getProviderLink({ provider, redirect, providerId }) {
  * @param {String} [providerId] Provider ID of custom provider (only required for `{ provider: 'custom sso' }`)
  */
 export function signonWithSso({ provider, redirect, providerId }) {
-  if (!provider) throw new Error("Missing provider");
   const url = getProviderLink({ provider, redirect, providerId });
   window.location.assign(url);
 }

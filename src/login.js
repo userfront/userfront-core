@@ -20,6 +20,7 @@ import { setupPkce } from "./pkce.js";
  * @property {String} password
  * @property {String} token
  * @property {String} uuid
+ * @property {String} linkType
  * @property {String} totpCode
  * @property {String} backupCode
  * @property {String} channel "sms" or "email"
@@ -31,6 +32,7 @@ import { setupPkce } from "./pkce.js";
  * @property {Function} handlePkceRequired
  * @property {Function} handleTokens
  * @property {Function} handleRedirect
+ * @property {Object} options
  */
 export async function login({
   method,
@@ -76,7 +78,6 @@ export async function login({
     case "google":
     case "linkedin":
     case "okta":
-      return signonWithSso({ provider: method, redirect });
     case "custom":
       return signonWithSso({ provider: method, redirect, providerId });
     case "password":

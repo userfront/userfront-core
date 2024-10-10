@@ -22,6 +22,10 @@ import { setupPkce } from "./pkce.js";
  * @property {Function} handlePkceRequired
  * @property {Function} handleTokens
  * @property {Function} handleRedirect
+ * @property {Object} options
+ * @property {Boolean} options.noSignupEmail
+ *  By default, Userfront sends a welcome and signup email when registering a new user.
+ *  Set options.noSignupEmail = true to override this behavior.
  */
 export async function signup({
   method,
@@ -42,6 +46,7 @@ export async function signup({
   handlePkceRequired,
   handleTokens,
   handleRedirect,
+  options,
 } = {}) {
   setupPkce();
   if (!method) {
@@ -71,6 +76,7 @@ export async function signup({
         handlePkceRequired,
         handleTokens,
         handleRedirect,
+        options,
       });
     case "passwordless":
       return sendPasswordlessLink({ email, name, username, userData: data });

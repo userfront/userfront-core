@@ -21,6 +21,10 @@ import { getPkceRequestQueryParams } from "./pkce.js";
  * @property {Function} handlePkceRequired
  * @property {Function} handleTokens
  * @property {Function} handleRedirect
+ * @property {Object} options
+ * @property {Boolean} options.noSignupEmail
+ *  By default, Userfront sends a welcome and signup email when registering a new user.
+ *  Set options.noSignupEmail = true to override this behavior.
  */
 export async function signupWithPassword({
   username,
@@ -34,6 +38,7 @@ export async function signupWithPassword({
   handlePkceRequired,
   handleTokens,
   handleRedirect,
+  options,
 } = {}) {
   try {
     const { tenantId } = store;
@@ -45,6 +50,7 @@ export async function signupWithPassword({
         email,
         password,
         data: userData,
+        ...(options?.noSignupEmail && { options: { noSignupEmail: true } }),
       },
       {
         headers: getMfaHeaders(),

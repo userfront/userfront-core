@@ -33,6 +33,9 @@ import { setupPkce } from "./pkce.js";
  * @property {Function} handleTokens
  * @property {Function} handleRedirect
  * @property {Object} options
+ * @property {Boolean} options.noResetEmail
+ *  By default, Userfront sends a password reset email if a user without a password tries to log in with a password.
+ *  Set options.noResetEmail = true to override this behavior and return an error instead.
  */
 export async function login({
   method,

@@ -5,7 +5,10 @@ interface InitOptions {
   userfrontSource?: string;
   supressNodeWarning?: boolean;
 }
-export declare function init(tenantId: string, options?: InitOptions): Promise<void>;
+export declare function init(
+  tenantId: string,
+  options?: InitOptions
+): Promise<void>;
 
 // addInitCallback()
 export declare function addInitCallback(callback: Function): void;
@@ -163,6 +166,7 @@ export declare function signup({
   handlePkceRequired,
   handleTokens,
   handleRedirect,
+  options,
 }: {
   method: string;
   email?: string;
@@ -178,6 +182,9 @@ export declare function signup({
   handlePkceRequired?: Function;
   handleTokens?: Function;
   handleRedirect?: Function;
+  options?: {
+    noSignupEmail?: boolean;
+  };
 }): Promise<SignupResponse>;
 
 // login()
